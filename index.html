@@ -27,21 +27,33 @@
 
 <div class="container">
 
-  <!-- NAVEGACION DE SECCIONES -->
-  <nav class="nav-tabs">
-    <button class="nav-tab active" data-section="dashboard" onclick="switchSection('dashboard')">
-      📊 Dashboard
-    </button>
-    <button class="nav-tab" data-section="ingresar-gastos" onclick="switchSection('ingresar-gastos')">
-      ➕ Ingresar Gastos
-    </button>
-    <button class="nav-tab" data-section="ingresar-pagos" onclick="switchSection('ingresar-pagos')">
-      💰 Ingresar Pagos
-    </button>
-    <button class="nav-tab" data-section="registros" onclick="switchSection('registros')">
-      📋 Registros
-    </button>
-  </nav>
+<!-- NAVEGACION DE SECCIONES -->
+<nav class="nav-tabs">
+  <button class="nav-tab active" data-section="dashboard" onclick="switchSection('dashboard')">
+    📊 Dashboard
+  </button>
+  <button class="nav-tab" data-section="catalogo-items" onclick="switchSection('catalogo-items')">
+    📋 Catálogo de Items
+  </button>
+  <button class="nav-tab" data-section="clientes" onclick="switchSection('clientes')">
+    🏢 Clientes
+  </button>
+  <button class="nav-tab" data-section="cotizaciones" onclick="switchSection('cotizaciones')">
+    📄 Cotizaciones
+  </button>
+  <button class="nav-tab" data-section="proyectos" onclick="switchSection('proyectos')">
+    🏗️ Proyectos
+  </button>
+  <button class="nav-tab" data-section="ingresar-gastos" onclick="switchSection('ingresar-gastos')">
+    ➕ Gastos
+  </button>
+  <button class="nav-tab" data-section="ingresar-pagos" onclick="switchSection('ingresar-pagos')">
+    💰 Pagos
+  </button>
+  <button class="nav-tab" data-section="registros" onclick="switchSection('registros')">
+    📑 Registros
+  </button>
+</nav>
 
   <!-- ============================================================
        SECCION: DASHBOARD
@@ -176,6 +188,139 @@
 
   </section>
 
+    <!-- ============================================================
+       SECCION: CATALOGO DE ITEMS
+       ============================================================ -->
+  <section id="catalogo-items" class="section-panel">
+    
+    <!-- Importar/Exportar JSON -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">📦 Gestión del Catálogo</h2>
+        <div class="section-actions">
+          <button class="btn-secondary" onclick="exportarCatalogoJSON()">⬇️ Exportar JSON</button>
+          <button class="btn-secondary" onclick="document.getElementById('import-json').click()">⬆️ Importar JSON</button>
+          <input type="file" id="import-json" accept=".json" style="display:none" onchange="importarCatalogoJSON(this)">
+        </div>
+      </div>
+      <p style="color:rgba(255,255,255,0.5);font-size:13px;margin-bottom:16px;">
+        El catálogo contiene todas las tareas/servicios con sus precios unitarios. Puedes exportar a JSON para respaldar o importar para añadir nuevos items.
+      </p>
+    </div>
+
+    <!-- Formulario nuevo item -->
+    <div class="form-section">
+      <div class="form-header">
+        <h2 class="section-title">➕ Añadir Nuevo Item</h2>
+      </div>
+      <form id="formItem" onsubmit="return guardarItem(event)">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="item-codigo">Código <span class="required">*</span></label>
+            <input type="text" id="item-codigo" placeholder="Ej: ELEC-001" required maxlength="30">
+          </div>
+          <div class="form-group">
+            <label for="item-categoria">Categoría <span class="required">*</span></label>
+            <select id="item-categoria" required>
+              <option value="">Selecciona</option>
+              <option value="electricidad">Electricidad</option>
+              <option value="plomeria">Plomería</option>
+              <option value="pintura">Pintura</option>
+              <option value="construccion">Construcción</option>
+              <option value="mantenimiento">Mantenimiento</option>
+              <option value="iluminacion">Iluminación</option>
+              <option value="sistemas_aci">Sistemas ACI</option>
+              <option value="bombeo">Bombeo</option>
+              <option value="ventilacion">Ventilación</option>
+              <option value="techo">Techo</option>
+              <option value="puertas">Puertas</option>
+              <option value="otros">Otros</option>
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <label for="item-descripcion">Descripción <span class="required">*</span></label>
+            <input type="text" id="item-descripcion" placeholder="Ej: Suministro e instalación de lámparas LED 2x2" required maxlength="300">
+          </div>
+          <div class="form-group">
+            <label for="item-unidad">Unidad <span class="required">*</span></label>
+            <select id="item-unidad" required>
+              <option value="und">und - Unidad</option>
+              <option value="m">m - Metro</option>
+              <option value="m2">m² - Metro cuadrado</option>
+              <option value="m3">m³ - Metro cúbico</option>
+              <option value="kg">kg - Kilogramo</option>
+              <option value="lb">lb - Libra</option>
+              <option value="gl">gl - Galón</option>
+              <option value="lt">lt - Litro</option>
+              <option value="hr">hr - Hora</option>
+              <option value="dia">día - Día</option>
+              <option value="mes">mes - Mes</option>
+              <option value="viaje">viaje - Viaje</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="item-precio">Precio Unitario ($) <span class="required">*</span></label>
+            <input type="number" id="item-precio" placeholder="0.00" required min="0.01" step="0.01" max="999999.99">
+          </div>
+          <div class="form-group">
+            <label for="item-itbms">¿Aplica ITBMS?</label>
+            <select id="item-itbms">
+              <option value="1">Sí (7%)</option>
+              <option value="0">No</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">💾 Guardar Item</button>
+          <button type="reset" class="btn-secondary">🔄 Limpiar</button>
+        </div>
+      </form>
+      <div class="form-feedback" id="feedback-item"></div>
+    </div>
+
+    <!-- Tabla de items -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">📋 Items Registrados</h2>
+        <div class="section-actions">
+          <input type="text" id="buscar-item" placeholder="🔍 Buscar item..." onkeyup="filtrarItems()" 
+                 style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 14px;color:white;font-size:13px;width:220px;">
+          <button class="filter-btn active" onclick="filtrarItemsCategoria('todos')">Todos</button>
+          <button class="filter-btn" onclick="filtrarItemsCategoria('electricidad')">Electricidad</button>
+          <button class="filter-btn" onclick="filtrarItemsCategoria('plomeria')">Plomería</button>
+          <button class="filter-btn" onclick="filtrarItemsCategoria('pintura')">Pintura</button>
+          <button class="filter-btn" onclick="filtrarItemsCategoria('construccion')">Construcción</button>
+          <button class="filter-btn" onclick="filtrarItemsCategoria('mantenimiento')">Mantenimiento</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="tablaItems">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Categoría</th>
+              <th>Descripción</th>
+              <th>Unidad</th>
+              <th>Precio Unit.</th>
+              <th>ITBMS</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyItems"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Vista previa JSON -->
+    <div class="section">
+      <div class="section-header">
+        <h2 class="section-title">📝 Vista del JSON</h2>
+      </div>
+      <pre id="json-preview" style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:20px;color:#6bbd45;font-size:12px;max-height:300px;overflow:auto;font-family:monospace;"></pre>
+    </div>
+
+  </section>
+  
   <!-- ============================================================
        SECCION: INGRESAR GASTOS
        ============================================================ -->
@@ -346,6 +491,7 @@
 <script src="js/storage.js"></script>
 <script src="js/charts.js"></script>
 <script src="js/app.js"></script>
-
+<script src="js/catalogo.js"></script>
+  
 </body>
 </html>
