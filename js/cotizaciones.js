@@ -379,4 +379,119 @@ function renderCotizacionesGuardadas(filtro) {
     
     html += row;
     
-    if
+    if (i < 5) {
+      htmlDash += '<tr>' +
+        '<td><strong style="color:#4f8cff">' + c.numero + '</strong></td>' +
+        '<td>' + (c.clienteNombre || '—') + '</td>' +
+        '<td>' + c.proyecto + '</td>' +
+        '<td class="td-monto">' + formatMoney(c.total) + '</td>' +
+        '<td><span class="estado-badge ' + estadoClass + '">' + estadoText + '</span></td>' +
+        '<td>' + formatDate(c.fecha) + '</td>' +
+        '</tr>';
+    }
+  }
+  
+  if (tbody) tbody.innerHTML = html;
+  if (tbodyDash) tbodyDash.innerHTML = htmlDash;
+}
+
+function filtrarCotizaciones() {
+  var texto = document.getElementById('buscar-cotizacion').value;
+  renderCotizacionesGuardadas(texto);
+}
+
+function verCotizacion(id) {
+  var cotizacion = findItem(STORAGE_KEYS.COTIZACIONES, id);
+  if (!cotizacion) return;
+  
+  var ventana = window.open('', '_blank');
+  var cliente = findItem(STORAGE_KEYS.CLIENTES, cotizacion.clienteId);
+  
+  var itemsHtml = '';
+  for (var i = 0; i < cotizacion.items.length; i++) {
+    var item = cotizacion.items[i];
+    var totalItem = item.cantidad * item.precioUnitario;
+    itemsHtml += '<tr>' +
+      '<td style="padding:10px;border:1px solid #ddd;">' + (i+1) + '</td>' +
+      '<td style="padding:10px;border:1px solid #ddd;">' + item.descripcion + '</td>' +
+      '<td style="padding:10px;border:1px solid #ddd;text-align:center;">' + item.cantidad + '</td>' +
+      '<td style="padding:10px;border:1px solid #ddd;text-align:center;">' + item.unidad + '</td>' +
+      '<td style="padding:10px;border:1px solid #ddd;text-align:right;">' + formatMoney(item.precioUnitario) + '</td>' +
+      '<td style="padding:10px;border:1px solid #ddd;text-align:right;">' + formatMoney(totalItem) + '</td>' +
+      '</tr>';
+  }
+  
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cotización ' + cotizacion.numero + '</title>' +
+    '<style>body{font-family:Inter,sans-serif;max-width:800px;margin:40px auto;padding:20px;color:#333}' +
+    '.header{text-align:center;padding:30px;border-bottom:3px solid #6bbd45;margin-bottom:30px}' +
+    '.header h1{color:#6bbd45;font-size:28px;margin-bottom:8px}' +
+    '.header p{color:#666;font-size:14px}' +
+    '.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:30px}' +
+    '.info-box{background:#f8f9fa;padding:16px;border-radius:8px}' +
+    '.info-box h4{margin:0 0 8px;color:#6bbd45;font-size:12px;text-transform:uppercase}' +
+    '.info-box p{margin:0;font-size:14px}' +
+    'table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px}' +
+    'th{background:#6bbd45;color:#fff;padding:12px;text-align:left}' +
+    '.totals{margin-left:auto;width:300px}' +
+    '.totals td{padding:8px 12px}' +
+    '.totals .grand{font-size:18px;font-weight:700;color:#6bbd45;border-top:2px solid #6bbd45}' +
+    '.footer{margin-top:40px;padding-top:20px;border-top:1px solid #ddd;text-align:center;color:#999;font-size:12px}' +
+    '@media print{body{margin:0}}</style></head><body>' +
+    '<div class="header"><h1>GN Studio</h1><p>Diseñamos experiencias que venden</p></div>' +
+    '<div class="info-grid">' +
+    '<div class="info-box"><h4>Cliente</h4><p>' + (cliente ? cliente.nombre : '—') + '</p><p>' + (cliente ? cliente.direccion : '') + '</p></div>' +
+    '<div class="info-box"><h4>Cotización ' + cotizacion.numero + '</h4><p><strong>Proyecto:</strong> ' + cotizacion.proyecto + '</p><p><strong>Fecha:</strong> ' + formatDate(cotizacion.fecha) + '</p><p><strong>Atención:</strong> ' + (cotizacion.atencion || '—') + '</p></div>' +
+    '</div>' +
+    (cotizacion.alcance ? '<div style="margin-bottom:20px;padding:16px;background:#f8f9fa;border-radius:8px;"><h4 style="margin:0 0 8px;color:#6bbd45;font-size:12px;text-transform:uppercase;">Alcance</h4><p style="margin:0;font-size:14px;">' + cotizacion.alcance + '</p></div>' : '') +
+    '<table><thead><tr><th>#</th><th>Descripción</th><th style="text-align:center">Cant.</th><th style="text-align:center">Unid.</th><th style="text-align:right">Precio Unit.</th><th style="text-align:right">Total</th></tr></thead><tbody>' + itemsHtml + '</tbody></table>' +
+    '<table class="totals"><tr><td style="text-align:right"><strong>Subtotal:</strong></td><td style="text-align:right">' + formatMoney(cotizacion.subtotal) + '</td></tr>' +
+    (cotizacion.aplicaItbms ? '<tr><td style="text-align:right"><strong>ITBMS (7%):</strong></td><td style="text-align:right">' + formatMoney(cotizacion.itbmsMonto) + '</td></tr>' : '') +
+    (cotizacion.descuentoPct > 0 ? '<tr><td style="text-align:right"><strong>Descuento (' + cotizacion.descuentoPct + '%):</strong></td><td style="text-align:right">-' + formatMoney(cotizacion.descuentoMonto) + '</td></tr>' : '') +
+    '<tr class="grand"><td style="text-align:right"><strong>TOTAL:</strong></td><td style="text-align:right">' + formatMoney(cotizacion.total) + '</td></tr></table>' +
+    '<div class="footer"><p>GN Studio — Diseño Web, Branding & Desarrollo</p><p>Esta cotización tiene validez de 15 días calendario.</p></div>' +
+    '</body></html>';
+  
+  ventana.document.write(html);
+  ventana.document.close();
+}
+
+function cambiarEstadoCotizacion(id) {
+  var cotizacion = findItem(STORAGE_KEYS.COTIZACIONES, id);
+  if (!cotizacion) return;
+  
+  var estados = ['cotizado', 'aprobado', 'rechazado', 'vencido'];
+  var estadoActual = cotizacion.estado;
+  var idx = estados.indexOf(estadoActual);
+  var nuevoEstado = estados[(idx + 1) % estados.length];
+  
+  updateItem(STORAGE_KEYS.COTIZACIONES, id, { estado: nuevoEstado });
+  
+  // Si se aprueba, crear proyecto automáticamente
+  if (nuevoEstado === 'aprobado') {
+    var proyecto = {
+      id: generarId(),
+      cotizacionId: id,
+      clienteId: cotizacion.clienteId,
+      clienteNombre: cotizacion.clienteNombre,
+      nombre: cotizacion.proyecto,
+      presupuesto: cotizacion.total,
+      avance: 0,
+      estado: 'en_progreso',
+      fechaInicio: new Date().toISOString().split('T')[0],
+      creadoEn: new Date().toISOString()
+    };
+    addItem(STORAGE_KEYS.PROYECTOS, proyecto);
+    alert('✅ Cotización aprobada. Se ha creado el proyecto automáticamente.');
+  }
+  
+  renderCotizacionesGuardadas();
+  renderProyectos();
+  actualizarKPIs();
+}
+
+function eliminarCotizacion(id) {
+  if (!confirm('¿Eliminar esta cotización?')) return;
+  deleteItem(STORAGE_KEYS.COTIZACIONES, id);
+  renderCotizacionesGuardadas();
+  actualizarKPIs();
+}
