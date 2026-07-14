@@ -1,212 +1,162 @@
 // ============================================================
-// js/catalogo.js - Catálogo de Items/Servicios
+// js/catalogo.js — Catálogo de Servicios
 // ============================================================
 
-const STORAGE_CATALOGO = 'proyintel_catalogo_items';
-
-// Items de ejemplo basados en los Excel reales
-const itemsEjemplo = [
-  { codigo: 'ELEC-001', categoria: 'electricidad', descripcion: 'Suministro e instalación de lámparas LED 2x2', unidad: 'und', precio: 60.00, itbms: 1 },
-  { codigo: 'ELEC-002', categoria: 'electricidad', descripcion: 'Suministro e instalación de lámparas redondas de 6"', unidad: 'und', precio: 21.00, itbms: 1 },
-  { codigo: 'ELEC-003', categoria: 'electricidad', descripcion: 'Suministro e instalación de switch doble de luces', unidad: 'und', precio: 15.00, itbms: 1 },
-  { codigo: 'ELEC-004', categoria: 'electricidad', descripcion: 'Instalación de ojos de buey', unidad: 'und', precio: 8.00, itbms: 1 },
-  { codigo: 'ELEC-005', categoria: 'electricidad', descripcion: 'Suministro e instalación de salida eléctrica 110V-60Hz', unidad: 'und', precio: 40.00, itbms: 1 },
-  { codigo: 'ELEC-006', categoria: 'electricidad', descripcion: 'Suministro e instalación de salida eléctrica 220V', unidad: 'und', precio: 230.00, itbms: 1 },
-  { codigo: 'ELEC-007', categoria: 'electricidad', descripcion: 'Suministro e instalación de interruptor sencillo', unidad: 'und', precio: 25.02, itbms: 1 },
-  { codigo: 'ELEC-008', categoria: 'electricidad', descripcion: 'Suministro de cableado estructurado CAT6', unidad: 'm', precio: 2.60, itbms: 1 },
-  { codigo: 'ELEC-009', categoria: 'electricidad', descripcion: 'Suministro e instalación de breaker trifásico 120/208V', unidad: 'und', precio: 850.00, itbms: 1 },
-  { codigo: 'ELEC-010', categoria: 'electricidad', descripcion: 'Mantenimiento de tableros eléctricos', unidad: 'und', precio: 350.00, itbms: 1 },
+var serviciosEjemplo = [
+  { id: generarId(), codigo: 'WEB-001', categoria: 'diseno_web', descripcion: 'Diseño de landing page de alto impacto (1 sección)', unidad: 'und', precio: 450.00, itbms: 1 },
+  { id: generarId(), codigo: 'WEB-002', categoria: 'diseno_web', descripcion: 'Diseño de página web corporativa (hasta 5 páginas)', unidad: 'proyecto', precio: 1800.00, itbms: 1 },
+  { id: generarId(), codigo: 'WEB-003', categoria: 'diseno_web', descripcion: 'Diseño de página web e-commerce (hasta 20 productos)', unidad: 'proyecto', precio: 3200.00, itbms: 1 },
+  { id: generarId(), codigo: 'WEB-004', categoria: 'diseno_web', descripcion: 'Diseño UI/UX de aplicación móvil', unidad: 'proyecto', precio: 2500.00, itbms: 1 },
+  { id: generarId(), codigo: 'WEB-005', categoria: 'diseno_web', descripcion: 'Rediseño completo de sitio web existente', unidad: 'proyecto', precio: 2200.00, itbms: 1 },
+  { id: generarId(), codigo: 'WEB-006', categoria: 'diseno_web', descripcion: 'Diseño de página adicional', unidad: 'pagina', precio: 350.00, itbms: 1 },
+  { id: generarId(), codigo: 'WEB-007', categoria: 'diseno_web', descripcion: 'Diseño responsive (adaptación móvil)', unidad: 'proyecto', precio: 600.00, itbms: 1 },
   
-  { codigo: 'PINT-001', categoria: 'pintura', descripcion: 'Suministro y aplicación de pintura impermeabilizante en pared', unidad: 'm2', precio: 3.00, itbms: 1 },
-  { codigo: 'PINT-002', categoria: 'pintura', descripcion: 'Suministro y aplicación de pintura impermeabilizante Koraza Sol & Lluvia', unidad: 'm2', precio: 3.00, itbms: 1 },
-  { codigo: 'PINT-003', categoria: 'pintura', descripcion: 'Suministro y aplicación de pintura en puertas enrollables', unidad: 'und', precio: 120.00, itbms: 1 },
-  { codigo: 'PINT-004', categoria: 'pintura', descripcion: 'Suministro y aplicación de pintura para delimitación líneas amarillas', unidad: 'm2', precio: 3.21, itbms: 1 },
-  { codigo: 'PINT-005', categoria: 'pintura', descripcion: 'Lavado de paredes de fachada con hidrolavadora', unidad: 'm2', precio: 1.50, itbms: 1 },
-  { codigo: 'PINT-006', categoria: 'pintura', descripcion: 'Tratamiento para hongos en paredes externas', unidad: 'm2', precio: 2.00, itbms: 1 },
+  { id: generarId(), codigo: 'DEV-001', categoria: 'desarrollo', descripcion: 'Desarrollo frontend (HTML/CSS/JS)', unidad: 'hr', precio: 45.00, itbms: 1 },
+  { id: generarId(), codigo: 'DEV-002', categoria: 'desarrollo', descripcion: 'Desarrollo backend (PHP/Node)', unidad: 'hr', precio: 55.00, itbms: 1 },
+  { id: generarId(), codigo: 'DEV-003', categoria: 'desarrollo', descripcion: 'Desarrollo web completo (frontend + backend)', unidad: 'proyecto', precio: 4500.00, itbms: 1 },
+  { id: generarId(), codigo: 'DEV-004', categoria: 'desarrollo', descripcion: 'Integración de CMS (WordPress/Strapi)', unidad: 'proyecto', precio: 800.00, itbms: 1 },
+  { id: generarId(), codigo: 'DEV-005', categoria: 'desarrollo', descripcion: 'Desarrollo de API REST', unidad: 'proyecto', precio: 1500.00, itbms: 1 },
+  { id: generarId(), codigo: 'DEV-006', categoria: 'desarrollo', descripcion: 'Configuración de hosting y deploy', unidad: 'und', precio: 200.00, itbms: 1 },
+  { id: generarId(), codigo: 'DEV-007', categoria: 'desarrollo', descripcion: 'Optimización de velocidad (Core Web Vitals)', unidad: 'proyecto', precio: 600.00, itbms: 1 },
   
-  { codigo: 'PLOM-001', categoria: 'plomeria', descripcion: 'Suministro e instalación de lavamanos', unidad: 'und', precio: 120.00, itbms: 1 },
-  { codigo: 'PLOM-002', categoria: 'plomeria', descripcion: 'Suministro e instalación de grifería para lavamanos', unidad: 'und', precio: 120.00, itbms: 1 },
-  { codigo: 'PLOM-003', categoria: 'plomeria', descripcion: 'Suministro e instalación de inodoro', unidad: 'und', precio: 270.00, itbms: 1 },
-  { codigo: 'PLOM-004', categoria: 'plomeria', descripcion: 'Suministro e instalación de urinal', unidad: 'und', precio: 220.00, itbms: 1 },
-  { codigo: 'PLOM-005', categoria: 'plomeria', descripcion: 'Reparación de fuga en plomería', unidad: 'und', precio: 75.00, itbms: 1 },
-  { codigo: 'PLOM-006', categoria: 'plomeria', descripcion: 'Suministro e instalación de bomba de llenado', unidad: 'und', precio: 550.00, itbms: 1 },
+  { id: generarId(), codigo: 'BRD-001', categoria: 'branding', descripcion: 'Diseño de logotipo (3 propuestas + revisiones)', unidad: 'proyecto', precio: 650.00, itbms: 1 },
+  { id: generarId(), codigo: 'BRD-002', categoria: 'branding', descripcion: 'Manual de marca completo', unidad: 'proyecto', precio: 1200.00, itbms: 1 },
+  { id: generarId(), codigo: 'BRD-003', categoria: 'branding', descripcion: 'Paleta de colores y tipografía', unidad: 'proyecto', precio: 300.00, itbms: 1 },
+  { id: generarId(), codigo: 'BRD-004', categoria: 'branding', descripcion: 'Tarjetas de presentación (diseño)', unidad: 'und', precio: 80.00, itbms: 1 },
+  { id: generarId(), codigo: 'BRD-005', categoria: 'branding', descripcion: 'Papelería corporativa completa', unidad: 'paquete', precio: 450.00, itbms: 1 },
+  { id: generarId(), codigo: 'BRD-006', categoria: 'branding', descripcion: 'Identidad visual para redes sociales', unidad: 'paquete', precio: 350.00, itbms: 1 },
   
-  { codigo: 'CONST-001', categoria: 'construccion', descripcion: 'Suministro e instalación de laminas EPS', unidad: 'm2', precio: 55.00, itbms: 1 },
-  { codigo: 'CONST-002', categoria: 'construccion', descripcion: 'Suministro e instalación de cielo raso suspendido', unidad: 'm2', precio: 11.00, itbms: 1 },
-  { codigo: 'CONST-003', categoria: 'construccion', descripcion: 'Suministro e instalación de revestimiento de paredes', unidad: 'm2', precio: 45.00, itbms: 1 },
-  { codigo: 'CONST-004', categoria: 'construccion', descripcion: 'Suministro e instalación de revestimiento de piso', unidad: 'm2', precio: 9.00, itbms: 1 },
-  { codigo: 'CONST-005', categoria: 'construccion', descripcion: 'Demolición y construcción de paredes', unidad: 'm2', precio: 26.00, itbms: 1 },
-  { codigo: 'CONST-006', categoria: 'construccion', descripcion: 'Resane de grietas y obra gris', unidad: 'm2', precio: 2.50, itbms: 1 },
+  { id: generarId(), codigo: 'MKT-001', categoria: 'marketing', descripcion: 'Estrategia de marketing digital mensual', unidad: 'mes', precio: 800.00, itbms: 1 },
+  { id: generarId(), codigo: 'MKT-002', categoria: 'marketing', descripcion: 'Campaña Google Ads (setup + 1 mes)', unidad: 'paquete', precio: 600.00, itbms: 1 },
+  { id: generarId(), codigo: 'MKT-003', categoria: 'marketing', descripcion: 'Campaña Meta Ads (setup + 1 mes)', unidad: 'paquete', precio: 550.00, itbms: 1 },
+  { id: generarId(), codigo: 'MKT-004', categoria: 'marketing', descripcion: 'Email marketing (diseño + envío)', unidad: 'paquete', precio: 400.00, itbms: 1 },
+  { id: generarId(), codigo: 'MKT-005', categoria: 'marketing', descripcion: 'Copywriting para landing page', unidad: 'und', precio: 150.00, itbms: 1 },
   
-  { codigo: 'MANT-001', categoria: 'mantenimiento', descripcion: 'Mantenimiento de sistema de bombeo general', unidad: 'und', precio: 125.00, itbms: 1 },
-  { codigo: 'MANT-002', categoria: 'mantenimiento', descripcion: 'Mantenimiento de A/A de 12,000 BTU', unidad: 'und', precio: 30.00, itbms: 1 },
-  { codigo: 'MANT-003', categoria: 'mantenimiento', descripcion: 'Mantenimiento de A/A de 24,000 BTU', unidad: 'und', precio: 40.00, itbms: 1 },
-  { codigo: 'MANT-004', categoria: 'mantenimiento', descripcion: 'Mantenimiento de puertas enrollables internas', unidad: 'und', precio: 120.00, itbms: 1 },
-  { codigo: 'MANT-005', categoria: 'mantenimiento', descripcion: 'Mantenimiento de puertas enrollables externas', unidad: 'und', precio: 250.00, itbms: 1 },
-  { codigo: 'MANT-006', categoria: 'mantenimiento', descripcion: 'Mantenimiento de sistemas eléctricos mensual', unidad: 'und', precio: 165.00, itbms: 1 },
+  { id: generarId(), codigo: 'SM-001', categoria: 'social_media', descripcion: 'Gestión mensual de redes sociales (4 plataformas)', unidad: 'mes', precio: 600.00, itbms: 1 },
+  { id: generarId(), codigo: 'SM-002', categoria: 'social_media', descripcion: 'Diseño de post para redes (12 piezas)', unidad: 'paquete', precio: 300.00, itbms: 1 },
+  { id: generarId(), codigo: 'SM-003', categoria: 'social_media', descripcion: 'Diseño de stories/reels (8 piezas)', unidad: 'paquete', precio: 250.00, itbms: 1 },
+  { id: generarId(), codigo: 'SM-004', categoria: 'social_media', descripcion: 'Calendario editorial mensual', unidad: 'mes', precio: 200.00, itbms: 1 },
   
-  { codigo: 'ILUM-001', categoria: 'iluminacion', descripcion: 'Suministro e instalación de lámparas tipo LED UFO 100W', unidad: 'und', precio: 40.00, itbms: 1 },
-  { codigo: 'ILUM-002', categoria: 'iluminacion', descripcion: 'Suministro e instalación de lámparas tipo fotocelda', unidad: 'und', precio: 40.00, itbms: 1 },
-  { codigo: 'ILUM-003', categoria: 'iluminacion', descripcion: 'Conversión de lámparas de tubo a LED', unidad: 'und', precio: 4000.00, itbms: 1 },
+  { id: generarId(), codigo: 'SEO-001', categoria: 'seo', descripcion: 'Auditoría SEO completa', unidad: 'proyecto', precio: 500.00, itbms: 1 },
+  { id: generarId(), codigo: 'SEO-002', categoria: 'seo', descripcion: 'Optimización SEO on-page mensual', unidad: 'mes', precio: 450.00, itbms: 1 },
+  { id: generarId(), codigo: 'SEO-003', categoria: 'seo', descripcion: 'Estrategia de link building', unidad: 'mes', precio: 350.00, itbms: 1 },
   
-  { codigo: 'TECHO-001', categoria: 'techo', descripcion: 'Suministro e instalación de láminas de zinc galvanizadas', unidad: 'm2', precio: 7.50, itbms: 1 },
-  { codigo: 'TECHO-002', categoria: 'techo', descripcion: 'Suministro de M/O por instalación de techo', unidad: 'm2', precio: 6.50, itbms: 1 },
-  { codigo: 'TECHO-003', categoria: 'techo', descripcion: 'Suministro e instalación de soportería y tornillería', unidad: 'und', precio: 1500.00, itbms: 1 },
-  { codigo: 'TECHO-004', categoria: 'techo', descripcion: 'Impermeabilización de cumbrera', unidad: 'm', precio: 2.10, itbms: 1 },
+  { id: generarId(), codigo: 'FOT-001', categoria: 'fotografia', descripcion: 'Sesión fotográfica de producto (20 fotos)', unidad: 'paquete', precio: 400.00, itbms: 1 },
+  { id: generarId(), codigo: 'FOT-002', categoria: 'fotografia', descripcion: 'Video corporativo (hasta 2 min)', unidad: 'proyecto', precio: 1200.00, itbms: 1 },
+  { id: generarId(), codigo: 'FOT-003', categoria: 'fotografia', descripcion: 'Edición de video profesional', unidad: 'hr', precio: 60.00, itbms: 1 },
+  { id: generarId(), codigo: 'FOT-004', categoria: 'fotografia', descripcion: 'Motion graphics / animación', unidad: 'hr', precio: 70.00, itbms: 1 },
   
-  { codigo: 'PUERT-001', categoria: 'puertas', descripcion: 'Suministro, fabricación e instalación de puerta corrediza 2.40x1.50', unidad: 'und', precio: 575.00, itbms: 1 },
-  { codigo: 'PUERT-002', categoria: 'puertas', descripcion: 'Suministro, fabricación e instalación de puerta abatible 2.40x1.50', unidad: 'und', precio: 850.00, itbms: 1 },
-  { codigo: 'PUERT-003', categoria: 'puertas', descripcion: 'Suministro e instalación de guías para puerta corrediza', unidad: 'und', precio: 125.00, itbms: 1 },
-  { codigo: 'PUERT-004', categoria: 'puertas', descripcion: 'Suministro e instalación de cerradura para puerta', unidad: 'und', precio: 120.00, itbms: 1 },
+  { id: generarId(), codigo: 'CON-001', categoria: 'consultoria', descripcion: 'Consultoría de marca (sesión 1hr)', unidad: 'hr', precio: 120.00, itbms: 1 },
+  { id: generarId(), codigo: 'CON-002', categoria: 'consultoria', descripcion: 'Consultoría de UX/UI', unidad: 'hr', precio: 100.00, itbms: 1 },
+  { id: generarId(), codigo: 'CON-003', categoria: 'consultoria', descripcion: 'Auditoría de presencia digital', unidad: 'proyecto', precio: 350.00, itbms: 1 },
   
-  { codigo: 'ACI-001', categoria: 'sistemas_aci', descripcion: 'Mantenimiento de panel de ACI - Revisión de zonas', unidad: 'und', precio: 160.00, itbms: 1 },
-  { codigo: 'ACI-002', categoria: 'sistemas_aci', descripcion: 'Mantenimiento de detectores de humo fotoelectricos', unidad: 'und', precio: 25.00, itbms: 1 },
-  { codigo: 'ACI-003', categoria: 'sistemas_aci', descripcion: 'Suministro e instalación de baterías de respaldo 12VDC-5Ah', unidad: 'und', precio: 60.00, itbms: 1 },
+  { id: generarId(), codigo: 'MNT-001', categoria: 'mantenimiento', descripcion: 'Mantenimiento web mensual (básico)', unidad: 'mes', precio: 150.00, itbms: 1 },
+  { id: generarId(), codigo: 'MNT-002', categoria: 'mantenimiento', descripcion: 'Mantenimiento web mensual (premium)', unidad: 'mes', precio: 350.00, itbms: 1 },
+  { id: generarId(), codigo: 'MNT-003', categoria: 'mantenimiento', descripcion: 'Soporte técnico por hora', unidad: 'hr', precio: 50.00, itbms: 1 },
   
-  { codigo: 'BOMB-001', categoria: 'bombeo', descripcion: 'Suministro e instalación de controlador de presión', unidad: 'und', precio: 140.00, itbms: 1 },
-  { codigo: 'BOMB-002', categoria: 'bombeo', descripcion: 'Suministro e instalación de bomba de llenado', unidad: 'und', precio: 550.00, itbms: 1 },
-  { codigo: 'BOMB-003', categoria: 'bombeo', descripcion: 'Suministro e instalación de manómetro de presión', unidad: 'und', precio: 120.00, itbms: 1 },
-  
-  { codigo: 'VENT-001', categoria: 'ventilacion', descripcion: 'Suministro e instalación de ventilador de pared', unidad: 'und', precio: 150.00, itbms: 1 },
-  { codigo: 'VENT-002', categoria: 'ventilacion', descripcion: 'Suministro e instalación de ventilador tipo campana', unidad: 'und', precio: 150.00, itbms: 1 },
-  { codigo: 'VENT-003', categoria: 'ventilacion', descripcion: 'Suministro de M/O por desmonte de ventiladores', unidad: 'und', precio: 650.00, itbms: 1 },
-  
-  { codigo: 'IMPER-001', categoria: 'construccion', descripcion: 'Suministro y aplicación de impermeabilización en ventanas', unidad: 'und', precio: 15.00, itbms: 1 },
-  { codigo: 'IMPER-002', categoria: 'construccion', descripcion: 'Suministro y aplicación de impermeabilización en techo', unidad: 'm2', precio: 3.75, itbms: 1 },
-  
-  { codigo: 'MO-001', categoria: 'otros', descripcion: 'Suministro de mano de obra general', unidad: 'hr', precio: 25.00, itbms: 1 },
-  { codigo: 'MO-002', categoria: 'otros', descripcion: 'Suministro de mano de obra especializada', unidad: 'hr', precio: 45.00, itbms: 1 },
-  { codigo: 'MO-003', categoria: 'otros', descripcion: 'Suministro de mano de obra por desmonte', unidad: 'und', precio: 250.00, itbms: 1 },
-  { codigo: 'MO-004', categoria: 'otros', descripcion: 'Suministro de mano de obra por instalación', unidad: 'und', precio: 350.00, itbms: 1 },
-  
-  { codigo: 'MAT-001', categoria: 'otros', descripcion: 'Suministro de tornillería y parcho para techo', unidad: 'm2', precio: 1.15, itbms: 1 },
-  { codigo: 'MAT-002', categoria: 'otros', descripcion: 'Suministro de laminas translucidas', unidad: 'und', precio: 120.00, itbms: 1 },
-  { codigo: 'MAT-003', categoria: 'otros', descripcion: 'Suministro de canalización y alambrado', unidad: 'm', precio: 15.00, itbms: 1 },
-  
-  { codigo: 'EQUIP-001', categoria: 'otros', descripcion: 'Alquiler de grúa RT 100 toneladas', unidad: 'dia', precio: 1480.00, itbms: 1 },
-  { codigo: 'EQUIP-002', categoria: 'otros', descripcion: 'Alquiler de telehandler 4.5 toneladas', unidad: 'dia', precio: 750.00, itbms: 1 },
-  { codigo: 'EQUIP-003', categoria: 'otros', descripcion: 'Alquiler de plataforma de tijera 12mts', unidad: 'dia', precio: 180.00, itbms: 1 },
-  
-  { codigo: 'TRANS-001', categoria: 'otros', descripcion: 'Transporte de equipo a sitio de proyecto ida y vuelta', unidad: 'viaje', precio: 3000.00, itbms: 1 },
-  { codigo: 'TRANS-002', categoria: 'otros', descripcion: 'Entrada y salida de Zona Libre', unidad: 'viaje', precio: 250.00, itbms: 1 },
-  { codigo: 'PERM-001', categoria: 'otros', descripcion: 'Permisología de operación', unidad: 'und', precio: 350.00, itbms: 1 }
+  { id: generarId(), codigo: 'HOS-001', categoria: 'hosting', descripcion: 'Hosting compartido (1 año)', unidad: 'und', precio: 120.00, itbms: 1 },
+  { id: generarId(), codigo: 'HOS-002', categoria: 'hosting', descripcion: 'Hosting VPS (1 año)', unidad: 'und', precio: 350.00, itbms: 1 },
+  { id: generarId(), codigo: 'HOS-003', categoria: 'hosting', descripcion: 'Registro de dominio (.com)', unidad: 'und', precio: 15.00, itbms: 1 },
+  { id: generarId(), codigo: 'HOS-004', categoria: 'hosting', descripcion: 'Certificado SSL', unidad: 'und', precio: 50.00, itbms: 1 }
 ];
 
-// ============================================================
-// INICIALIZACIÓN
-// ============================================================
 function inicializarCatalogo() {
-  var data = localStorage.getItem(STORAGE_CATALOGO);
-  if (!data) {
-    localStorage.setItem(STORAGE_CATALOGO, JSON.stringify(itemsEjemplo));
-    console.log('[Catalogo] Items de ejemplo cargados');
+  var data = getData(STORAGE_KEYS.SERVICIOS);
+  if (!data || data.length === 0) {
+    setData(STORAGE_KEYS.SERVICIOS, serviciosEjemplo);
+    console.log('[Catalogo] Servicios de ejemplo cargados');
   }
 }
 
-function obtenerItems() {
-  try {
-    var data = localStorage.getItem(STORAGE_CATALOGO);
-    return data ? JSON.parse(data) : [];
-  } catch (e) {
-    return [];
-  }
+function obtenerServicios() {
+  return getData(STORAGE_KEYS.SERVICIOS);
 }
 
-function guardarItems(items) {
-  localStorage.setItem(STORAGE_CATALOGO, JSON.stringify(items));
+function guardarServicios(servicios) {
+  setData(STORAGE_KEYS.SERVICIOS, servicios);
 }
 
 // ============================================================
 // CRUD
 // ============================================================
-function guardarItem(event) {
+function guardarServicio(event) {
   event.preventDefault();
-  var feedback = document.getElementById('feedback-item');
+  var feedback = document.getElementById('feedback-servicio');
   
-  var codigo = document.getElementById('item-codigo').value.trim().toUpperCase();
-  var items = obtenerItems();
+  var codigo = document.getElementById('serv-codigo').value.trim().toUpperCase();
+  var servicios = obtenerServicios();
   
-  // Verificar código único
-  for (var i = 0; i < items.length; i++) {
-    if (items[i].codigo === codigo) {
+  for (var i = 0; i < servicios.length; i++) {
+    if (servicios[i].codigo === codigo) {
       feedback.className = 'form-feedback error';
       feedback.textContent = '❌ El código "' + codigo + '" ya existe';
       return false;
     }
   }
   
-  var nuevoItem = {
+  var nuevoServicio = {
+    id: generarId(),
     codigo: codigo,
-    categoria: document.getElementById('item-categoria').value,
-    descripcion: document.getElementById('item-descripcion').value.trim(),
-    unidad: document.getElementById('item-unidad').value,
-    precio: parseFloat(document.getElementById('item-precio').value),
-    itbms: parseInt(document.getElementById('item-itbms').value)
+    categoria: document.getElementById('serv-categoria').value,
+    descripcion: document.getElementById('serv-descripcion').value.trim(),
+    unidad: document.getElementById('serv-unidad').value,
+    precio: parseFloat(document.getElementById('serv-precio').value),
+    itbms: parseInt(document.getElementById('serv-itbms').value)
   };
   
-  items.push(nuevoItem);
-  items.sort(function(a, b) { return a.codigo.localeCompare(b.codigo); });
-  guardarItems(items);
+  servicios.push(nuevoServicio);
+  servicios.sort(function(a, b) { return a.codigo.localeCompare(b.codigo); });
+  guardarServicios(servicios);
   
   feedback.className = 'form-feedback success';
-  feedback.textContent = '✅ Item "' + codigo + '" guardado correctamente';
-  document.getElementById('formItem').reset();
+  feedback.textContent = '✅ Servicio "' + codigo + '" guardado correctamente';
+  document.getElementById('formServicio').reset();
   
-  renderItems();
+  renderServicios();
   actualizarVistaJSON();
   return false;
 }
 
-function eliminarItem(codigo) {
-  if (!confirm('¿Eliminar el item "' + codigo + '"?')) return;
-  var items = obtenerItems().filter(function(item) { return item.codigo !== codigo; });
-  guardarItems(items);
-  renderItems();
+function eliminarServicio(id) {
+  if (!confirm('¿Eliminar este servicio?')) return;
+  deleteItem(STORAGE_KEYS.SERVICIOS, id);
+  renderServicios();
   actualizarVistaJSON();
 }
 
 // ============================================================
 // RENDER
 // ============================================================
-function renderItems(filtroTexto, filtroCategoria) {
-  var items = obtenerItems();
-  var tbody = document.getElementById('tbodyItems');
+function renderServicios(filtroTexto, filtroCategoria) {
+  var servicios = obtenerServicios();
+  var tbody = document.getElementById('tbodyServicios');
   if (!tbody) return;
   
-  // Filtrar
   if (filtroTexto) {
     var term = filtroTexto.toLowerCase();
-    items = items.filter(function(item) {
-      return item.descripcion.toLowerCase().indexOf(term) !== -1 ||
-             item.codigo.toLowerCase().indexOf(term) !== -1;
+    servicios = servicios.filter(function(s) {
+      return s.descripcion.toLowerCase().indexOf(term) !== -1 ||
+             s.codigo.toLowerCase().indexOf(term) !== -1;
     });
   }
   
   if (filtroCategoria && filtroCategoria !== 'todos') {
-    items = items.filter(function(item) { return item.categoria === filtroCategoria; });
+    servicios = servicios.filter(function(s) { return s.categoria === filtroCategoria; });
   }
   
-  var catLabels = {
-    electricidad: 'Electricidad', plomeria: 'Plomería', pintura: 'Pintura',
-    construccion: 'Construcción', mantenimiento: 'Mantenimiento',
-    iluminacion: 'Iluminación', sistemas_aci: 'Sistemas ACI',
-    bombeo: 'Bombeo', ventilacion: 'Ventilación', techo: 'Techo',
-    puertas: 'Puertas', otros: 'Otros'
-  };
-  
   var html = '';
-  for (var i = 0; i < items.length; i++) {
-    var item = items[i];
-    var catClass = 'cat-' + item.categoria.replace('_', '-');
+  for (var i = 0; i < servicios.length; i++) {
+    var s = servicios[i];
+    var catClass = 'cat-' + s.categoria.replace('_', '-');
     html += '<tr>' +
-      '<td><strong style="color:#6bbd45">' + item.codigo + '</strong></td>' +
-      '<td><span class="td-categoria ' + catClass + '">' + (catLabels[item.categoria] || item.categoria) + '</span></td>' +
-      '<td>' + item.descripcion + '</td>' +
-      '<td>' + item.unidad + '</td>' +
-      '<td class="td-monto">' + fmt.format(item.precio) + '</td>' +
-      '<td>' + (item.itbms ? 'Sí (7%)' : 'No') + '</td>' +
+      '<td><strong style="color:#6bbd45">' + s.codigo + '</strong></td>' +
+      '<td><span class="td-categoria ' + catClass + '">' + (CAT_LABELS[s.categoria] || s.categoria) + '</span></td>' +
+      '<td>' + s.descripcion + '</td>' +
+      '<td>' + s.unidad + '</td>' +
+      '<td class="td-monto">' + formatMoney(s.precio) + '</td>' +
+      '<td>' + (s.itbms ? 'Sí (7%)' : 'No') + '</td>' +
       '<td class="td-actions">' +
-        '<button class="btn-icon" onclick="eliminarItem(\'' + item.codigo + '\')" title="Eliminar">🗑</button>' +
+        '<button class="btn-icon" onclick="eliminarServicio(\'' + s.id + '\')" title="Eliminar">🗑</button>' +
       '</td>' +
       '</tr>';
   }
@@ -214,40 +164,45 @@ function renderItems(filtroTexto, filtroCategoria) {
   tbody.innerHTML = html;
 }
 
-function filtrarItems() {
-  var texto = document.getElementById('buscar-item').value;
-  renderItems(texto, null);
+function filtrarServicios() {
+  var texto = document.getElementById('buscar-servicio').value;
+  renderServicios(texto, null);
 }
 
-function filtrarItemsCategoria(cat) {
-  var btns = document.querySelectorAll('#catalogo-items .filter-btn');
+function filtrarServiciosCategoria(cat) {
+  var btns = document.querySelectorAll('#catalogo-servicios .filter-btn');
   for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
   if (event && event.target) event.target.classList.add('active');
-  renderItems(null, cat);
+  renderServicios(null, cat);
 }
 
 function actualizarVistaJSON() {
   var preview = document.getElementById('json-preview');
   if (preview) {
-    preview.textContent = JSON.stringify(obtenerItems(), null, 2);
+    var data = {
+      catalogo_servicios: obtenerServicios(),
+      exportado: new Date().toISOString(),
+      total: obtenerServicios().length
+    };
+    preview.textContent = JSON.stringify(data, null, 2);
   }
 }
 
 // ============================================================
-// IMPORT/EXPORT JSON
+// IMPORT/EXPORT
 // ============================================================
 function exportarCatalogoJSON() {
-  var items = obtenerItems();
+  var servicios = obtenerServicios();
   var data = {
-    catalogo_items: items,
+    catalogo_servicios: servicios,
     exportado: new Date().toISOString(),
-    total_items: items.length
+    total: servicios.length
   };
   var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
   a.href = url;
-  a.download = 'proyintel-catalogo-' + new Date().toISOString().split('T')[0] + '.json';
+  a.download = 'gn-catalogo-' + new Date().toISOString().split('T')[0] + '.json';
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -260,34 +215,35 @@ function importarCatalogoJSON(input) {
   reader.onload = function(e) {
     try {
       var data = JSON.parse(e.target.result);
-      var nuevosItems = data.catalogo_items || data.items || [];
-      if (!Array.isArray(nuevosItems) || nuevosItems.length === 0) {
-        alert('❌ El archivo no contiene items válidos');
+      var nuevos = data.catalogo_servicios || data.servicios || data.items || [];
+      if (!Array.isArray(nuevos) || nuevos.length === 0) {
+        alert('❌ El archivo no contiene servicios válidos');
         return;
       }
       
-      var itemsActuales = obtenerItems();
+      var actuales = obtenerServicios();
       var codigosExistentes = {};
-      for (var i = 0; i < itemsActuales.length; i++) {
-        codigosExistentes[itemsActuales[i].codigo] = true;
+      for (var i = 0; i < actuales.length; i++) {
+        codigosExistentes[actuales[i].codigo] = true;
       }
       
       var agregados = 0;
-      for (var i = 0; i < nuevosItems.length; i++) {
-        var nuevo = nuevosItems[i];
+      for (var i = 0; i < nuevos.length; i++) {
+        var nuevo = nuevos[i];
+        if (!nuevo.id) nuevo.id = generarId();
         if (!codigosExistentes[nuevo.codigo]) {
-          itemsActuales.push(nuevo);
+          actuales.push(nuevo);
           codigosExistentes[nuevo.codigo] = true;
           agregados++;
         }
       }
       
-      itemsActuales.sort(function(a, b) { return a.codigo.localeCompare(b.codigo); });
-      guardarItems(itemsActuales);
+      actuales.sort(function(a, b) { return a.codigo.localeCompare(b.codigo); });
+      guardarServicios(actuales);
       
-      renderItems();
+      renderServicios();
       actualizarVistaJSON();
-      alert('✅ ' + agregados + ' items nuevos importados. Total: ' + itemsActuales.length);
+      alert('✅ ' + agregados + ' servicios nuevos importados. Total: ' + actuales.length);
     } catch (err) {
       alert('❌ Error al importar: ' + err.message);
     }
@@ -295,14 +251,3 @@ function importarCatalogoJSON(input) {
   reader.readAsText(file);
   input.value = '';
 }
-
-// ============================================================
-// INICIALIZAR AL CARGAR
-// ============================================================
-document.addEventListener('DOMContentLoaded', function() {
-  inicializarCatalogo();
-  if (document.getElementById('tbodyItems')) {
-    renderItems();
-    actualizarVistaJSON();
-  }
-});
