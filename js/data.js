@@ -5,56 +5,104 @@
 var fmt = new Intl.NumberFormat('es-PA', {
   style: 'currency',
   currency: 'USD',
-  minimumFractionDigits: 2
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
 });
 
 function formatMoney(valor) {
-  if (valor === undefined || valor === null) return '$0.00';
-  return fmt.format(parseFloat(valor));
+  var num = parseFloat(valor);
+  if (isNaN(num)) num = 0;
+  return fmt.format(num);
 }
 
 function formatNumber(valor) {
-  return new Intl.NumberFormat('es-PA').format(parseFloat(valor) || 0);
+  var num = parseFloat(valor);
+  if (isNaN(num)) num = 0;
+  return new Intl.NumberFormat('es-PA').format(num);
 }
 
 function formatDate(fecha) {
   if (!fecha) return '';
+
   var d = new Date(fecha);
   if (isNaN(d.getTime())) return fecha;
-  return d.toLocaleDateString('es-PA', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+  return d.toLocaleDateString('es-PA', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
 }
 
 function generarId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+  return 'id_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
 }
 
 function generarNumeroCotizacion(fecha) {
   var d = fecha ? new Date(fecha) : new Date();
+
+  if (isNaN(d.getTime())) {
+    d = new Date();
+  }
+
   var dd = String(d.getDate()).padStart(2, '0');
   var mm = String(d.getMonth() + 1).padStart(2, '0');
   var yy = String(d.getFullYear()).slice(-2);
-  return 'COT-' + dd + mm + yy + '-' + Math.floor(Math.random() * 900 + 100);
+  var rnd = Math.floor(Math.random() * 900 + 100);
+
+  return 'COT-' + dd + mm + yy + '-' + rnd;
 }
 
 function slugify(texto) {
-  return texto.toString().toLowerCase()
+  return String(texto || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/\s+/g, '-')
     .replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-');
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
 }
 
 function debounce(func, wait) {
   var timeout;
+
   return function() {
-    var context = this, args = arguments;
+    var context = this;
+    var args = arguments;
+
     clearTimeout(timeout);
+
     timeout = setTimeout(function() {
       func.apply(context, args);
-    }, wait);
+    }, wait || 300);
   };
 }
 
-// Categorías de servicios para labels
+function clamp(value, min, max) {
+  var num = parseFloat(value);
+  if (isNaN(num)) num = 0;
+  return Math.min(Math.max(num, min), max);
+}
+
+function toMoneyNumber(valor) {
+  var num = parseFloat(valor);
+  return isNaN(num) ? 0 : num;
+}
+
+function sumBy(arr, field) {
+  if (!Array.isArray(arr)) return 0;
+
+  var total = 0;
+
+  for (var i = 0; i < arr.length; i++) {
+    total += toMoneyNumber(arr[i] && arr[i][field]);
+  }
+
+  return total;
+}
+
 var CAT_LABELS = {
   diseno_web: 'Diseño Web',
   desarrollo: 'Desarrollo',
@@ -69,7 +117,6 @@ var CAT_LABELS = {
   otros: 'Otros'
 };
 
-// Categorías de gastos para labels
 var GASTO_LABELS = {
   software: 'Software & Herramientas',
   hosting: 'Hosting & Dominios',
@@ -82,3 +129,11 @@ var GASTO_LABELS = {
   impuestos: 'Impuestos',
   otros: 'Otros'
 };
+
+function getCategoriaLabel(cat) {
+  return CAT_LABELS[cat] || cat || 'Sin categoría';
+}
+
+function getGastoLabel(cat) {
+  return GASTO_LABELS[cat] || cat || 'Sin categoría';
+}
