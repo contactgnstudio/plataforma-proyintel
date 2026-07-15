@@ -332,21 +332,207 @@ function vistaPreviaCotizacion() {
 }
 
 // ============================================================
-// RENDER COTIZACIONES GUARDADAS
+// RENDER ITEMS DE COTIZACIÓN AGRUPADOS
 // ============================================================
-function renderCotizacionesGuardadas(filtro) {
-  var tbody = document.getElementById('tbodyCotizaciones');
-  var tbodyDash = document.getElementById('tbodyCotizacionesDashboard');
-  var cotizaciones = getData(STORAGE_KEYS.COTIZACIONES);
+function renderItemsCotizacion() {
+  var container = document.getElementById('items-agrupados-container');
+  if (!container) return;
   
-  if (filtro) {
-    var term = filtro.toLowerCase();
-    cotizaciones = cotizaciones.filter(function(c) {
-      return c.proyecto.toLowerCase().indexOf(term) !== -1 ||
-             c.numero.toLowerCase().indexOf(term) !== -1 ||
-             (c.clienteNombre && c.clienteNombre.toLowerCase().indexOf(term) !== -1);
-    });
+  if (itemsCotizacionActual.length === 0) {
+    container.innerHTML = '<div class="tabla-vacia"><div class="tabla-vacia-icon">📋</div>No hay items agregados aún</div>';
+    document.getElementById('cot-subtotal').textContent = '$0.00';
+    document.getElementById('cot-itbms-monto').textContent = '$0.00';
+    document.getElementById('cot-descuento-monto').textContent = '$0.00';
+    document.getElementById('cot-total').textContent = '$0.00';
+    document.getElementById('resumen-grupos').innerHTML = '';
+    return;
   }
+  
+  var subtotal = 0;
+  var itbmsTotal = 0;
+  
+  // Agrupar items por grupo
+  var itemsPorGrupo = {};
+  var itemsSinGrupo = [];
+  
+  for (var i = 0; i < itemsCotizacionActual.length; i++) {
+    var item = itemsCotizacionActual[i];
+    var grupo = null;
+    
+    if (item.tipo === 'catalogo' && item.servicioId) {
+      grupo = obtenerGrupoDeServicio(item.servicioId);
+    }
+    
+    if (grupo) {
+      if (!itemsPorGrupo[grupo.id]) {
+        itemsPorGrupo[grupo.id] = { grupo: grupo, items: [] };
+      }
+      itemsPorGrupo[grupo.id].items.push({ item: item, index: i });
+    } else {
+      itemsSinGrupo.push({ item: item, index: i });
+    }
+  }
+  
+  var html = '';
+  var colorIdx = 0;
+  
+  // Renderizar items con grupo
+  for (var gid in itemsPorGrupo) {
+    var g = itemsPorGrupo[gid];
+    var color = COLORES_GRUPO[g.grupo.color] || COLORES_GRUPO.gray;
+    var grupoSubtotal = 0;
+    
+    html += '<div class="grupo-cotizacion">' +
+      '<div class="grupo-cotizacion-header" style="background:' + color.bg + ';color:' + color.border + ';">' +
+        '<span class="grupo-dot" style="background:' + color.border + ';"></span>' +
+        g.grupo.nombre +
+      '</div>' +
+      '<div class="table-wrap">' +
+      '<table>' +
+      '<thead><tr>' +
+        '<th>#</th><th>Descripción</th><th>Cant.</th><th>Unidad</th><th>Precio Unit.</th><th>Total</th><th>ITBMS</th><th>Acción</th>' +
+      '</tr></thead><tbody>';
+    
+    for (var j = 0; j < g.items.length; j++) {
+      var entry = g.items[j];
+      var item = entry.item;
+      var idx = entry.index;
+      var totalItem = item.cantidad * item.precioUnitario;
+      grupoSubtotal += totalItem;
+      subtotal += totalItem;
+      
+      var itbmsItem = 0;
+      if (item.aplicaItbms) {
+        itbmsItem = totalItem * 0.07;
+        itbmsTotal += itbmsItem;
+      }
+      
+      html += '<tr>' +
+        '<td>' + (idx + 1) + '</td>' +
+        '<td>' + (item.tipo === 'catalogo' ? '<span style="color:#6bbd45;font-size:11px;">[' + item.codigo + ']</span> ' : '') + item.descripcion + '</td>' +
+        '<td>' + item.cantidad + '</td>' +
+        '<td>' + item.unidad + '</td>' +
+        '<td class="td-monto">' + formatMoney(item.precioUnitario) + '</td>' +
+        '<td class="td-monto">' + formatMoney(totalItem) + '</td>' +
+        '<td>' + (item.aplicaItbms ? formatMoney(itbmsItem) : '—') + '</td>' +
+        '<td class="td-actions">' +
+          '<button class="btn-icon" onclick="eliminarItemCotizacion(' + idx + ')" title="Eliminar">🗑</button>' +
+        '</td>' +
+        '</tr>';
+    }
+    
+    html += '</tbody></table></div></div>';
+  }
+  
+  // Renderizar items sin grupo
+  if (itemsSinGrupo.length > 0) {
+    html += '<div class="grupo-cotizacion">' +
+      '<div class="grupo-cotizacion-header" style="background:rgba(100,116,139,0.1);color:#64748b;">' +
+        '<span class="grupo-dot" style="background:#64748b;"></span>' +
+        'Sin grupo asignado' +
+      '</div>' +
+      '<div class="table-wrap">' +
+      '<table>' +
+      '<thead><tr>' +
+        '<th>#</th><th>Descripción</th><th>Cant.</th><th>Unidad</th><th>Precio Unit.</th><th>Total</th><th>ITBMS</th><th>Acción</th>' +
+      '</tr></thead><tbody>';
+    
+    for (var j = 0; j < itemsSinGrupo.length; j++) {
+      var entry = itemsSinGrupo[j];
+      var item = entry.item;
+      var idx = entry.index;
+      var totalItem = item.cantidad * item.precioUnitario;
+      subtotal += totalItem;
+      
+      var itbmsItem = 0;
+      if (item.aplicaItbms) {
+        itbmsItem = totalItem * 0.07;
+        itbmsTotal += itbmsItem;
+      }
+      
+      html += '<tr>' +
+        '<td>' + (idx + 1) + '</td>' +
+        '<td>' + (item.tipo === 'catalogo' ? '<span style="color:#6bbd45;font-size:11px;">[' + item.codigo + ']</span> ' : '') + item.descripcion + '</td>' +
+        '<td>' + item.cantidad + '</td>' +
+        '<td>' + item.unidad + '</td>' +
+        '<td class="td-monto">' + formatMoney(item.precioUnitario) + '</td>' +
+        '<td class="td-monto">' + formatMoney(totalItem) + '</td>' +
+        '<td>' + (item.aplicaItbms ? formatMoney(itbmsItem) : '—') + '</td>' +
+        '<td class="td-actions">' +
+          '<button class="btn-icon" onclick="eliminarItemCotizacion(' + idx + ')" title="Eliminar">🗑</button>' +
+        '</td>' +
+        '</tr>';
+    }
+    
+    html += '</tbody></table></div></div>';
+  }
+  
+  container.innerHTML = html;
+  
+  // Calcular totales globales
+  var aplicaItbmsGlobal = document.getElementById('cot-itbms').value === '1';
+  var descuentoPct = parseFloat(document.getElementById('cot-descuento').value) || 0;
+  
+  var itbmsMonto = aplicaItbmsGlobal ? itbmsTotal : 0;
+  var descuentoMonto = subtotal * (descuentoPct / 100);
+  var total = subtotal + itbmsMonto - descuentoMonto;
+  
+  document.getElementById('cot-subtotal').textContent = formatMoney(subtotal);
+  document.getElementById('cot-itbms-monto').textContent = formatMoney(itbmsMonto);
+  document.getElementById('cot-descuento-monto').textContent = '-' + formatMoney(descuentoMonto);
+  document.getElementById('cot-total').textContent = formatMoney(total);
+  
+  // Renderizar resumen por grupo
+  renderResumenGrupos(itemsPorGrupo, itemsSinGrupo, subtotal);
+}
+
+function renderResumenGrupos(itemsPorGrupo, itemsSinGrupo, totalGeneral) {
+  var container = document.getElementById('resumen-grupos');
+  if (!container) return;
+  
+  var html = '<div class="resumen-grupos">';
+  
+  for (var gid in itemsPorGrupo) {
+    var g = itemsPorGrupo[gid];
+    var color = COLORES_GRUPO[g.grupo.color] || COLORES_GRUPO.gray;
+    var grupoTotal = 0;
+    
+    for (var i = 0; i < g.items.length; i++) {
+      var item = g.items[i].item;
+      grupoTotal += item.cantidad * item.precioUnitario;
+    }
+    
+    var porcentaje = totalGeneral > 0 ? Math.round((grupoTotal / totalGeneral) * 100) : 0;
+    
+    html += '<div class="resumen-grupo-card">' +
+      '<span class="resumen-grupo-dot" style="background:' + color.border + ';"></span>' +
+      '<div class="resumen-grupo-info">' +
+        '<div class="resumen-grupo-nombre">' + g.grupo.nombre + ' (' + porcentaje + '%)</div>' +
+        '<div class="resumen-grupo-monto">' + formatMoney(grupoTotal) + '</div>' +
+      '</div>' +
+      '</div>';
+  }
+  
+  if (itemsSinGrupo.length > 0) {
+    var sinGrupoTotal = 0;
+    for (var i = 0; i < itemsSinGrupo.length; i++) {
+      var item = itemsSinGrupo[i].item;
+      sinGrupoTotal += item.cantidad * item.precioUnitario;
+    }
+    var porcentaje = totalGeneral > 0 ? Math.round((sinGrupoTotal / totalGeneral) * 100) : 0;
+    
+    html += '<div class="resumen-grupo-card">' +
+      '<span class="resumen-grupo-dot" style="background:#64748b;"></span>' +
+      '<div class="resumen-grupo-info">' +
+        '<div class="resumen-grupo-nombre">Sin grupo (' + porcentaje + '%)</div>' +
+        '<div class="resumen-grupo-monto">' + formatMoney(sinGrupoTotal) + '</div>' +
+      '</div>' +
+      '</div>';
+  }
+  
+  html += '</div>';
+  container.innerHTML = html;
+}
   
   // Ordenar por fecha descendente
   cotizaciones.sort(function(a, b) {
