@@ -10,6 +10,7 @@ var STORAGE_KEYS = {
   GASTOS: 'gn_gastos',
   PAGOS: 'gn_pagos',
   SESSION: 'gn_session'
+  TAREAS: 'gn_tareas',
 };
 
 function getData(key) {
