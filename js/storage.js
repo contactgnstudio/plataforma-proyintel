@@ -12,7 +12,7 @@ var STORAGE_KEYS = {
   TAREAS: 'gn_tareas'
 };
 
-function safeClone(value) {
+function storageClone(value) {
   try {
     return JSON.parse(JSON.stringify(value));
   } catch (e) {
@@ -27,13 +27,13 @@ function getData(key, fallback) {
     var raw = localStorage.getItem(key);
 
     if (raw === null || raw === undefined || raw === '') {
-      return safeClone(defaultValue);
+      return storageClone(defaultValue);
     }
 
     return JSON.parse(raw);
   } catch (e) {
     console.error('Error leyendo "' + key + '":', e);
-    return safeClone(defaultValue);
+    return storageClone(defaultValue);
   }
 }
 
@@ -86,8 +86,7 @@ function updateItem(key, id, changes) {
         }
       }
 
-      setData(key, data);
-      return true;
+      return setData(key, data);
     }
   }
 
@@ -115,19 +114,21 @@ function upsertItem(key, item) {
 
   var data = getData(key, []);
 
-  if (!Array.isArray(data)) data = [];
+  if (!Array.isArray(data)) {
+    data = [];
+  }
 
-  var updated = false;
+  var found = false;
 
   for (var i = 0; i < data.length; i++) {
     if (data[i] && data[i].id === item.id) {
       data[i] = item;
-      updated = true;
+      found = true;
       break;
     }
   }
 
-  if (!updated) {
+  if (!found) {
     data.push(item);
   }
 
