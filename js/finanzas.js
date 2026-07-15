@@ -14,7 +14,6 @@ function generarEstadoCuenta() {
   var gastos = getData(STORAGE_KEYS.GASTOS);
   var pagos = getData(STORAGE_KEYS.PAGOS);
   
-  // Filtrar por fecha
   if (desde) {
     gastos = gastos.filter(function(g) { return g.fecha >= desde; });
     pagos = pagos.filter(function(p) { return p.fecha >= desde; });
@@ -24,13 +23,11 @@ function generarEstadoCuenta() {
     pagos = pagos.filter(function(p) { return p.fecha <= hasta; });
   }
   
-  // Filtrar por proyecto
   if (proyectoId) {
     gastos = gastos.filter(function(g) { return g.proyectoId === proyectoId; });
     pagos = pagos.filter(function(p) { return p.proyectoId === proyectoId; });
   }
   
-  // Combinar y ordenar
   var movimientos = [];
   
   if (tipo !== 'ingresos') {
@@ -65,7 +62,6 @@ function generarEstadoCuenta() {
   
   movimientos.sort(function(a, b) { return new Date(a.fecha) - new Date(b.fecha); });
   
-  // Calcular saldo acumulado
   var saldo = 0;
   var totalIngresos = 0;
   var totalGastos = 0;
@@ -90,10 +86,16 @@ function generarEstadoCuenta() {
       '</tr>';
   }
   
-  document.getElementById('tbodyEstadoCuenta').innerHTML = html || '<tr><td colspan="7" class="tabla-vacia">No hay movimientos en el período seleccionado</td></tr>';
-  document.getElementById('ec-total-ingresos').textContent = formatMoney(totalIngresos);
-  document.getElementById('ec-total-gastos').textContent = formatMoney(totalGastos);
-  document.getElementById('ec-balance').textContent = formatMoney(totalIngresos - totalGastos);
+  var tbody = document.getElementById('tbodyEstadoCuenta');
+  if (tbody) tbody.innerHTML = html || '<tr><td colspan="7" class="tabla-vacia">No hay movimientos en el período seleccionado</td></tr>';
+  
+  var elIngresos = document.getElementById('ec-total-ingresos');
+  var elGastos = document.getElementById('ec-total-gastos');
+  var elBalance = document.getElementById('ec-balance');
+  
+  if (elIngresos) elIngresos.textContent = formatMoney(totalIngresos);
+  if (elGastos) elGastos.textContent = formatMoney(totalGastos);
+  if (elBalance) elBalance.textContent = formatMoney(totalIngresos - totalGastos);
 }
 
 function exportarEstadoCuentaPDF() {
@@ -120,7 +122,6 @@ function generarDeclaracionITBMS() {
   var mes = periodo + '-01';
   var finMes = periodo + '-31';
   
-  // Ventas con ITBMS (débito fiscal)
   var cotizaciones = getData(STORAGE_KEYS.COTIZACIONES).filter(function(c) {
     return c.fecha >= mes && c.fecha <= finMes && c.aplicaItbms && c.estado !== 'rechazado';
   });
@@ -131,8 +132,8 @@ function generarDeclaracionITBMS() {
   
   for (var i = 0; i < cotizaciones.length; i++) {
     var c = cotizaciones[i];
-    var base = c.subtotal - c.descuentoMonto;
-    var itbms = c.itbmsMonto;
+    var base = c.subtotal - (c.descuentoMonto || 0);
+    var itbms = c.itbmsMonto || 0;
     ventasGravadas += base;
     itbmsDebito += itbms;
     
@@ -146,9 +147,7 @@ function generarDeclaracionITBMS() {
       '</tr>';
   }
   
-  // Compras/gastos con ITBMS (crédito fiscal)
   var gastos = getData(STORAGE_KEYS.GASTOS).filter(function(g) {
-    // Simulación: gastos que aplican ITBMS (en realidad se marcaría en cada gasto)
     return g.fecha >= mes && g.fecha <= finMes;
   });
   
@@ -156,11 +155,10 @@ function generarDeclaracionITBMS() {
   var itbmsCredito = 0;
   var htmlCredito = '';
   
-  // Para demo, asumimos que algunos gastos tienen ITBMS
   for (var i = 0; i < gastos.length; i++) {
     var g = gastos[i];
     var base = parseFloat(g.monto) || 0;
-    var itbms = base * 0.07; // Simulado
+    var itbms = base * 0.07;
     comprasGravadas += base;
     itbmsCredito += itbms;
     
@@ -176,16 +174,24 @@ function generarDeclaracionITBMS() {
   
   var aPagar = itbmsDebito - itbmsCredito;
   
-  // Mostrar resumen
-  document.getElementById('itbms-ventas-gravadas').textContent = formatMoney(ventasGravadas);
-  document.getElementById('itbms-debito').textContent = formatMoney(itbmsDebito);
-  document.getElementById('itbms-credito').textContent = formatMoney(itbmsCredito);
-  document.getElementById('itbms-a-pagar').textContent = formatMoney(Math.max(0, aPagar));
+  var elVentas = document.getElementById('itbms-ventas-gravadas');
+  var elDebito = document.getElementById('itbms-debito');
+  var elCredito = document.getElementById('itbms-credito');
+  var elPagar = document.getElementById('itbms-a-pagar');
   
-  document.getElementById('tbodyITBMSDebito').innerHTML = htmlDebito || '<tr><td colspan="6" class="tabla-vacia">No hay ventas gravadas</td></tr>';
-  document.getElementById('tbodyITBMSCredito').innerHTML = htmlCredito || '<tr><td colspan="6" class="tabla-vacia">No hay compras gravadas</td></tr>';
+  if (elVentas) elVentas.textContent = formatMoney(ventasGravadas);
+  if (elDebito) elDebito.textContent = formatMoney(itbmsDebito);
+  if (elCredito) elCredito.textContent = formatMoney(itbmsCredito);
+  if (elPagar) elPagar.textContent = formatMoney(Math.max(0, aPagar));
   
-  document.getElementById('itbms-resumen-container').style.display = 'block';
+  var tbodyDebito = document.getElementById('tbodyITBMSDebito');
+  var tbodyCredito = document.getElementById('tbodyITBMSCredito');
+  
+  if (tbodyDebito) tbodyDebito.innerHTML = htmlDebito || '<tr><td colspan="6" class="tabla-vacia">No hay ventas gravadas</td></tr>';
+  if (tbodyCredito) tbodyCredito.innerHTML = htmlCredito || '<tr><td colspan="6" class="tabla-vacia">No hay compras gravadas</td></tr>';
+  
+  var container = document.getElementById('itbms-resumen-container');
+  if (container) container.style.display = 'block';
 }
 
 function exportarITBMSPDF() {
