@@ -1,22 +1,21 @@
 // ============================================================
-// js/storage.js — Gestión de localStorage
+// js/storage.js — LocalStorage utilities
 // ============================================================
 
 var STORAGE_KEYS = {
-  SERVICIOS: 'gn_catalogo_servicios',
+  SERVICIOS: 'gn_servicios',
   CLIENTES: 'gn_clientes',
   COTIZACIONES: 'gn_cotizaciones',
   PROYECTOS: 'gn_proyectos',
   GASTOS: 'gn_gastos',
   PAGOS: 'gn_pagos',
-  SESSION: 'gn_session'
-  TAREAS: 'gn_tareas',
+  TAREAS: 'gn_tareas'
 };
 
 function getData(key) {
   try {
-    var data = localStorage.getItem(key);
-    return data ? JSON.parse(data) : [];
+    var raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : [];
   } catch (e) {
     console.error('Error leyendo ' + key + ':', e);
     return [];
@@ -26,58 +25,87 @@ function getData(key) {
 function setData(key, data) {
   try {
     localStorage.setItem(key, JSON.stringify(data));
-    return true;
   } catch (e) {
     console.error('Error guardando ' + key + ':', e);
-    return false;
   }
 }
 
 function addItem(key, item) {
-  var items = getData(key);
-  items.push(item);
-  return setData(key, items);
+  var data = getData(key);
+  data.push(item);
+  setData(key, data);
 }
 
-function updateItem(key, id, newData) {
-  var items = getData(key);
-  for (var i = 0; i < items.length; i++) {
-    if (items[i].id === id) {
-      items[i] = Object.assign({}, items[i], newData);
-      return setData(key, items);
+function findItem(key, id) {
+  var data = getData(key);
+  for (var i = 0; i < data.length; i++) {
+    if (data[i].id === id) return data[i];
+  }
+  return null;
+}
+
+function updateItem(key, id, changes) {
+  var data = getData(key);
+  for (var i = 0; i < data.length; i++) {
+    if (data[i].id === id) {
+      for (var prop in changes) {
+        data[i][prop] = changes[prop];
+      }
+      setData(key, data);
+      return true;
     }
   }
   return false;
 }
 
 function deleteItem(key, id) {
-  var items = getData(key).filter(function(item) { return item.id !== id; });
-  return setData(key, items);
-}
-
-function findItem(key, id) {
-  var items = getData(key);
-  for (var i = 0; i < items.length; i++) {
-    if (items[i].id === id) return items[i];
+  var data = getData(key);
+  var filtered = [];
+  for (var i = 0; i < data.length; i++) {
+    if (data[i].id !== id) filtered.push(data[i]);
   }
-  return null;
+  setData(key, filtered);
 }
 
-function exportarTodo() {
-  var data = {
-    exportado: new Date().toISOString(),
-    servicios: getData(STORAGE_KEYS.SERVICIOS),
-    clientes: getData(STORAGE_KEYS.CLIENTES),
-    cotizaciones: getData(STORAGE_KEYS.COTIZACIONES),
-    proyectos: getData(STORAGE_KEYS.PROYECTOS),
-    gastos: getData(STORAGE_KEYS.GASTOS),
-    pagos: getData(STORAGE_KEYS.PAGOS)
-  };
-  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url;
-  a.download = 'gn-studio-backup-' + new Date().toISOString().split('T')[0] + '.json';
-  a.click();
-  URL.revokeObjectURL(url);
+function generarId() {
+  return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
+
+function formatMoney(amount) {
+  var num = parseFloat(amount) || 0;
+  return '$' + num.toLocaleString('es-PA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  var d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString('es-PA', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+var CAT_LABELS = {
+  diseno_web: 'Diseño Web',
+  desarrollo: 'Desarrollo',
+  branding: 'Branding & Identidad',
+  marketing: 'Marketing Digital',
+  social_media: 'Social Media',
+  seo: 'SEO & Posicionamiento',
+  fotografia: 'Fotografía & Video',
+  consultoria: 'Consultoría',
+  mantenimiento: 'Mantenimiento Web',
+  hosting: 'Hosting & Dominio',
+  otros: 'Otros'
+};
+
+var GASTO_LABELS = {
+  software: 'Software & Herramientas',
+  hosting: 'Hosting & Dominios',
+  marketing: 'Marketing & Ads',
+  equipo: 'Equipo & Hardware',
+  oficina: 'Oficina & Suministros',
+  transporte: 'Transporte & Logística',
+  capacitacion: 'Capacitación',
+  servicios: 'Servicios Profesionales',
+  impuestos: 'Impuestos',
+  otros: 'Otros'
+};
