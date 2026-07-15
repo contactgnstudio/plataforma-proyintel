@@ -30,14 +30,14 @@
         <span class="nav-icon">📊</span>
         <span>Dashboard</span>
       </a>
+      <a class="nav-link" data-section="grupos-servicios" onclick="switchSection('grupos-servicios')">
+        <span class="nav-icon">📁</span>
+        <span>Grupos</span>
+      </a>
       <a class="nav-link" data-section="catalogo-servicios" onclick="switchSection('catalogo-servicios')">
         <span class="nav-icon">📋</span>
         <span>Servicios</span>
       </a>
-      <a class="nav-link" data-section="grupos-servicios" onclick="switchSection('grupos-servicios')">
-  <span class="nav-icon">📁</span>
-  <span>Grupos</span>
-</a>
       <a class="nav-link" data-section="clientes" onclick="switchSection('clientes')">
         <span class="nav-icon">🏢</span>
         <span>Clientes</span>
@@ -164,117 +164,117 @@
     </section>
 
     <!-- ============================================================
-     SECCION: GRUPOS DE SERVICIOS
-     ============================================================ -->
-<section id="grupos-servicios" class="section-panel">
-  
-  <div class="section">
-    <div class="section-header">
-      <h2 class="section-title">📁 Gestión de Grupos de Servicios</h2>
-    </div>
-    <p class="section-desc">
-      Crea grupos para organizar tus servicios. Luego asigna cada servicio a un grupo para que las cotizaciones queden agrupadas automáticamente.
-    </p>
-  </div>
+         SECCION: GRUPOS DE SERVICIOS
+         ============================================================ -->
+    <section id="grupos-servicios" class="section-panel">
+      
+      <div class="section">
+        <div class="section-header">
+          <h2 class="section-title">📁 Gestión de Grupos de Servicios</h2>
+        </div>
+        <p class="section-desc">
+          Crea grupos para organizar tus servicios. Luego asigna cada servicio a un grupo para que las cotizaciones queden agrupadas automáticamente.
+        </p>
+      </div>
 
-  <!-- CREAR GRUPO -->
-  <div class="form-section">
-    <div class="form-header">
-      <h2 class="section-title">➕ Crear Nuevo Grupo</h2>
-    </div>
-    <form id="formGrupo" onsubmit="return guardarGrupo(event)">
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="grp-codigo">Código del Grupo <span class="required">*</span></label>
-          <input type="text" id="grp-codigo" placeholder="Ej: DESARROLLO" required maxlength="20">
+      <!-- CREAR GRUPO -->
+      <div class="form-section">
+        <div class="form-header">
+          <h2 class="section-title">➕ Crear Nuevo Grupo</h2>
         </div>
-        <div class="form-group">
-          <label for="grp-nombre">Nombre del Grupo <span class="required">*</span></label>
-          <input type="text" id="grp-nombre" placeholder="Ej: Desarrollo Web" required maxlength="50">
-        </div>
-        <div class="form-group full-width">
-          <label for="grp-descripcion">Descripción</label>
-          <input type="text" id="grp-descripcion" placeholder="Ej: Servicios relacionados con programación y desarrollo" maxlength="200">
-        </div>
-        <div class="form-group">
-          <label for="grp-color">Color del Grupo</label>
-          <select id="grp-color">
-            <option value="green">🟢 Verde (Desarrollo)</option>
-            <option value="blue">🔵 Azul (Diseño)</option>
-            <option value="purple">🟣 Púrpura (Branding)</option>
-            <option value="orange">🟠 Naranja (Marketing)</option>
-            <option value="red">🔴 Rojo (Urgente)</option>
-            <option value="teal">🩵 Turquesa (Consultoría)</option>
-            <option value="pink">🩷 Rosa (Social Media)</option>
-            <option value="gray">⚪ Gris (Otros)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="grp-orden">Orden de Visualización</label>
-          <input type="number" id="grp-orden" placeholder="1" min="1" max="99" value="1">
-        </div>
+        <form id="formGrupo" onsubmit="return guardarGrupo(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="grp-codigo">Código del Grupo <span class="required">*</span></label>
+              <input type="text" id="grp-codigo" placeholder="Ej: DESARROLLO" required maxlength="20">
+            </div>
+            <div class="form-group">
+              <label for="grp-nombre">Nombre del Grupo <span class="required">*</span></label>
+              <input type="text" id="grp-nombre" placeholder="Ej: Desarrollo Web" required maxlength="50">
+            </div>
+            <div class="form-group full-width">
+              <label for="grp-descripcion">Descripción</label>
+              <input type="text" id="grp-descripcion" placeholder="Ej: Servicios relacionados con programación y desarrollo" maxlength="200">
+            </div>
+            <div class="form-group">
+              <label for="grp-color">Color del Grupo</label>
+              <select id="grp-color">
+                <option value="green">🟢 Verde (Desarrollo)</option>
+                <option value="blue">🔵 Azul (Diseño)</option>
+                <option value="purple">🟣 Púrpura (Branding)</option>
+                <option value="orange">🟠 Naranja (Marketing)</option>
+                <option value="red">🔴 Rojo (Urgente)</option>
+                <option value="teal">🩵 Turquesa (Consultoría)</option>
+                <option value="pink">🩷 Rosa (Social Media)</option>
+                <option value="gray">⚪ Gris (Otros)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="grp-orden">Orden de Visualización</label>
+              <input type="number" id="grp-orden" placeholder="1" min="1" max="99" value="1">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">💾 Crear Grupo</button>
+            <button type="reset" class="btn-secondary">🔄 Limpiar</button>
+          </div>
+        </form>
+        <div class="form-feedback" id="feedback-grupo"></div>
       </div>
-      <div class="form-actions">
-        <button type="submit" class="btn-primary">💾 Crear Grupo</button>
-        <button type="reset" class="btn-secondary">🔄 Limpiar</button>
-      </div>
-    </form>
-    <div class="form-feedback" id="feedback-grupo"></div>
-  </div>
 
-  <!-- GRUPOS EXISTENTES -->
-  <div class="section">
-    <div class="section-header">
-      <h2 class="section-title">📋 Grupos Creados</h2>
-      <div class="section-actions">
-        <input type="text" id="buscar-grupo" placeholder="🔍 Buscar grupo..." onkeyup="filtrarGrupos()" class="search-input">
-      </div>
-    </div>
-    <div class="table-wrap">
-      <table id="tablaGrupos">
-        <thead>
-          <tr>
-            <th>Orden</th>
-            <th>Código</th>
-            <th>Nombre</th>
-            <th>Descripción</th>
-            <th>Color</th>
-            <th>Servicios</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="tbodyGrupos"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- ASIGNAR SERVICIOS A GRUPOS -->
-  <div class="form-section">
-    <div class="form-header">
-      <h2 class="section-title">🔗 Asignar Servicios a Grupos</h2>
-    </div>
-    <div class="form-grid">
-      <div class="form-group">
-        <label for="asig-grupo">Grupo <span class="required">*</span></label>
-        <select id="asig-grupo" required>
-          <option value="">Selecciona un grupo</option>
-        </select>
-      </div>
-      <div class="form-group full-width">
-        <label>Servicios sin grupo asignado:</label>
-        <div id="servicios-sin-grupo" class="servicios-checklist">
-          <p class="tabla-vacia" style="padding:20px;">Cargando servicios...</p>
+      <!-- GRUPOS EXISTENTES -->
+      <div class="section">
+        <div class="section-header">
+          <h2 class="section-title">📋 Grupos Creados</h2>
+          <div class="section-actions">
+            <input type="text" id="buscar-grupo" placeholder="🔍 Buscar grupo..." onkeyup="filtrarGrupos()" class="search-input">
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="tablaGrupos">
+            <thead>
+              <tr>
+                <th>Orden</th>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Color</th>
+                <th>Servicios</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyGrupos"></tbody>
+          </table>
         </div>
       </div>
-    </div>
-    <div class="form-actions">
-      <button type="button" class="btn-primary" onclick="asignarServiciosAGrupo()">💾 Guardar Asignaciones</button>
-    </div>
-    <div class="form-feedback" id="feedback-asignacion"></div>
-  </div>
 
-</section>
-    
+      <!-- ASIGNAR SERVICIOS A GRUPOS -->
+      <div class="form-section">
+        <div class="form-header">
+          <h2 class="section-title">🔗 Asignar Servicios a Grupos</h2>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="asig-grupo">Grupo <span class="required">*</span></label>
+            <select id="asig-grupo" required>
+              <option value="">Selecciona un grupo</option>
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <label>Servicios sin grupo asignado:</label>
+            <div id="servicios-sin-grupo" class="servicios-checklist">
+              <p class="tabla-vacia" style="padding:20px;">Cargando servicios...</p>
+            </div>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-primary" onclick="asignarServiciosAGrupo()">💾 Guardar Asignaciones</button>
+        </div>
+        <div class="form-feedback" id="feedback-asignacion"></div>
+      </div>
+
+    </section>
+
     <!-- ============================================================
          SECCION: CATALOGO DE SERVICIOS
          ============================================================ -->
@@ -588,48 +588,55 @@
           </div>
         </div>
 
-<!-- TABLA DE ITEMS AGRUPADOS POR GRUPO -->
-<div class="items-tabla">
-  <h4 class="sub-title">📋 Items Agregados</h4>
-  <div id="items-agrupados-container">
-    <!-- Los items se renderizarán agrupados por grupo aquí -->
-    <div class="tabla-vacia">
-      <div class="tabla-vacia-icon">📋</div>
-      No hay items agregados aún
-    </div>
-  </div>
-  
-  <!-- RESUMEN POR GRUPO -->
-  <div id="resumen-grupos" style="margin-top:20px;"></div>
-  
-  <!-- TOTALES -->
-  <div class="table-wrap" style="margin-top:20px;">
-    <table>
-      <tfoot>
-        <tr class="total-row">
-          <td style="text-align:right" colspan="6"><strong>Subtotal:</strong></td>
-          <td id="cot-subtotal" class="td-monto">$0.00</td>
-          <td></td>
-        </tr>
-        <tr class="total-row" id="row-itbms">
-          <td style="text-align:right" colspan="6"><strong>ITBMS (7%):</strong></td>
-          <td id="cot-itbms-monto" class="td-monto">$0.00</td>
-          <td></td>
-        </tr>
-        <tr class="total-row" id="row-descuento">
-          <td style="text-align:right" colspan="6"><strong>Descuento:</strong></td>
-          <td id="cot-descuento-monto" class="td-monto">$0.00</td>
-          <td></td>
-        </tr>
-        <tr class="total-row grand-total">
-          <td style="text-align:right" colspan="6"><strong>TOTAL:</strong></td>
-          <td id="cot-total" class="td-monto" style="color:#6bbd45;font-size:18px;">$0.00</td>
-          <td></td>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
-</div>
+        <!-- TABLA DE ITEMS AGRUPADOS POR GRUPO -->
+        <div class="items-tabla">
+          <h4 class="sub-title">📋 Items Agregados</h4>
+          <div id="items-agrupados-container">
+            <div class="tabla-vacia">
+              <div class="tabla-vacia-icon">📋</div>
+              No hay items agregados aún
+            </div>
+          </div>
+          
+          <!-- RESUMEN POR GRUPO -->
+          <div id="resumen-grupos" style="margin-top:20px;"></div>
+          
+          <!-- TOTALES -->
+          <div class="table-wrap" style="margin-top:20px;">
+            <table>
+              <tfoot>
+                <tr class="total-row">
+                  <td style="text-align:right" colspan="6"><strong>Subtotal:</strong></td>
+                  <td id="cot-subtotal" class="td-monto">$0.00</td>
+                  <td></td>
+                </tr>
+                <tr class="total-row" id="row-itbms">
+                  <td style="text-align:right" colspan="6"><strong>ITBMS (7%):</strong></td>
+                  <td id="cot-itbms-monto" class="td-monto">$0.00</td>
+                  <td></td>
+                </tr>
+                <tr class="total-row" id="row-descuento">
+                  <td style="text-align:right" colspan="6"><strong>Descuento:</strong></td>
+                  <td id="cot-descuento-monto" class="td-monto">$0.00</td>
+                  <td></td>
+                </tr>
+                <tr class="total-row grand-total">
+                  <td style="text-align:right" colspan="6"><strong>TOTAL:</strong></td>
+                  <td id="cot-total" class="td-monto" style="color:#6bbd45;font-size:18px;">$0.00</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-primary" onclick="guardarCotizacion()">💾 Guardar Cotización</button>
+          <button type="button" class="btn-secondary" onclick="vistaPreviaCotizacion()">👁️ Vista Previa</button>
+          <button type="button" class="btn-secondary" onclick="limpiarCotizacion()">🔄 Nueva Cotización</button>
+        </div>
+        <div class="form-feedback" id="feedback-cotizacion"></div>
+      </div>
 
       <!-- COTIZACIONES GUARDADAS -->
       <div class="section">
@@ -835,6 +842,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="js/data.js"></script>
   <script src="js/storage.js"></script>
+  <script src="js/grupos.js"></script>
   <script src="js/catalogo.js"></script>
   <script src="js/clientes.js"></script>
   <script src="js/cotizaciones.js"></script>
