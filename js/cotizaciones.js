@@ -4,680 +4,466 @@
 
 var itemsCotizacionActual = [];
 
+function ctGetServicios() {
+  if (typeof obtenerServicios === 'function') {
+    var servicios = obtenerServicios();
+    return Array.isArray(servicios) ? servicios : [];
+  }
+
+  if (typeof getData === 'function' && typeof STORAGE_KEYS !== 'undefined') {
+    var data = getData(STORAGE_KEYS.SERVICIOS, []);
+    return Array.isArray(data) ? data : [];
+  }
+
+  return [];
+}
+
+function ctGetClientes() {
+  if (typeof obtenerClientes === 'function') {
+    var clientes = obtenerClientes();
+    return Array.isArray(clientes) ? clientes : [];
+  }
+
+  if (typeof getData === 'function' && typeof STORAGE_KEYS !== 'undefined') {
+    var data = getData(STORAGE_KEYS.CLIENTES, []);
+    return Array.isArray(data) ? data : [];
+  }
+
+  return [];
+}
+
+function ctGetCotizaciones() {
+  if (typeof getData === 'function' && typeof STORAGE_KEYS !== 'undefined') {
+    var data = getData(STORAGE_KEYS.COTIZACIONES, []);
+    return Array.isArray(data) ? data : [];
+  }
+
+  return [];
+}
+
+function ctSetCotizaciones(data) {
+  if (typeof setData === 'function' && typeof STORAGE_KEYS !== 'undefined') {
+    return setData(STORAGE_KEYS.COTIZACIONES, data);
+  }
+  return false;
+}
+
+function ctFindServicio(id) {
+  var servicios = ctGetServicios();
+  for (var i = 0; i < servicios.length; i++) {
+    if (servicios[i].id === id) return servicios[i];
+  }
+  return null;
+}
+
+function ctFindCliente(id) {
+  var clientes = ctGetClientes();
+  for (var i = 0; i < clientes.length; i++) {
+    if (clientes[i].id === id) return clientes[i];
+  }
+  return null;
+}
+
+function ctEscape(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function ctMoney(value) {
+  if (typeof formatMoney === 'function') return formatMoney(value);
+  var num = parseFloat(value) || 0;
+  return '$' + num.toFixed(2);
+}
+
+function ctDate(value) {
+  if (typeof formatDate === 'function') return formatDate(value);
+  return value || '—';
+}
+
+function ctId() {
+  if (typeof generarId === 'function') return generarId();
+  return 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+}
+
+function ctNumero(fecha) {
+  if (typeof generarNumeroCotizacion === 'function') return generarNumeroCotizacion(fecha);
+  var d = fecha ? new Date(fecha) : new Date();
+  var dd = String(d.getDate()).padStart(2, '0');
+  var mm = String(d.getMonth() + 1).padStart(2, '0');
+  var yy = String(d.getFullYear()).slice(-2);
+  return 'COT-' + dd + mm + yy + '-' + Math.floor(Math.random() * 900 + 100);
+}
+
 function inicializarCotizaciones() {
-  var data = getData(STORAGE_KEYS.COTIZACIONES);
-  if (!data) setData(STORAGE_KEYS.COTIZACIONES, []);
-  
-  // Set fecha actual por defecto
+  var data = ctGetCotizaciones();
+  if (!Array.isArray(data)) {
+    ctSetCotizaciones([]);
+  }
+
   var fechaInput = document.getElementById('cot-fecha');
   if (fechaInput && !fechaInput.value) {
-    fechaInput.valueAsDate = new Date();
+    var hoy = new Date();
+    fechaInput.value = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
   }
-  
+
+  actualizarSelectClientes();
   actualizarSelectServicios();
+  renderItemsCotizacion();
   renderCotizacionesGuardadas();
+}
+
+function actualizarSelectClientes() {
+  var selectIds = ['cot-cliente', 'proy-cliente'];
+  var clientes = ctGetClientes();
+
+  for (var i = 0; i < selectIds.length; i++) {
+    var select = document.getElementById(selectIds[i]);
+    if (!select) continue;
+
+    var currentValue = select.value;
+    var html = '<option value="">Selecciona un cliente</option>';
+
+    for (var j = 0; j < clientes.length; j++) {
+      html += '<option value="' + ctEscape(clientes[j].id) + '">' + ctEscape(clientes[j].nombre) + '</option>';
+    }
+
+    select.innerHTML = html;
+    select.value = currentValue;
+  }
 }
 
 function actualizarSelectServicios() {
   var select = document.getElementById('cot-item-servicio');
   if (!select) return;
-  var servicios = obtenerServicios();
-  select.innerHTML = '<option value="">Selecciona del catálogo</option>';
+
+  var currentValue = select.value;
+  var servicios = ctGetServicios();
+  var html = '<option value="">Selecciona un servicio</option>';
+
   for (var i = 0; i < servicios.length; i++) {
     var s = servicios[i];
-    select.innerHTML += '<option value="' + s.id + '">' + s.codigo + ' — ' + s.descripcion + ' (' + formatMoney(s.precio) + ')</option>';
+    html += '<option value="' + ctEscape(s.id) + '">' + ctEscape(s.codigo + ' — ' + s.descripcion) + '</option>';
   }
+
+  select.innerHTML = html;
+  select.value = currentValue;
 }
 
 function cargarPrecioServicio() {
-  var servicioId = document.getElementById('cot-item-servicio').value;
-  if (!servicioId) return;
-  var servicio = findItem(STORAGE_KEYS.SERVICIOS, servicioId);
-  if (servicio) {
-    // El precio se carga automáticamente al agregar, no necesitamos mostrarlo
-  }
+  var select = document.getElementById('cot-item-servicio');
+  if (!select || !select.value) return;
+
+  var servicio = ctFindServicio(select.value);
+  if (!servicio) return;
 }
 
-// ============================================================
-// AGREGAR ITEM DESDE CATÁLOGO
-// ============================================================
 function agregarItemDesdeCatalogo() {
-  var servicioId = document.getElementById('cot-item-servicio').value;
-  var cantidad = parseFloat(document.getElementById('cot-item-cantidad-catalogo').value) || 1;
-  
+  var servicioId = document.getElementById('cot-item-servicio') ? document.getElementById('cot-item-servicio').value : '';
+  var cantidad = document.getElementById('cot-item-cantidad-catalogo') ? parseFloat(document.getElementById('cot-item-cantidad-catalogo').value) || 1 : 1;
+
   if (!servicioId) {
     alert('Selecciona un servicio del catálogo');
     return;
   }
-  
-  var servicio = findItem(STORAGE_KEYS.SERVICIOS, servicioId);
-  if (!servicio) return;
-  
-  var item = {
-    id: generarId(),
+
+  var servicio = ctFindServicio(servicioId);
+  if (!servicio) {
+    alert('No se encontró el servicio seleccionado');
+    return;
+  }
+
+  itemsCotizacionActual.push({
+    id: ctId(),
     tipo: 'catalogo',
     servicioId: servicio.id,
     codigo: servicio.codigo,
     descripcion: servicio.descripcion,
     cantidad: cantidad,
-    unidad: servicio.unidad,
-    precioUnitario: servicio.precio,
-    aplicaItbms: servicio.itbms === 1
-  };
-  
-  itemsCotizacionActual.push(item);
+    unidad: servicio.unidad || 'und',
+    precioUnitario: parseFloat(servicio.precio) || 0,
+    aplicaItbms: Number(servicio.itbms) === 1
+  });
+
+  if (document.getElementById('cot-item-servicio')) {
+    document.getElementById('cot-item-servicio').value = '';
+  }
+  if (document.getElementById('cot-item-cantidad-catalogo')) {
+    document.getElementById('cot-item-cantidad-catalogo').value = '1';
+  }
+
   renderItemsCotizacion();
-  
-  // Limpiar selects
-  document.getElementById('cot-item-servicio').value = '';
-  document.getElementById('cot-item-cantidad-catalogo').value = '1';
 }
 
-// ============================================================
-// AGREGAR ITEM MANUAL
-// ============================================================
 function agregarItemManual() {
-  var descripcion = document.getElementById('cot-item-desc-manual').value.trim();
-  var cantidad = parseFloat(document.getElementById('cot-item-cantidad-manual').value) || 1;
-  var unidad = document.getElementById('cot-item-unidad-manual').value;
-  var precio = parseFloat(document.getElementById('cot-item-precio-manual').value);
-  var itbms = parseInt(document.getElementById('cot-item-itbms-manual').value);
-  
+  var descripcion = document.getElementById('cot-item-desc-manual') ? document.getElementById('cot-item-desc-manual').value.trim() : '';
+  var cantidad = document.getElementById('cot-item-cantidad-manual') ? parseFloat(document.getElementById('cot-item-cantidad-manual').value) || 1 : 1;
+  var unidad = document.getElementById('cot-item-unidad-manual') ? document.getElementById('cot-item-unidad-manual').value : 'und';
+  var precio = document.getElementById('cot-item-precio-manual') ? parseFloat(document.getElementById('cot-item-precio-manual').value) || 0 : 0;
+  var itbms = document.getElementById('cot-item-itbms-manual') ? parseInt(document.getElementById('cot-item-itbms-manual').value, 10) : 1;
+
   if (!descripcion) {
     alert('Ingresa una descripción para el servicio');
     return;
   }
-  if (!precio || precio <= 0) {
+
+  if (precio <= 0) {
     alert('Ingresa un precio unitario válido');
     return;
   }
-  
-  var item = {
-    id: generarId(),
+
+  itemsCotizacionActual.push({
+    id: ctId(),
     tipo: 'manual',
     servicioId: null,
     codigo: 'MANUAL',
     descripcion: descripcion,
     cantidad: cantidad,
-    unidad: unidad,
+    unidad: unidad || 'und',
     precioUnitario: precio,
     aplicaItbms: itbms === 1
-  };
-  
-  itemsCotizacionActual.push(item);
+  });
+
+  if (document.getElementById('cot-item-desc-manual')) document.getElementById('cot-item-desc-manual').value = '';
+  if (document.getElementById('cot-item-cantidad-manual')) document.getElementById('cot-item-cantidad-manual').value = '1';
+  if (document.getElementById('cot-item-unidad-manual')) document.getElementById('cot-item-unidad-manual').value = 'und';
+  if (document.getElementById('cot-item-precio-manual')) document.getElementById('cot-item-precio-manual').value = '';
+
   renderItemsCotizacion();
-  
-  // Limpiar campos
-  document.getElementById('cot-item-desc-manual').value = '';
-  document.getElementById('cot-item-cantidad-manual').value = '1';
-  document.getElementById('cot-item-precio-manual').value = '';
 }
 
-// ============================================================
-// RENDER ITEMS DE COTIZACIÓN
-// ============================================================
-function renderItemsCotizacion() {
-  var tbody = document.getElementById('tbodyItemsCotizacion');
-  if (!tbody) return;
-  
-  var html = '';
-  var subtotal = 0;
-  var itbmsTotal = 0;
-  
+function eliminarItemCotizacion(id) {
+  var nextItems = [];
   for (var i = 0; i < itemsCotizacionActual.length; i++) {
-    var item = itemsCotizacionActual[i];
-    var totalItem = item.cantidad * item.precioUnitario;
-    subtotal += totalItem;
-    
-    var itbmsItem = 0;
-    if (item.aplicaItbms) {
-      itbmsItem = totalItem * 0.07;
-      itbmsTotal += itbmsItem;
+    if (itemsCotizacionActual[i].id !== id) {
+      nextItems.push(itemsCotizacionActual[i]);
     }
-    
-    html += '<tr>' +
-      '<td>' + (i + 1) + '</td>' +
-      '<td>' + (item.tipo === 'catalogo' ? '<span style="color:#6bbd45;font-size:11px;">[' + item.codigo + ']</span> ' : '') + item.descripcion + '</td>' +
-      '<td>' + item.cantidad + '</td>' +
-      '<td>' + item.unidad + '</td>' +
-      '<td class="td-monto">' + formatMoney(item.precioUnitario) + '</td>' +
-      '<td class="td-monto">' + formatMoney(totalItem) + '</td>' +
-      '<td>' + (item.aplicaItbms ? formatMoney(itbmsItem) : '—') + '</td>' +
-      '<td class="td-actions">' +
-        '<button class="btn-icon" onclick="eliminarItemCotizacion(' + i + ')" title="Eliminar">🗑</button>' +
-      '</td>' +
-      '</tr>';
   }
-  
-  tbody.innerHTML = html;
-  
-  // Calcular totales
-  var aplicaItbmsGlobal = document.getElementById('cot-itbms').value === '1';
-  var descuentoPct = parseFloat(document.getElementById('cot-descuento').value) || 0;
-  
-  var itbmsMonto = aplicaItbmsGlobal ? itbmsTotal : 0;
-  var descuentoMonto = subtotal * (descuentoPct / 100);
-  var total = subtotal + itbmsMonto - descuentoMonto;
-  
-  document.getElementById('cot-subtotal').textContent = formatMoney(subtotal);
-  document.getElementById('cot-itbms-monto').textContent = formatMoney(itbmsMonto);
-  document.getElementById('cot-descuento-monto').textContent = '-' + formatMoney(descuentoMonto);
-  document.getElementById('cot-total').textContent = formatMoney(total);
-}
-
-function eliminarItemCotizacion(index) {
-  itemsCotizacionActual.splice(index, 1);
+  itemsCotizacionActual = nextItems;
   renderItemsCotizacion();
 }
 
-// ============================================================
-// GUARDAR COTIZACIÓN
-// ============================================================
-function guardarCotizacion() {
-  var feedback = document.getElementById('feedback-cotizacion');
-  var clienteId = document.getElementById('cot-cliente').value;
-  var proyecto = document.getElementById('cot-proyecto').value.trim();
-  var fecha = document.getElementById('cot-fecha').value;
-  
-  if (!clienteId) {
-    feedback.className = 'form-feedback error';
-    feedback.textContent = '❌ Selecciona un cliente';
-    return;
-  }
-  if (!proyecto) {
-    feedback.className = 'form-feedback error';
-    feedback.textContent = '❌ Ingresa el nombre del proyecto';
-    return;
-  }
-  if (itemsCotizacionActual.length === 0) {
-    feedback.className = 'form-feedback error';
-    feedback.textContent = '❌ Agrega al menos un item a la cotización';
-    return;
-  }
-  
-  var cliente = findItem(STORAGE_KEYS.CLIENTES, clienteId);
-  var aplicaItbms = document.getElementById('cot-itbms').value === '1';
-  var descuentoPct = parseFloat(document.getElementById('cot-descuento').value) || 0;
-  
-  // Calcular totales
+function calcularTotalesCotizacion() {
   var subtotal = 0;
-  var itbmsTotal = 0;
+  var itbmsMonto = 0;
+  var descuentoPct = document.getElementById('cot-descuento') ? parseFloat(document.getElementById('cot-descuento').value) || 0 : 0;
+
   for (var i = 0; i < itemsCotizacionActual.length; i++) {
     var item = itemsCotizacionActual[i];
-    var totalItem = item.cantidad * item.precioUnitario;
+    var totalItem = (parseFloat(item.cantidad) || 0) * (parseFloat(item.precioUnitario) || 0);
     subtotal += totalItem;
-    if (item.aplicaItbms) itbmsTotal += totalItem * 0.07;
+
+    if (item.aplicaItbms) {
+      itbmsMonto += totalItem * 0.07;
+    }
   }
-  
-  var itbmsMonto = aplicaItbms ? itbmsTotal : 0;
+
   var descuentoMonto = subtotal * (descuentoPct / 100);
   var total = subtotal + itbmsMonto - descuentoMonto;
-  
-  var cotizacion = {
-    id: generarId(),
-    numero: generarNumeroCotizacion(fecha),
-    clienteId: clienteId,
-    clienteNombre: cliente ? cliente.nombre : '',
-    clienteCodigo: cliente ? cliente.codigo : '',
-    proyecto: proyecto,
-    atencion: document.getElementById('cot-atencion').value.trim(),
-    fecha: fecha,
-    alcance: document.getElementById('cot-alcance').value.trim(),
-    aplicaItbms: aplicaItbms,
-    descuentoPct: descuentoPct,
+
+  return {
     subtotal: subtotal,
     itbmsMonto: itbmsMonto,
+    descuentoPct: descuentoPct,
     descuentoMonto: descuentoMonto,
-    total: total,
+    total: total
+  };
+}
+
+function renderItemsCotizacion() {
+  var tbody = document.getElementById('tbodyItemsCotizacion');
+  var totals = calcularTotalesCotizacion();
+
+  if (tbody) {
+    if (!itemsCotizacionActual.length) {
+      tbody.innerHTML = '<tr><td colspan="8">No hay items agregados</td></tr>';
+    } else {
+      var html = '';
+
+      for (var i = 0; i < itemsCotizacionActual.length; i++) {
+        var item = itemsCotizacionActual[i];
+        var totalItem = (parseFloat(item.cantidad) || 0) * (parseFloat(item.precioUnitario) || 0);
+        var itbmsItem = item.aplicaItbms ? totalItem * 0.07 : 0;
+
+        html += ''
+          + '<tr>'
+          +   '<td>' + (i + 1) + '</td>'
+          +   '<td>' + ctEscape((item.tipo === 'catalogo' ? '[' + item.codigo + '] ' : '') + item.descripcion) + '</td>'
+          +   '<td>' + ctEscape(item.cantidad) + '</td>'
+          +   '<td>' + ctEscape(item.unidad) + '</td>'
+          +   '<td>' + ctMoney(item.precioUnitario) + '</td>'
+          +   '<td>' + ctMoney(totalItem) + '</td>'
+          +   '<td>' + (item.aplicaItbms ? ctMoney(itbmsItem) : '—') + '</td>'
+          +   '<td><button type="button" onclick="eliminarItemCotizacion(\'' + ctEscape(item.id) + '\')">Quitar</button></td>'
+          + '</tr>';
+      }
+
+      tbody.innerHTML = html;
+    }
+  }
+
+  var subtotalEl = document.getElementById('cot-subtotal');
+  var itbmsEl = document.getElementById('cot-itbms');
+  var descuentoEl = document.getElementById('cot-descuento-monto');
+  var totalEl = document.getElementById('cot-total');
+
+  if (subtotalEl) subtotalEl.textContent = ctMoney(totals.subtotal);
+  if (itbmsEl) itbmsEl.textContent = ctMoney(totals.itbmsMonto);
+  if (descuentoEl) descuentoEl.textContent = ctMoney(totals.descuentoMonto);
+  if (totalEl) totalEl.textContent = ctMoney(totals.total);
+}
+
+function guardarCotizacion(event) {
+  if (event && typeof event.preventDefault === 'function') {
+    event.preventDefault();
+  }
+
+  var feedback = document.getElementById('feedback-cotizacion');
+  var clienteId = document.getElementById('cot-cliente') ? document.getElementById('cot-cliente').value : '';
+  var proyecto = document.getElementById('cot-proyecto') ? document.getElementById('cot-proyecto').value.trim() : '';
+  var fecha = document.getElementById('cot-fecha') ? document.getElementById('cot-fecha').value : '';
+  var atencion = document.getElementById('cot-atencion') ? document.getElementById('cot-atencion').value.trim() : '';
+  var alcance = document.getElementById('cot-alcance') ? document.getElementById('cot-alcance').value.trim() : '';
+
+  if (!clienteId) {
+    if (feedback) {
+      feedback.className = 'form-feedback error';
+      feedback.textContent = '❌ Debes seleccionar un cliente';
+    }
+    return false;
+  }
+
+  if (!proyecto) {
+    if (feedback) {
+      feedback.className = 'form-feedback error';
+      feedback.textContent = '❌ Debes ingresar el nombre del proyecto';
+    }
+    return false;
+  }
+
+  if (!itemsCotizacionActual.length) {
+    if (feedback) {
+      feedback.className = 'form-feedback error';
+      feedback.textContent = '❌ Agrega al menos un item a la cotización';
+    }
+    return false;
+  }
+
+  var cliente = ctFindCliente(clienteId);
+  var totals = calcularTotalesCotizacion();
+  var cotizaciones = ctGetCotizaciones();
+
+  var nuevaCotizacion = {
+    id: ctId(),
+    numero: ctNumero(fecha),
+    fecha: fecha,
+    clienteId: clienteId,
+    clienteNombre: cliente ? cliente.nombre : '',
+    proyecto: proyecto,
+    atencion: atencion,
+    alcance: alcance,
+    items: itemsCotizacionActual.slice(),
+    subtotal: totals.subtotal,
+    itbmsMonto: totals.itbmsMonto,
+    descuentoPct: totals.descuentoPct,
+    descuentoMonto: totals.descuentoMonto,
+    total: totals.total,
     estado: 'cotizado',
-    items: JSON.parse(JSON.stringify(itemsCotizacionActual)),
     creadoEn: new Date().toISOString()
   };
-  
-  addItem(STORAGE_KEYS.COTIZACIONES, cotizacion);
-  
-  feedback.className = 'form-feedback success';
-  feedback.textContent = '✅ Cotización ' + cotizacion.numero + ' guardada. Total: ' + formatMoney(total);
-  
-  // Limpiar
-  limpiarCotizacion();
-  renderCotizacionesGuardadas();
-  actualizarKPIs();
-}
 
-function limpiarCotizacion() {
+  cotizaciones.push(nuevaCotizacion);
+  ctSetCotizaciones(cotizaciones);
+
   itemsCotizacionActual = [];
-  document.getElementById('formCotizacionInfo').reset();
-  document.getElementById('cot-fecha').valueAsDate = new Date();
-  document.getElementById('cot-item-desc-manual').value = '';
-  document.getElementById('cot-item-cantidad-manual').value = '1';
-  document.getElementById('cot-item-precio-manual').value = '';
   renderItemsCotizacion();
-  document.getElementById('feedback-cotizacion').style.display = 'none';
-}
-
-function vistaPreviaCotizacion() {
-  if (itemsCotizacionActual.length === 0) {
-    alert('Agrega items para ver la vista previa');
-    return;
-  }
-  // Abrir en nueva ventana con formato de proforma
-  var ventana = window.open('', '_blank');
-  var clienteId = document.getElementById('cot-cliente').value;
-  var cliente = findItem(STORAGE_KEYS.CLIENTES, clienteId);
-  var proyecto = document.getElementById('cot-proyecto').value || 'Sin nombre';
-  var fecha = document.getElementById('cot-fecha').value;
-  var atencion = document.getElementById('cot-atencion').value;
-  var alcance = document.getElementById('cot-alcance').value;
-  
-  var aplicaItbms = document.getElementById('cot-itbms').value === '1';
-  var descuentoPct = parseFloat(document.getElementById('cot-descuento').value) || 0;
-  
-  var subtotal = 0;
-  var itbmsTotal = 0;
-  var itemsHtml = '';
-  
-  for (var i = 0; i < itemsCotizacionActual.length; i++) {
-    var item = itemsCotizacionActual[i];
-    var totalItem = item.cantidad * item.precioUnitario;
-    subtotal += totalItem;
-    if (item.aplicaItbms) itbmsTotal += totalItem * 0.07;
-    
-    itemsHtml += '<tr>' +
-      '<td style="padding:10px;border:1px solid #ddd;">' + (i+1) + '</td>' +
-      '<td style="padding:10px;border:1px solid #ddd;">' + item.descripcion + '</td>' +
-      '<td style="padding:10px;border:1px solid #ddd;text-align:center;">' + item.cantidad + '</td>' +
-      '<td style="padding:10px;border:1px solid #ddd;text-align:center;">' + item.unidad + '</td>' +
-      '<td style="padding:10px;border:1px solid #ddd;text-align:right;">' + formatMoney(item.precioUnitario) + '</td>' +
-      '<td style="padding:10px;border:1px solid #ddd;text-align:right;">' + formatMoney(totalItem) + '</td>' +
-      '</tr>';
-  }
-  
-  var itbmsMonto = aplicaItbms ? itbmsTotal : 0;
-  var descuentoMonto = subtotal * (descuentoPct / 100);
-  var total = subtotal + itbmsMonto - descuentoMonto;
-  
-  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cotización - ' + proyecto + '</title>' +
-    '<style>body{font-family:Inter,sans-serif;max-width:800px;margin:40px auto;padding:20px;color:#333}' +
-    '.header{text-align:center;padding:30px;border-bottom:3px solid #6bbd45;margin-bottom:30px}' +
-    '.header h1{color:#6bbd45;font-size:28px;margin-bottom:8px}' +
-    '.header p{color:#666;font-size:14px}' +
-    '.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:30px}' +
-    '.info-box{background:#f8f9fa;padding:16px;border-radius:8px}' +
-    '.info-box h4{margin:0 0 8px;color:#6bbd45;font-size:12px;text-transform:uppercase}' +
-    '.info-box p{margin:0;font-size:14px}' +
-    'table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px}' +
-    'th{background:#6bbd45;color:#fff;padding:12px;text-align:left}' +
-    '.totals{margin-left:auto;width:300px}' +
-    '.totals td{padding:8px 12px}' +
-    '.totals .grand{font-size:18px;font-weight:700;color:#6bbd45;border-top:2px solid #6bbd45}' +
-    '.footer{margin-top:40px;padding-top:20px;border-top:1px solid #ddd;text-align:center;color:#999;font-size:12px}' +
-    '@media print{body{margin:0}}</style></head><body>' +
-    '<div class="header"><h1>GN Studio</h1><p>Diseñamos experiencias que venden</p></div>' +
-    '<div class="info-grid">' +
-    '<div class="info-box"><h4>Cliente</h4><p>' + (cliente ? cliente.nombre : '—') + '</p><p>' + (cliente ? cliente.direccion : '') + '</p></div>' +
-    '<div class="info-box"><h4>Cotización</h4><p><strong>Proyecto:</strong> ' + proyecto + '</p><p><strong>Fecha:</strong> ' + formatDate(fecha) + '</p><p><strong>Atención:</strong> ' + (atencion || '—') + '</p></div>' +
-    '</div>' +
-    (alcance ? '<div style="margin-bottom:20px;padding:16px;background:#f8f9fa;border-radius:8px;"><h4 style="margin:0 0 8px;color:#6bbd45;font-size:12px;text-transform:uppercase;">Alcance</h4><p style="margin:0;font-size:14px;">' + alcance + '</p></div>' : '') +
-    '<table><thead><tr><th>#</th><th>Descripción</th><th style="text-align:center">Cant.</th><th style="text-align:center">Unid.</th><th style="text-align:right">Precio Unit.</th><th style="text-align:right">Total</th></tr></thead><tbody>' + itemsHtml + '</tbody></table>' +
-    '<table class="totals"><tr><td style="text-align:right"><strong>Subtotal:</strong></td><td style="text-align:right">' + formatMoney(subtotal) + '</td></tr>' +
-    (aplicaItbms ? '<tr><td style="text-align:right"><strong>ITBMS (7%):</strong></td><td style="text-align:right">' + formatMoney(itbmsMonto) + '</td></tr>' : '') +
-    (descuentoPct > 0 ? '<tr><td style="text-align:right"><strong>Descuento (' + descuentoPct + '%):</strong></td><td style="text-align:right">-' + formatMoney(descuentoMonto) + '</td></tr>' : '') +
-    '<tr class="grand"><td style="text-align:right"><strong>TOTAL:</strong></td><td style="text-align:right">' + formatMoney(total) + '</td></tr></table>' +
-    '<div class="footer"><p>GN Studio — Diseño Web, Branding & Desarrollo</p><p>Esta cotización tiene validez de 15 días calendario.</p></div>' +
-    '</body></html>';
-  
-  ventana.document.write(html);
-  ventana.document.close();
-}
-
-// ============================================================
-// RENDER ITEMS DE COTIZACIÓN AGRUPADOS
-// ============================================================
-function renderItemsCotizacion() {
-  var container = document.getElementById('items-agrupados-container');
-  if (!container) return;
-  
-  if (itemsCotizacionActual.length === 0) {
-    container.innerHTML = '<div class="tabla-vacia"><div class="tabla-vacia-icon">📋</div>No hay items agregados aún</div>';
-    document.getElementById('cot-subtotal').textContent = '$0.00';
-    document.getElementById('cot-itbms-monto').textContent = '$0.00';
-    document.getElementById('cot-descuento-monto').textContent = '$0.00';
-    document.getElementById('cot-total').textContent = '$0.00';
-    document.getElementById('resumen-grupos').innerHTML = '';
-    return;
-  }
-  
-  var subtotal = 0;
-  var itbmsTotal = 0;
-  
-  // Agrupar items por grupo
-  var itemsPorGrupo = {};
-  var itemsSinGrupo = [];
-  
-  for (var i = 0; i < itemsCotizacionActual.length; i++) {
-    var item = itemsCotizacionActual[i];
-    var grupo = null;
-    
-    if (item.tipo === 'catalogo' && item.servicioId) {
-      grupo = obtenerGrupoDeServicio(item.servicioId);
-    }
-    
-    if (grupo) {
-      if (!itemsPorGrupo[grupo.id]) {
-        itemsPorGrupo[grupo.id] = { grupo: grupo, items: [] };
-      }
-      itemsPorGrupo[grupo.id].items.push({ item: item, index: i });
-    } else {
-      itemsSinGrupo.push({ item: item, index: i });
-    }
-  }
-  
-  var html = '';
-  var colorIdx = 0;
-  
-  // Renderizar items con grupo
-  for (var gid in itemsPorGrupo) {
-    var g = itemsPorGrupo[gid];
-    var color = COLORES_GRUPO[g.grupo.color] || COLORES_GRUPO.gray;
-    var grupoSubtotal = 0;
-    
-    html += '<div class="grupo-cotizacion">' +
-      '<div class="grupo-cotizacion-header" style="background:' + color.bg + ';color:' + color.border + ';">' +
-        '<span class="grupo-dot" style="background:' + color.border + ';"></span>' +
-        g.grupo.nombre +
-      '</div>' +
-      '<div class="table-wrap">' +
-      '<table>' +
-      '<thead><tr>' +
-        '<th>#</th><th>Descripción</th><th>Cant.</th><th>Unidad</th><th>Precio Unit.</th><th>Total</th><th>ITBMS</th><th>Acción</th>' +
-      '</tr></thead><tbody>';
-    
-    for (var j = 0; j < g.items.length; j++) {
-      var entry = g.items[j];
-      var item = entry.item;
-      var idx = entry.index;
-      var totalItem = item.cantidad * item.precioUnitario;
-      grupoSubtotal += totalItem;
-      subtotal += totalItem;
-      
-      var itbmsItem = 0;
-      if (item.aplicaItbms) {
-        itbmsItem = totalItem * 0.07;
-        itbmsTotal += itbmsItem;
-      }
-      
-      html += '<tr>' +
-        '<td>' + (idx + 1) + '</td>' +
-        '<td>' + (item.tipo === 'catalogo' ? '<span style="color:#6bbd45;font-size:11px;">[' + item.codigo + ']</span> ' : '') + item.descripcion + '</td>' +
-        '<td>' + item.cantidad + '</td>' +
-        '<td>' + item.unidad + '</td>' +
-        '<td class="td-monto">' + formatMoney(item.precioUnitario) + '</td>' +
-        '<td class="td-monto">' + formatMoney(totalItem) + '</td>' +
-        '<td>' + (item.aplicaItbms ? formatMoney(itbmsItem) : '—') + '</td>' +
-        '<td class="td-actions">' +
-          '<button class="btn-icon" onclick="eliminarItemCotizacion(' + idx + ')" title="Eliminar">🗑</button>' +
-        '</td>' +
-        '</tr>';
-    }
-    
-    html += '</tbody></table></div></div>';
-  }
-  
-  // Renderizar items sin grupo
-  if (itemsSinGrupo.length > 0) {
-    html += '<div class="grupo-cotizacion">' +
-      '<div class="grupo-cotizacion-header" style="background:rgba(100,116,139,0.1);color:#64748b;">' +
-        '<span class="grupo-dot" style="background:#64748b;"></span>' +
-        'Sin grupo asignado' +
-      '</div>' +
-      '<div class="table-wrap">' +
-      '<table>' +
-      '<thead><tr>' +
-        '<th>#</th><th>Descripción</th><th>Cant.</th><th>Unidad</th><th>Precio Unit.</th><th>Total</th><th>ITBMS</th><th>Acción</th>' +
-      '</tr></thead><tbody>';
-    
-    for (var j = 0; j < itemsSinGrupo.length; j++) {
-      var entry = itemsSinGrupo[j];
-      var item = entry.item;
-      var idx = entry.index;
-      var totalItem = item.cantidad * item.precioUnitario;
-      subtotal += totalItem;
-      
-      var itbmsItem = 0;
-      if (item.aplicaItbms) {
-        itbmsItem = totalItem * 0.07;
-        itbmsTotal += itbmsItem;
-      }
-      
-      html += '<tr>' +
-        '<td>' + (idx + 1) + '</td>' +
-        '<td>' + (item.tipo === 'catalogo' ? '<span style="color:#6bbd45;font-size:11px;">[' + item.codigo + ']</span> ' : '') + item.descripcion + '</td>' +
-        '<td>' + item.cantidad + '</td>' +
-        '<td>' + item.unidad + '</td>' +
-        '<td class="td-monto">' + formatMoney(item.precioUnitario) + '</td>' +
-        '<td class="td-monto">' + formatMoney(totalItem) + '</td>' +
-        '<td>' + (item.aplicaItbms ? formatMoney(itbmsItem) : '—') + '</td>' +
-        '<td class="td-actions">' +
-          '<button class="btn-icon" onclick="eliminarItemCotizacion(' + idx + ')" title="Eliminar">🗑</button>' +
-        '</td>' +
-        '</tr>';
-    }
-    
-    html += '</tbody></table></div></div>';
-  }
-  
-  container.innerHTML = html;
-  
-  // Calcular totales globales
-  var aplicaItbmsGlobal = document.getElementById('cot-itbms').value === '1';
-  var descuentoPct = parseFloat(document.getElementById('cot-descuento').value) || 0;
-  
-  var itbmsMonto = aplicaItbmsGlobal ? itbmsTotal : 0;
-  var descuentoMonto = subtotal * (descuentoPct / 100);
-  var total = subtotal + itbmsMonto - descuentoMonto;
-  
-  document.getElementById('cot-subtotal').textContent = formatMoney(subtotal);
-  document.getElementById('cot-itbms-monto').textContent = formatMoney(itbmsMonto);
-  document.getElementById('cot-descuento-monto').textContent = '-' + formatMoney(descuentoMonto);
-  document.getElementById('cot-total').textContent = formatMoney(total);
-  
-  // Renderizar resumen por grupo
-  renderResumenGrupos(itemsPorGrupo, itemsSinGrupo, subtotal);
-}
-
-function renderResumenGrupos(itemsPorGrupo, itemsSinGrupo, totalGeneral) {
-  var container = document.getElementById('resumen-grupos');
-  if (!container) return;
-  
-  var html = '<div class="resumen-grupos">';
-  
-  for (var gid in itemsPorGrupo) {
-    var g = itemsPorGrupo[gid];
-    var color = COLORES_GRUPO[g.grupo.color] || COLORES_GRUPO.gray;
-    var grupoTotal = 0;
-    
-    for (var i = 0; i < g.items.length; i++) {
-      var item = g.items[i].item;
-      grupoTotal += item.cantidad * item.precioUnitario;
-    }
-    
-    var porcentaje = totalGeneral > 0 ? Math.round((grupoTotal / totalGeneral) * 100) : 0;
-    
-    html += '<div class="resumen-grupo-card">' +
-      '<span class="resumen-grupo-dot" style="background:' + color.border + ';"></span>' +
-      '<div class="resumen-grupo-info">' +
-        '<div class="resumen-grupo-nombre">' + g.grupo.nombre + ' (' + porcentaje + '%)</div>' +
-        '<div class="resumen-grupo-monto">' + formatMoney(grupoTotal) + '</div>' +
-      '</div>' +
-      '</div>';
-  }
-  
-  if (itemsSinGrupo.length > 0) {
-    var sinGrupoTotal = 0;
-    for (var i = 0; i < itemsSinGrupo.length; i++) {
-      var item = itemsSinGrupo[i].item;
-      sinGrupoTotal += item.cantidad * item.precioUnitario;
-    }
-    var porcentaje = totalGeneral > 0 ? Math.round((sinGrupoTotal / totalGeneral) * 100) : 0;
-    
-    html += '<div class="resumen-grupo-card">' +
-      '<span class="resumen-grupo-dot" style="background:#64748b;"></span>' +
-      '<div class="resumen-grupo-info">' +
-        '<div class="resumen-grupo-nombre">Sin grupo (' + porcentaje + '%)</div>' +
-        '<div class="resumen-grupo-monto">' + formatMoney(sinGrupoTotal) + '</div>' +
-      '</div>' +
-      '</div>';
-  }
-  
-  html += '</div>';
-  container.innerHTML = html;
-}
-  
-  // Ordenar por fecha descendente
-  cotizaciones.sort(function(a, b) {
-    return new Date(b.creadoEn) - new Date(a.creadoEn);
-  });
-  
-  var html = '';
-  var htmlDash = '';
-  
-  for (var i = 0; i < cotizaciones.length; i++) {
-    var c = cotizaciones[i];
-    var estadoClass = 'estado-' + c.estado;
-    var estadoText = c.estado === 'cotizado' ? 'Cotizado' : 
-                     c.estado === 'aprobado' ? 'Aprobado' :
-                     c.estado === 'rechazado' ? 'Rechazado' : 'Vencido';
-    
-    var row = '<tr>' +
-      '<td><strong style="color:#4f8cff">' + c.numero + '</strong></td>' +
-      '<td>' + (c.clienteNombre || '—') + '</td>' +
-      '<td>' + c.proyecto + '</td>' +
-      '<td class="td-monto">' + formatMoney(c.total) + '</td>' +
-      '<td><span class="estado-badge ' + estadoClass + '">' + estadoText + '</span></td>' +
-      '<td>' + formatDate(c.fecha) + '</td>' +
-      '<td class="td-actions">' +
-        '<button class="btn-icon" onclick="verCotizacion(\'' + c.id + '\')" title="Ver">👁</button>' +
-        '<button class="btn-icon" onclick="cambiarEstadoCotizacion(\'' + c.id + '\')" title="Cambiar estado" style="background:rgba(79,140,255,0.1);color:#4f8cff;margin-left:4px;">✓</button>' +
-        '<button class="btn-icon" onclick="eliminarCotizacion(\'' + c.id + '\')" title="Eliminar" style="margin-left:4px;">🗑</button>' +
-      '</td>' +
-      '</tr>';
-    
-    html += row;
-    
-    if (i < 5) {
-      htmlDash += '<tr>' +
-        '<td><strong style="color:#4f8cff">' + c.numero + '</strong></td>' +
-        '<td>' + (c.clienteNombre || '—') + '</td>' +
-        '<td>' + c.proyecto + '</td>' +
-        '<td class="td-monto">' + formatMoney(c.total) + '</td>' +
-        '<td><span class="estado-badge ' + estadoClass + '">' + estadoText + '</span></td>' +
-        '<td>' + formatDate(c.fecha) + '</td>' +
-        '</tr>';
-    }
-  }
-  
-  if (tbody) tbody.innerHTML = html;
-  if (tbodyDash) tbodyDash.innerHTML = htmlDash;
-}
-
-function filtrarCotizaciones() {
-  var texto = document.getElementById('buscar-cotizacion').value;
-  renderCotizacionesGuardadas(texto);
-}
-
-function verCotizacion(id) {
-  var cotizacion = findItem(STORAGE_KEYS.COTIZACIONES, id);
-  if (!cotizacion) return;
-  
-  var ventana = window.open('', '_blank');
-  var cliente = findItem(STORAGE_KEYS.CLIENTES, cotizacion.clienteId);
-  
-  var itemsHtml = '';
-  for (var i = 0; i < cotizacion.items.length; i++) {
-    var item = cotizacion.items[i];
-    var totalItem = item.cantidad * item.precioUnitario;
-    itemsHtml += '<tr>' +
-      '<td style="padding:10px;border:1px solid #ddd;">' + (i+1) + '</td>' +
-      '<td style="padding:10px;border:1px solid #ddd;">' + item.descripcion + '</td>' +
-      '<td style="padding:10px;border:1px solid #ddd;text-align:center;">' + item.cantidad + '</td>' +
-      '<td style="padding:10px;border:1px solid #ddd;text-align:center;">' + item.unidad + '</td>' +
-      '<td style="padding:10px;border:1px solid #ddd;text-align:right;">' + formatMoney(item.precioUnitario) + '</td>' +
-      '<td style="padding:10px;border:1px solid #ddd;text-align:right;">' + formatMoney(totalItem) + '</td>' +
-      '</tr>';
-  }
-  
-  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cotización ' + cotizacion.numero + '</title>' +
-    '<style>body{font-family:Inter,sans-serif;max-width:800px;margin:40px auto;padding:20px;color:#333}' +
-    '.header{text-align:center;padding:30px;border-bottom:3px solid #6bbd45;margin-bottom:30px}' +
-    '.header h1{color:#6bbd45;font-size:28px;margin-bottom:8px}' +
-    '.header p{color:#666;font-size:14px}' +
-    '.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:30px}' +
-    '.info-box{background:#f8f9fa;padding:16px;border-radius:8px}' +
-    '.info-box h4{margin:0 0 8px;color:#6bbd45;font-size:12px;text-transform:uppercase}' +
-    '.info-box p{margin:0;font-size:14px}' +
-    'table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px}' +
-    'th{background:#6bbd45;color:#fff;padding:12px;text-align:left}' +
-    '.totals{margin-left:auto;width:300px}' +
-    '.totals td{padding:8px 12px}' +
-    '.totals .grand{font-size:18px;font-weight:700;color:#6bbd45;border-top:2px solid #6bbd45}' +
-    '.footer{margin-top:40px;padding-top:20px;border-top:1px solid #ddd;text-align:center;color:#999;font-size:12px}' +
-    '@media print{body{margin:0}}</style></head><body>' +
-    '<div class="header"><h1>GN Studio</h1><p>Diseñamos experiencias que venden</p></div>' +
-    '<div class="info-grid">' +
-    '<div class="info-box"><h4>Cliente</h4><p>' + (cliente ? cliente.nombre : '—') + '</p><p>' + (cliente ? cliente.direccion : '') + '</p></div>' +
-    '<div class="info-box"><h4>Cotización ' + cotizacion.numero + '</h4><p><strong>Proyecto:</strong> ' + cotizacion.proyecto + '</p><p><strong>Fecha:</strong> ' + formatDate(cotizacion.fecha) + '</p><p><strong>Atención:</strong> ' + (cotizacion.atencion || '—') + '</p></div>' +
-    '</div>' +
-    (cotizacion.alcance ? '<div style="margin-bottom:20px;padding:16px;background:#f8f9fa;border-radius:8px;"><h4 style="margin:0 0 8px;color:#6bbd45;font-size:12px;text-transform:uppercase;">Alcance</h4><p style="margin:0;font-size:14px;">' + cotizacion.alcance + '</p></div>' : '') +
-    '<table><thead><tr><th>#</th><th>Descripción</th><th style="text-align:center">Cant.</th><th style="text-align:center">Unid.</th><th style="text-align:right">Precio Unit.</th><th style="text-align:right">Total</th></tr></thead><tbody>' + itemsHtml + '</tbody></table>' +
-    '<table class="totals"><tr><td style="text-align:right"><strong>Subtotal:</strong></td><td style="text-align:right">' + formatMoney(cotizacion.subtotal) + '</td></tr>' +
-    (cotizacion.aplicaItbms ? '<tr><td style="text-align:right"><strong>ITBMS (7%):</strong></td><td style="text-align:right">' + formatMoney(cotizacion.itbmsMonto) + '</td></tr>' : '') +
-    (cotizacion.descuentoPct > 0 ? '<tr><td style="text-align:right"><strong>Descuento (' + cotizacion.descuentoPct + '%):</strong></td><td style="text-align:right">-' + formatMoney(cotizacion.descuentoMonto) + '</td></tr>' : '') +
-    '<tr class="grand"><td style="text-align:right"><strong>TOTAL:</strong></td><td style="text-align:right">' + formatMoney(cotizacion.total) + '</td></tr></table>' +
-    '<div class="footer"><p>GN Studio — Diseño Web, Branding & Desarrollo</p><p>Esta cotización tiene validez de 15 días calendario.</p></div>' +
-    '</body></html>';
-  
-  ventana.document.write(html);
-  ventana.document.close();
-}
-
-function cambiarEstadoCotizacion(id) {
-  var cotizacion = findItem(STORAGE_KEYS.COTIZACIONES, id);
-  if (!cotizacion) return;
-  
-  var estados = ['cotizado', 'aprobado', 'rechazado', 'vencido'];
-  var estadoActual = cotizacion.estado;
-  var idx = estados.indexOf(estadoActual);
-  var nuevoEstado = estados[(idx + 1) % estados.length];
-  
-  updateItem(STORAGE_KEYS.COTIZACIONES, id, { estado: nuevoEstado });
-  
-  // Si se aprueba, crear proyecto automáticamente
-  if (nuevoEstado === 'aprobado') {
-    var proyecto = {
-      id: generarId(),
-      cotizacionId: id,
-      clienteId: cotizacion.clienteId,
-      clienteNombre: cotizacion.clienteNombre,
-      nombre: cotizacion.proyecto,
-      presupuesto: cotizacion.total,
-      avance: 0,
-      estado: 'en_progreso',
-      fechaInicio: new Date().toISOString().split('T')[0],
-      creadoEn: new Date().toISOString()
-    };
-    addItem(STORAGE_KEYS.PROYECTOS, proyecto);
-    alert('✅ Cotización aprobada. Se ha creado el proyecto automáticamente.');
-  }
-  
   renderCotizacionesGuardadas();
-  renderProyectos();
-  actualizarKPIs();
+
+  var form = document.getElementById('formCotizacion');
+  if (form) form.reset();
+
+  var fechaInput = document.getElementById('cot-fecha');
+  if (fechaInput && !fechaInput.value) {
+    var hoy = new Date();
+    fechaInput.value = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
+  }
+
+  actualizarSelectClientes();
+  actualizarSelectServicios();
+
+  if (feedback) {
+    feedback.className = 'form-feedback success';
+    feedback.textContent = '✅ Cotización guardada correctamente';
+  }
+
+  return false;
 }
 
 function eliminarCotizacion(id) {
   if (!confirm('¿Eliminar esta cotización?')) return;
-  deleteItem(STORAGE_KEYS.COTIZACIONES, id);
+
+  var data = ctGetCotizaciones();
+  var next = [];
+
+  for (var i = 0; i < data.length; i++) {
+    if (data[i].id !== id) next.push(data[i]);
+  }
+
+  ctSetCotizaciones(next);
   renderCotizacionesGuardadas();
-  actualizarKPIs();
+}
+
+function cambiarEstadoCotizacion(id, estado) {
+  var data = ctGetCotizaciones();
+
+  for (var i = 0; i < data.length; i++) {
+    if (data[i].id === id) {
+      data[i].estado = estado;
+      break;
+    }
+  }
+
+  ctSetCotizaciones(data);
+  renderCotizacionesGuardadas();
+}
+
+function renderCotizacionesGuardadas() {
+  var tbody = document.getElementById('tbodyCotizaciones');
+  if (!tbody) return;
+
+  var data = ctGetCotizaciones();
+  data.sort(function(a, b) {
+    return new Date(b.creadoEn || b.fecha) - new Date(a.creadoEn || a.fecha);
+  });
+
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="7">No hay cotizaciones registradas</td></tr>';
+    return;
+  }
+
+  var html = '';
+
+  for (var i = 0; i < data.length; i++) {
+    var c = data[i];
+
+    html += ''
+      + '<tr>'
+      +   '<td>' + ctEscape(c.numero) + '</td>'
+      +   '<td>' + ctEscape(c.clienteNombre || '—') + '</td>'
+      +   '<td>' + ctEscape(c.proyecto || '—') + '</td>'
+      +   '<td>' + ctMoney(c.total) + '</td>'
+      +   '<td>' + ctEscape(c.estado || 'cotizado') + '</td>'
+      +   '<td>' + ctDate(c.fecha) + '</td>'
+      +   '<td>'
+      +     '<button type="button" onclick="cambiarEstadoCotizacion(\'' + ctEscape(c.id) + '\', \'aprobado\')">Aprobar</button> '
+      +     '<button type="button" onclick="cambiarEstadoCotizacion(\'' + ctEscape(c.id) + '\', \'rechazado\')">Rechazar</button> '
+      +     '<button type="button" onclick="eliminarCotizacion(\'' + ctEscape(c.id) + '\')">Eliminar</button>'
+      +   '</td>'
+      + '</tr>';
+  }
+
+  tbody.innerHTML = html;
 }
