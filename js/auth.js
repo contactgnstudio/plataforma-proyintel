@@ -1,125 +1,150 @@
 // ============================================================
-// js/auth.js — Login provisional para GN Studio OS
+// js/auth.js — GN Studio + Supabase Auth
 // ============================================================
 
-var GN_AUTH_CONFIG = {
-  username: 'admin',
-  password: 'GNStudio2026!',
-  recoveryEmail: 'contact@gnstudio.space'
-};
+const SUPABASE_URL = 'https://TU-PROYECTO.supabase.co';
+const SUPABASE_ANON_KEY = 'TU_ANON_KEY_PUBLICA';
 
-var GN_AUTH_SESSION_KEY = 'gn_auth_session';
-var GN_AUTH_CALLBACK = null;
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-function gnTieneSesion() {
-  return sessionStorage.getItem(GN_AUTH_SESSION_KEY) === 'active';
+function gnGetOverlay() {
+  return document.getElementById('gn-login-overlay');
 }
 
-function gnGuardarSesion() {
-  sessionStorage.setItem(GN_AUTH_SESSION_KEY, 'active');
+function gnGetLogoutBtn() {
+  return document.getElementById('gn-logout-btn');
 }
 
-function gnLimpiarSesion() {
-  sessionStorage.removeItem(GN_AUTH_SESSION_KEY);
+function gnGetFeedback() {
+  return document.getElementById('feedback-login');
+}
+
+function gnSetFeedback(msg, type) {
+  const feedback = gnGetFeedback();
+  if (!feedback) return;
+
+  if (!msg) {
+    feedback.className = 'form-feedback';
+    feedback.textContent = '';
+    feedback.style.display = 'none';
+    return;
+  }
+
+  feedback.className = 'form-feedback ' + (type || 'error');
+  feedback.textContent = msg;
+  feedback.style.display = 'block';
 }
 
 function gnMostrarLogin() {
-  var overlay = document.getElementById('gn-login-overlay');
-  var logoutBtn = document.getElementById('gn-logout-btn');
+  const overlay = gnGetOverlay();
+  const logoutBtn = gnGetLogoutBtn();
 
-  if (overlay) overlay.style.display = 'flex';
+  if (overlay) {
+    overlay.style.display = 'flex';
+    overlay.classList.add('is-visible');
+  }
+
   if (logoutBtn) logoutBtn.style.display = 'none';
-
-  document.body.classList.add('login-locked');
+  document.body.classList.add('gn-auth-locked');
 }
 
 function gnOcultarLogin() {
-  var overlay = document.getElementById('gn-login-overlay');
-  var logoutBtn = document.getElementById('gn-logout-btn');
+  const overlay = gnGetOverlay();
+  const logoutBtn = gnGetLogoutBtn();
 
-  if (overlay) overlay.style.display = 'none';
+  if (overlay) {
+    overlay.style.display = 'none';
+    overlay.classList.remove('is-visible');
+  }
+
   if (logoutBtn) logoutBtn.style.display = 'inline-flex';
-
-  document.body.classList.remove('login-locked');
+  document.body.classList.remove('gn-auth-locked');
 }
 
-function gnMostrarFeedbackLogin(tipo, mensaje) {
-  var feedback = document.getElementById('feedback-login');
-  if (!feedback) return;
-
-  feedback.className = 'form-feedback ' + tipo;
-  feedback.textContent = mensaje;
-}
-
-function gnProcesarLogin(event) {
+async function gnProcesarLogin(event, onSuccess) {
   if (event) event.preventDefault();
 
-  var usuario = document.getElementById('login-usuario');
-  var password = document.getElementById('login-password');
+  const emailInput = document.getElementById('login-usuario');
+  const passwordInput = document.getElementById('login-password');
 
-  var userValue = usuario ? usuario.value.trim() : '';
-  var passValue = password ? password.value : '';
+  const email = emailInput ? emailInput.value.trim() : '';
+  const password = passwordInput ? passwordInput.value : '';
 
-  if (!userValue || !passValue) {
-    gnMostrarFeedbackLogin('error', '❌ Completa usuario y contraseña');
+  if (!email || !password) {
+    gnSetFeedback('Completa correo y contraseña.', 'error');
     return false;
   }
 
-  if (
-    userValue === GN_AUTH_CONFIG.username &&
-    passValue === GN_AUTH_CONFIG.password
-  ) {
-    gnGuardarSesion();
-    gnOcultarLogin();
-    gnMostrarFeedbackLogin('success', '✅ Acceso concedido');
+  const { error } = await supabaseClient.auth.signInWithPassword({
+    email,
+    password
+  });
 
-    if (typeof GN_AUTH_CALLBACK === 'function') {
-      GN_AUTH_CALLBACK();
-      GN_AUTH_CALLBACK = null;
-    }
-
+  if (error) {
+    gnSetFeedback(error.message || 'No se pudo iniciar sesión.', 'error');
     return false;
   }
 
-  gnMostrarFeedbackLogin('error', '❌ Usuario o contraseña incorrectos');
-  return false;
-}
+  gnSetFeedback('Acceso correcto.', 'success');
+  gnOcultarLogin();
 
-function gnCerrarSesion() {
-  gnLimpiarSesion();
-  window.location.reload();
-}
-
-function gnRecuperarPassword() {
-  var subject = encodeURIComponent('Cambio o recuperación de contraseña - GN Studio OS');
-  var body = encodeURIComponent(
-    'Hola,\n\nNecesitamos cambiar o recuperar la contraseña de acceso a la plataforma GN Studio OS.\n'
-  );
-
-  window.location.href =
-    'mailto:' + GN_AUTH_CONFIG.recoveryEmail +
-    '?subject=' + subject +
-    '&body=' + body;
+  if (typeof onSuccess === 'function') {
+    onSuccess();
+  }
 
   return false;
 }
 
-function gnAuthInit(onSuccess) {
-  GN_AUTH_CALLBACK = onSuccess || null;
+async function gnCerrarSesion() {
+  await supabaseClient.auth.signOut();
+  gnMostrarLogin();
+  gnSetFeedback('');
 
-  var form = document.getElementById('login-form');
-  if (form && !form.dataset.bound) {
-    form.addEventListener('submit', gnProcesarLogin);
-    form.dataset.bound = '1';
+  const passwordInput = document.getElementById('login-password');
+  if (passwordInput) passwordInput.value = '';
+}
+
+async function gnRecuperarPassword() {
+  const emailInput = document.getElementById('login-usuario');
+  const email = emailInput ? emailInput.value.trim() : '';
+
+  if (!email) {
+    gnSetFeedback('Escribe tu correo primero para enviarte el enlace.', 'error');
+    return false;
   }
 
-  if (gnTieneSesion()) {
+  const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + '/reset-password.html'
+  });
+
+  if (error) {
+    gnSetFeedback(error.message || 'No se pudo enviar el correo.', 'error');
+    return false;
+  }
+
+  gnSetFeedback('Te enviamos un enlace para cambiar tu contraseña.', 'success');
+  return false;
+}
+
+async function gnAuthInit(onAuthenticated) {
+  const form = document.getElementById('login-form');
+
+  gnSetFeedback('');
+
+  if (form && !form.dataset.authBound) {
+    form.addEventListener('submit', function(event) {
+      gnProcesarLogin(event, onAuthenticated);
+    });
+    form.dataset.authBound = '1';
+  }
+
+  const { data } = await supabaseClient.auth.getSession();
+
+  if (data && data.session) {
     gnOcultarLogin();
-    if (typeof GN_AUTH_CALLBACK === 'function') {
-      GN_AUTH_CALLBACK();
-      GN_AUTH_CALLBACK = null;
-    }
-  } else {
-    gnMostrarLogin();
+    if (typeof onAuthenticated === 'function') onAuthenticated();
+    return;
   }
+
+  gnMostrarLogin();
 }
