@@ -1,4 +1,81 @@
 // ============================================================
+// js/app.js — Lógica principal y navegación (v2)
+// ============================================================
+
+function inicializarAppGNStudio() {
+  if (window.__gnAppInicializada) return;
+  window.__gnAppInicializada = true;
+
+  inicializarCatalogo();
+  inicializarClientes();
+  inicializarGrupos();
+  inicializarCotizaciones();
+  inicializarCharts();
+
+  if (!getData('gn_tareas')) setData('gn_tareas', []);
+
+  renderServicios();
+  actualizarVistaJSON();
+  renderClientes();
+  actualizarSelectClientes();
+  renderCotizacionesGuardadas();
+  renderProyectos();
+  renderRegistros();
+  actualizarKPIs();
+
+  var hoy = new Date();
+  var yyyy = hoy.getFullYear();
+  var mm = String(hoy.getMonth() + 1).padStart(2, '0');
+  var dd = String(hoy.getDate()).padStart(2, '0');
+  var fechaHoy = yyyy + '-' + mm + '-' + dd;
+
+  var gf = document.getElementById('gasto-fecha');
+  var pf = document.getElementById('pago-fecha');
+  var cf = document.getElementById('cot-fecha');
+  var ecDesde = document.getElementById('ec-desde');
+  var ecHasta = document.getElementById('ec-hasta');
+
+  if (gf && !gf.value) gf.value = fechaHoy;
+  if (pf && !pf.value) pf.value = fechaHoy;
+  if (cf && !cf.value) cf.value = fechaHoy;
+
+  if (ecDesde) {
+    var primerDiaMes = yyyy + '-' + mm + '-01';
+    ecDesde.value = primerDiaMes;
+  }
+
+  if (ecHasta) ecHasta.value = fechaHoy;
+
+  var itbmsPeriodo = document.getElementById('itbms-periodo');
+  if (itbmsPeriodo) itbmsPeriodo.value = yyyy + '-' + mm;
+
+  var ecProyecto = document.getElementById('ec-proyecto');
+  if (ecProyecto) {
+    var proyectos = getData(STORAGE_KEYS.PROYECTOS);
+    ecProyecto.innerHTML = '<option value="">Todos los proyectos</option>';
+
+    for (var i = 0; i < proyectos.length; i++) {
+      ecProyecto.innerHTML +=
+        '<option value="' + proyectos[i].id + '">' +
+        (proyectos[i].nombre || 'Proyecto sin nombre') +
+        '</option>';
+    }
+  }
+
+  if (typeof actualizarSelectProyectosFinanzas === 'function') {
+    actualizarSelectProyectosFinanzas();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof gnAuthInit === 'function') {
+    gnAuthInit(inicializarAppGNStudio);
+  } else {
+    inicializarAppGNStudio();
+  }
+});
+
+// ============================================================
 // js/app.js — Lógica principal y compatibilidad global
 // ============================================================
 
