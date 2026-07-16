@@ -2,9 +2,8 @@
 // js/auth.js — GN Studio + Supabase Auth
 // ============================================================
 
-// REEMPLAZA ESTOS 2 VALORES CON LOS DE TU PROYECTO
-const SUPABASE_URL = 'https://TU-PROYECTO.supabase.co';
-const SUPABASE_ANON_KEY = 'TU_ANON_PUBLIC_KEY';
+const SUPABASE_URL = 'https://smbphmmaswqcwmacfdxg.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_PUCx7VxzdeB75l1FqrvKSA_WbBha9mE';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -44,7 +43,7 @@ function gnTraducirError(error) {
   const msg = (error && error.message ? error.message : '').toLowerCase();
 
   if (msg.includes('failed to fetch')) {
-    return 'No se pudo conectar con Supabase. Revisa la SUPABASE_URL, la ANON KEY, tu conexión y prueba en incógnito.';
+    return 'No se pudo conectar con Supabase. Revisa tu conexión, las Redirect URLs y prueba en incógnito.';
   }
 
   if (msg.includes('invalid login credentials')) {
@@ -56,7 +55,7 @@ function gnTraducirError(error) {
   }
 
   if (msg.includes('invalid api key')) {
-    return 'La ANON KEY de Supabase es inválida o está mal copiada.';
+    return 'La Publishable key de Supabase es inválida o está mal copiada.';
   }
 
   if (msg.includes('network')) {
