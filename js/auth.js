@@ -6,7 +6,7 @@ const SUPABASE_URL = 'https://smbphmmaswqcwmacfdxg.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_PUCx7VxzdeB75l1FqrvKSA_WbBha9mE';
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+window.supabaseClient = supabaseClient;
 function gnGetOverlay() {
   return document.getElementById('gn-login-overlay');
 }
