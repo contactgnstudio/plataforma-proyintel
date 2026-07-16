@@ -205,5 +205,138 @@ async function actualizarSelectClientes() {
       sel.appendChild(opt);
     });
     if (current) sel.value = current;
+
+// ============================================================
+// Modal de cliente — Nuevo y Editar
+// ============================================================
+
+function abrirModalCliente(id) {
+  // Remover modal anterior si existe
+  var existing = document.getElementById('gn-modal-cliente');
+  if (existing) existing.remove();
+
+  var esEdicion = !!id;
+  var titulo = esEdicion ? 'Editar Cliente' : 'Nuevo Cliente';
+
+  var modal = document.createElement('div');
+  modal.id = 'gn-modal-cliente';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
+
+  modal.innerHTML = `
+    <div style="background:#1a1a2e;border-radius:12px;padding:32px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;border:1px solid #2a2a4a;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+        <h3 style="margin:0;color:#fff;font-size:18px;">${titulo}</h3>
+        <button onclick="cerrarModalCliente()" style="background:none;border:none;color:#aaa;font-size:24px;cursor:pointer;">&#x2715;</button>
+      </div>
+      <form id="form-cliente" onsubmit="return false;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div style="grid-column:1/-1;">
+            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">NOMBRE *</label>
+            <input id="cli-nombre" type="text" placeholder="Nombre completo o razón social" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+          </div>
+          <div>
+            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">NOMBRE COMERCIAL</label>
+            <input id="cli-nombre-comercial" type="text" placeholder="Nombre comercial" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+          </div>
+          <div>
+            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">RUC</label>
+            <input id="cli-ruc" type="text" placeholder="Ej: 8-123-456" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+          </div>
+          <div>
+            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">DÍGITO VERIFICADOR</label>
+            <input id="cli-dv" type="text" placeholder="DV" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+          </div>
+          <div>
+            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">TIPO CONTRIBUYENTE</label>
+            <select id="cli-tipo-contrib" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;">
+              <option value="">-- Seleccionar --</option>
+              <option value="natural">Persona Natural</option>
+              <option value="juridico">Persona Jurídica</option>
+            </select>
+          </div>
+          <div>
+            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">CORREO</label>
+            <input id="cli-correo" type="email" placeholder="correo@empresa.com" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+          </div>
+          <div>
+            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">TELÉFONO</label>
+            <input id="cli-telefono" type="text" placeholder="+507 6000-0000" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+          </div>
+          <div>
+            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">TELÉFONO 2</label>
+            <input id="cli-telefono2" type="text" placeholder="Secundario" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+          </div>
+          <div>
+            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">PERSONA DE CONTACTO</label>
+            <input id="cli-contacto" type="text" placeholder="Nombre del contacto" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+          </div>
+          <div>
+            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">PROVINCIA</label>
+            <select id="cli-provincia" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;">
+              <option value="">-- Seleccionar --</option>
+              <option>Panamá</option><option>Panamá Oeste</option><option>Colon</option>
+              <option>Chiriqí</option><option>Bocas del Toro</option><option>Coclé</option>
+              <option>Her rera</option><option>Los Santos</option><option>Ver aguas</option>
+              <option>Darién</option><option>Ngäbe-Buglé</option><option>Guna Yala</option>
+            </select>
+          </div>
+          <div style="grid-column:1/-1;">
+            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">DIRECCIÓN</label>
+            <input id="cli-direccion" type="text" placeholder="Dirección completa" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+          </div>
+          <div style="grid-column:1/-1;">
+            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">NOTAS</label>
+            <textarea id="cli-notas" rows="3" placeholder="Notas internas" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;resize:vertical;"></textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:24px;justify-content:flex-end;">
+          <button type="button" onclick="cerrarModalCliente()" style="padding:10px 20px;background:#333;border:none;border-radius:8px;color:#fff;cursor:pointer;">Cancelar</button>
+          <button type="button" onclick="${esEdicion ? 'actualizarCliente(event)' : 'guardarCliente(event)'}" style="padding:10px 24px;background:#4caf50;border:none;border-radius:8px;color:#fff;cursor:pointer;font-weight:600;">${esEdicion ? 'Actualizar' : 'Guardar Cliente'}</button>
+        </div>
+      </form>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Si es edición, cargar datos
+  if (esEdicion) {
+    findItem(STORAGE_KEYS.CLIENTES, id).then(function(cliente) {
+      if (!cliente) return;
+      var set = function(elId, val) { var el = document.getElementById(elId); if (el) el.value = val || ''; };
+      set('cli-nombre', cliente.nombre);
+      set('cli-nombre-comercial', cliente.nombre_comercial);
+      set('cli-ruc', cliente.ruc);
+      set('cli-dv', cliente.dv);
+      set('cli-tipo-contrib', cliente.tipo_contribuyente);
+      set('cli-correo', cliente.correo);
+      set('cli-telefono', cliente.telefono);
+      set('cli-telefono2', cliente.telefono_secundario);
+      set('cli-contacto', cliente.contacto_nombre);
+      set('cli-provincia', cliente.provincia);
+      set('cli-direccion', cliente.direccion);
+      set('cli-notas', cliente.notas);
+      var form = document.getElementById('form-cliente');
+      if (form) form.dataset.editingId = id;
+    });
+  }
+
+  // Cerrar al hacer clic fuera
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) cerrarModalCliente();
+  });
+}
+
+function cerrarModalCliente() {
+  var modal = document.getElementById('gn-modal-cliente');
+  if (modal) modal.remove();
+}
+
+// Sobrescribir guardarCliente para cerrar modal al terminar
+var _guardarClienteOriginal = guardarCliente;
+async function guardarCliente(event) {
+  await _guardarClienteOriginal(event);
+  cerrarModalCliente();
+}
   });
 }
