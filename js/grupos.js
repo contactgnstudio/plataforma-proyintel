@@ -436,3 +436,96 @@ function renderServiciosSinGrupo() {
 
   container.innerHTML = html;
 }
+// ============================================================
+// SUGERENCIA AUTOMÁTICA DE GRUPO
+// ============================================================
+
+function sugerirGrupoIA() {
+  var descripcionEl = document.getElementById('serv-descripcion');
+  var grupoSelect = document.getElementById('serv-grupo') || document.getElementById('serv-categoria');
+  var feedback = document.getElementById('feedback-servicio');
+
+  if (!descripcionEl || !grupoSelect) return false;
+
+  var texto = (descripcionEl.value || '').trim().toLowerCase();
+
+  if (!texto) {
+    if (feedback) {
+      feedback.className = 'form-feedback error';
+      feedback.textContent = '❌ Escribe primero la descripción del servicio para sugerir un grupo';
+    }
+    return false;
+  }
+
+  var grupos = typeof obtenerGrupos === 'function' ? obtenerGrupos() : [];
+  if (!Array.isArray(grupos) || grupos.length === 0) {
+    if (feedback) {
+      feedback.className = 'form-feedback error';
+      feedback.textContent = '❌ No hay grupos creados para sugerir';
+    }
+    return false;
+  }
+
+  var reglas = [
+    { match: ['web', 'landing', 'ui', 'ux', 'responsive', 'figma', 'diseño', 'diseno'], codigo: 'DISENO', nombre: 'Diseño Web' },
+    { match: ['frontend', 'backend', 'api', 'cms', 'wordpress', 'strapi', 'deploy', 'desarrollo', 'app'], codigo: 'DESARROLLO', nombre: 'Desarrollo Web' },
+    { match: ['logo', 'branding', 'marca', 'identidad', 'papelería', 'papeleria'], codigo: 'BRANDING', nombre: 'Branding' },
+    { match: ['marketing', 'ads', 'campaña', 'campana', 'email', 'embudo'], codigo: 'MARKETING', nombre: 'Marketing Digital' },
+    { match: ['social', 'redes', 'instagram', 'facebook', 'contenido', 'reels', 'stories'], codigo: 'SOCIAL', nombre: 'Social Media' },
+    { match: ['consultoría', 'consultoria', 'auditoría', 'auditoria', 'estrategia', 'asesoría', 'asesoria'], codigo: 'CONSULTORIA', nombre: 'Consultoría' },
+    { match: ['hosting', 'dominio', 'ssl', 'mantenimiento', 'soporte', 'servidor'], codigo: 'SOPORTE', nombre: 'Soporte & Hosting' }
+  ];
+
+  var mejorRegla = null;
+  var mejorPuntaje = 0;
+
+  for (var i = 0; i < reglas.length; i++) {
+    var puntaje = 0;
+
+    for (var j = 0; j < reglas[i].match.length; j++) {
+      if (texto.indexOf(reglas[i].match[j]) !== -1) {
+        puntaje++;
+      }
+    }
+
+    if (puntaje > mejorPuntaje) {
+      mejorPuntaje = puntaje;
+      mejorRegla = reglas[i];
+    }
+  }
+
+  if (!mejorRegla) {
+    if (feedback) {
+      feedback.className = 'form-feedback error';
+      feedback.textContent = '❌ No pude sugerir un grupo con esa descripción';
+    }
+    return false;
+  }
+
+  var grupoEncontrado = null;
+
+  for (var k = 0; k < grupos.length; k++) {
+    var g = grupos[k];
+    if (g.codigo === mejorRegla.codigo || g.nombre === mejorRegla.nombre) {
+      grupoEncontrado = g;
+      break;
+    }
+  }
+
+  if (!grupoEncontrado) {
+    if (feedback) {
+      feedback.className = 'form-feedback error';
+      feedback.textContent = '❌ Se detectó "' + mejorRegla.nombre + '" pero ese grupo no existe en tu lista';
+    }
+    return false;
+  }
+
+  grupoSelect.value = grupoEncontrado.id;
+
+  if (feedback) {
+    feedback.className = 'form-feedback success';
+    feedback.textContent = '💡 Grupo sugerido: ' + grupoEncontrado.nombre;
+  }
+
+  return false;
+}
