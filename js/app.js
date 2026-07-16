@@ -2,69 +2,126 @@
 // js/app.js — Lógica principal y navegación (v2)
 // ============================================================
 
-function inicializarAppGNStudio() {
-  if (window.__gnAppInicializada) return;
-  window.__gnAppInicializada = true;
+function gnSafeCall(fnName) {
+  if (typeof window[fnName] === 'function') {
+    return window[fnName].apply(null, Array.prototype.slice.call(arguments, 1));
+  }
+  return null;
+}
 
-  inicializarCatalogo();
-  inicializarClientes();
-  inicializarGrupos();
-  inicializarCotizaciones();
-  inicializarCharts();
-
-  if (!getData('gn_tareas')) setData('gn_tareas', []);
-
-  renderServicios();
-  actualizarVistaJSON();
-  renderClientes();
-  actualizarSelectClientes();
-  renderCotizacionesGuardadas();
-  renderProyectos();
-  renderRegistros();
-  actualizarKPIs();
-
+function gnGetFechaHoyISO() {
   var hoy = new Date();
   var yyyy = hoy.getFullYear();
   var mm = String(hoy.getMonth() + 1).padStart(2, '0');
   var dd = String(hoy.getDate()).padStart(2, '0');
-  var fechaHoy = yyyy + '-' + mm + '-' + dd;
+  return yyyy + '-' + mm + '-' + dd;
+}
+
+function gnFormatMoney(valor) {
+  if (typeof formatMoney === 'function') return formatMoney(valor);
+  var num = parseFloat(valor || 0);
+  return 'USD ' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function gnFormatDate(fecha) {
+  if (typeof formatDate === 'function') return formatDate(fecha);
+  if (!fecha) return '-';
+  var d = new Date(fecha);
+  if (isNaN(d.getTime())) return fecha;
+  return d.toLocaleDateString('es-PA');
+}
+
+function gnGetDataByKey(keyName, fallback) {
+  fallback = fallback || [];
+  if (typeof STORAGE_KEYS === 'undefined' || !STORAGE_KEYS[keyName]) return fallback;
+  if (typeof getData !== 'function') return fallback;
+  return getData(STORAGE_KEYS[keyName]) || fallback;
+}
+
+function gnRenderDashboardExtras() {
+  renderActividadReciente();
+  renderPipelineMini();
+}
+
+function gnConfigurarFechasIniciales() {
+  var fechaHoy = gnGetFechaHoyISO();
+  var hoy = new Date();
+  var yyyy = hoy.getFullYear();
+  var mm = String(hoy.getMonth() + 1).padStart(2, '0');
 
   var gf = document.getElementById('gasto-fecha');
   var pf = document.getElementById('pago-fecha');
   var cf = document.getElementById('cot-fecha');
   var ecDesde = document.getElementById('ec-desde');
   var ecHasta = document.getElementById('ec-hasta');
+  var itbmsPeriodo = document.getElementById('itbms-periodo');
 
   if (gf && !gf.value) gf.value = fechaHoy;
   if (pf && !pf.value) pf.value = fechaHoy;
   if (cf && !cf.value) cf.value = fechaHoy;
 
-  if (ecDesde) {
-    var primerDiaMes = yyyy + '-' + mm + '-01';
-    ecDesde.value = primerDiaMes;
+  if (ecDesde && !ecDesde.value) {
+    ecDesde.value = yyyy + '-' + mm + '-01';
   }
 
-  if (ecHasta) ecHasta.value = fechaHoy;
+  if (ecHasta && !ecHasta.value) {
+    ecHasta.value = fechaHoy;
+  }
 
-  var itbmsPeriodo = document.getElementById('itbms-periodo');
-  if (itbmsPeriodo) itbmsPeriodo.value = yyyy + '-' + mm;
+  if (itbmsPeriodo && !itbmsPeriodo.value) {
+    itbmsPeriodo.value = yyyy + '-' + mm;
+  }
+}
 
+function gnActualizarSelectProyectoEstadoCuenta() {
   var ecProyecto = document.getElementById('ec-proyecto');
-  if (ecProyecto) {
-    var proyectos = getData(STORAGE_KEYS.PROYECTOS);
-    ecProyecto.innerHTML = '<option value="">Todos los proyectos</option>';
+  if (!ecProyecto) return;
 
-    for (var i = 0; i < proyectos.length; i++) {
-      ecProyecto.innerHTML +=
-        '<option value="' + proyectos[i].id + '">' +
-        (proyectos[i].nombre || 'Proyecto sin nombre') +
-        '</option>';
-    }
+  var proyectos = gnGetDataByKey('PROYECTOS', []);
+  ecProyecto.innerHTML = '<option value="">Todos los proyectos</option>';
+
+  for (var i = 0; i < proyectos.length; i++) {
+    ecProyecto.innerHTML +=
+      '<option value="' + proyectos[i].id + '">' +
+      (proyectos[i].nombre || 'Proyecto sin nombre') +
+      '</option>';
+  }
+}
+
+function inicializarAppGNStudio() {
+  if (window.__gnAppInicializada) return;
+  window.__gnAppInicializada = true;
+
+  gnSafeCall('inicializarCatalogo');
+  gnSafeCall('inicializarClientes');
+  gnSafeCall('inicializarGrupos');
+  gnSafeCall('inicializarCotizaciones');
+  gnSafeCall('inicializarCharts');
+
+  if (typeof getData === 'function' && typeof setData === 'function') {
+    if (!getData('gn_tareas')) setData('gn_tareas', []);
   }
 
-  if (typeof actualizarSelectProyectosFinanzas === 'function') {
-    actualizarSelectProyectosFinanzas();
+  gnSafeCall('renderServicios');
+  actualizarVistaJSON();
+  gnSafeCall('renderClientes');
+  gnSafeCall('actualizarSelectClientes');
+  gnSafeCall('renderCotizacionesGuardadas');
+
+  if (typeof renderProyectos === 'function') {
+    renderProyectos();
+  } else {
+    renderProyectosSimple();
   }
+
+  renderRegistros();
+  actualizarKPIs();
+  gnRenderDashboardExtras();
+  gnConfigurarFechasIniciales();
+  gnActualizarSelectProyectoEstadoCuenta();
+
+  gnSafeCall('actualizarSelectProyectosFinanzas');
+  gnSafeCall('generarEstadoCuenta');
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -76,149 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ============================================================
-// js/app.js — Lógica principal y compatibilidad global
-// ============================================================
-
-document.addEventListener('DOMContentLoaded', bootstrapApp);
-
-// ============================================================
-// BOOTSTRAP
-// ============================================================
-
-function bootstrapApp() {
-  callIfExists('inicializarCatalogo');
-  callIfExists('inicializarClientes');
-  callIfExists('inicializarGrupos');
-  callIfExists('inicializarCotizaciones');
-  callIfExists('inicializarCharts');
-
-  if (typeof getData === 'function' && typeof setData === 'function') {
-    if (!getData('gn_tareas')) setData('gn_tareas', []);
-  }
-
-  asegurarFormularioCliente();
-  asegurarFormularioGrupo();
-  setFechasPorDefecto();
-  poblarFiltroProyectoEstadoCuenta();
-
-  callIfExists('renderServicios');
-  callIfExists('actualizarVistaJSON');
-  callIfExists('renderClientes');
-  callIfExists('actualizarSelectClientes');
-  callIfExists('renderCotizacionesGuardadas');
-  callIfExists('renderProyectos');
-  callIfExists('renderRegistros');
-  callIfExists('actualizarKPIs');
-  callIfExists('actualizarSelectClientesProyecto');
-}
-
-// ============================================================
-// HELPERS GENERALES
-// ============================================================
-
-function callIfExists(fnName, args) {
-  var fn = window[fnName];
-  if (typeof fn !== 'function') return null;
-
-  try {
-    return fn.apply(window, Array.isArray(args) ? args : []);
-  } catch (error) {
-    console.error('Error en ' + fnName + ':', error);
-    return null;
-  }
-}
-
-function storageKey(name, fallback) {
-  if (typeof STORAGE_KEYS !== 'undefined' && STORAGE_KEYS && STORAGE_KEYS[name]) {
-    return STORAGE_KEYS[name];
-  }
-  return fallback;
-}
-
-function safeGetArray(keyName, fallback) {
-  if (typeof getData !== 'function') return [];
-  var data = getData(storageKey(keyName, fallback));
-  return Array.isArray(data) ? data : [];
-}
-
-function el(id) {
-  return document.getElementById(id);
-}
-
-function valueOf(id) {
-  var node = el(id);
-  return node ? node.value : '';
-}
-
-function setValue(id, value) {
-  var node = el(id);
-  if (node) node.value = value;
-}
-
-function setText(id, value) {
-  var node = el(id);
-  if (node) node.textContent = value;
-}
-
-function formatCurrencySafe(value) {
-  var n = parseFloat(value);
-  if (isNaN(n)) n = 0;
-  return typeof formatMoney === 'function' ? formatMoney(n) : ('$' + n.toFixed(2));
-}
-
-function escapeHtml(str) {
-  return String(str || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function escapeAttr(str) {
-  return String(str || '').replace(/'/g, '&#39;');
-}
-
-function todayYMD() {
-  var d = new Date();
-  return d.getFullYear()
-    + '-' + String(d.getMonth() + 1).padStart(2, '0')
-    + '-' + String(d.getDate()).padStart(2, '0');
-}
-
-function currentMonthPrefix() {
-  var d = new Date();
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-}
-
-function sumMontoMes(items, fechaKey, montoKey) {
-  var prefix = currentMonthPrefix();
-  var total = 0;
-
-  items = Array.isArray(items) ? items : [];
-  for (var i = 0; i < items.length; i++) {
-    var item = items[i] || {};
-    if (String(item[fechaKey] || '').indexOf(prefix) === 0) {
-      total += parseFloat(item[montoKey]) || 0;
-    }
-  }
-
-  return total;
-}
-
-function findButtonActionContainer(actionName) {
-  var buttons = document.querySelectorAll('button');
-  for (var i = 0; i < buttons.length; i++) {
-    var onclick = buttons[i].getAttribute('onclick') || '';
-    if (onclick.indexOf(actionName) !== -1) {
-      return buttons[i].closest('.section-actions') || buttons[i].parentNode;
-    }
-  }
-  return null;
-}
-
-// ============================================================
-// NAVEGACIÓN
+// NAVEGACIÓN PRINCIPAL
 // ============================================================
 
 function switchSection(sectionId) {
@@ -227,7 +142,7 @@ function switchSection(sectionId) {
     panels[i].classList.remove('active');
   }
 
-  var target = el(sectionId);
+  var target = document.getElementById(sectionId);
   if (target) target.classList.add('active');
 
   var links = document.querySelectorAll('.nav-link');
@@ -238,24 +153,18 @@ function switchSection(sectionId) {
     }
   }
 
-  var titles = {
+  var titulos = {
     dashboard: 'Dashboard',
     negocio: 'Negocio',
     proyectos: 'Proyectos',
     finanzas: 'Finanzas'
   };
 
-  if (el('page-title')) {
-    el('page-title').textContent = titles[sectionId] || 'Dashboard';
-  }
+  var pageTitle = document.getElementById('page-title');
+  if (pageTitle) pageTitle.textContent = titulos[sectionId] || 'Dashboard';
 
-  if (sectionId === 'negocio') {
-    switchSubSection('negocio', 'crm');
-  }
-
-  if (sectionId === 'finanzas') {
-    switchSubSection('finanzas', 'estado-cuenta');
-  }
+  if (sectionId === 'negocio') switchSubSection('negocio', 'crm');
+  if (sectionId === 'finanzas') switchSubSection('finanzas', 'estado-cuenta');
 
   var mobileNav = document.querySelector('.mobile-nav-overlay');
   if (mobileNav) mobileNav.classList.remove('open');
@@ -269,14 +178,14 @@ function switchSubSection(parent, subId) {
     subs[i].classList.remove('active');
   }
 
-  var target = el(parent + '-' + subId);
+  var target = document.getElementById(parent + '-' + subId);
   if (target) target.classList.add('active');
 
   var tabs = document.querySelectorAll('#' + parent + ' .sub-nav-item');
   for (var j = 0; j < tabs.length; j++) {
     tabs[j].classList.remove('active');
-    var onclick = tabs[j].getAttribute('onclick') || '';
-    if (onclick.indexOf("'" + subId + "'") !== -1) {
+    var onclick = tabs[j].getAttribute('onclick');
+    if (onclick && onclick.indexOf("'" + subId + "'") !== -1) {
       tabs[j].classList.add('active');
     }
   }
@@ -304,708 +213,465 @@ function toggleMobileNav() {
 }
 
 // ============================================================
-// FECHAS Y FILTROS
-// ============================================================
-
-function setFechasPorDefecto() {
-  var fechaHoy = todayYMD();
-  var mesActual = fechaHoy.slice(0, 7);
-
-  if (el('gasto-fecha') && !valueOf('gasto-fecha')) setValue('gasto-fecha', fechaHoy);
-  if (el('pago-fecha') && !valueOf('pago-fecha')) setValue('pago-fecha', fechaHoy);
-  if (el('cot-fecha') && !valueOf('cot-fecha')) setValue('cot-fecha', fechaHoy);
-  if (el('ec-desde') && !valueOf('ec-desde')) setValue('ec-desde', mesActual + '-01');
-  if (el('ec-hasta') && !valueOf('ec-hasta')) setValue('ec-hasta', fechaHoy);
-  if (el('itbms-periodo') && !valueOf('itbms-periodo')) setValue('itbms-periodo', mesActual);
-}
-
-function poblarFiltroProyectoEstadoCuenta() {
-  var select = el('ec-proyecto');
-  if (!select) return;
-
-  var proyectos = safeGetArray('PROYECTOS', 'gn_proyectos');
-  var html = '<option value="">Todos los proyectos</option>';
-
-  for (var i = 0; i < proyectos.length; i++) {
-    html += '<option value="' + escapeAttr(proyectos[i].id || '') + '">' + escapeHtml(proyectos[i].nombre || 'Proyecto') + '</option>';
-  }
-
-  select.innerHTML = html;
-}
-
-// ============================================================
-// FORMULARIOS INLINE — CLIENTES Y GRUPOS
-// ============================================================
-
-function asegurarFormularioCliente() {
-  if (el('formCliente')) return;
-
-  var acciones = findButtonActionContainer('abrirModalCliente');
-  if (!acciones || !acciones.parentNode) return;
-
-  var wrap = document.createElement('div');
-  wrap.id = 'panelClienteInline';
-  wrap.className = 'form-section';
-  wrap.style.display = 'none';
-  wrap.style.marginTop = '16px';
-
-  wrap.innerHTML = [
-    '<div class="form-header"><h3 class="section-title">Nuevo Cliente</h3></div>',
-    '<form id="formCliente" onsubmit="return guardarCliente(event)">',
-    '<div class="form-grid">',
-    '<div class="form-group">',
-    '<label for="cli-codigo">Código <span class="required">*</span></label>',
-    '<input type="text" id="cli-codigo" maxlength="30" placeholder="Ej. CLI-001" required>',
-    '</div>',
-    '<div class="form-group">',
-    '<label for="cli-nombre">Nombre <span class="required">*</span></label>',
-    '<input type="text" id="cli-nombre" maxlength="150" placeholder="Nombre del cliente" required>',
-    '</div>',
-    '<div class="form-group">',
-    '<label for="cli-contacto">Contacto</label>',
-    '<input type="text" id="cli-contacto" maxlength="150" placeholder="Persona de contacto">',
-    '</div>',
-    '<div class="form-group">',
-    '<label for="cli-telefono">Teléfono</label>',
-    '<input type="text" id="cli-telefono" maxlength="50" placeholder="+507 6000-0000">',
-    '</div>',
-    '<div class="form-group">',
-    '<label for="cli-email">Email</label>',
-    '<input type="email" id="cli-email" maxlength="150" placeholder="correo@cliente.com">',
-    '</div>',
-    '<div class="form-group full-width">',
-    '<label for="cli-direccion">Dirección</label>',
-    '<input type="text" id="cli-direccion" maxlength="250" placeholder="Dirección del cliente">',
-    '</div>',
-    '</div>',
-    '<div class="form-actions">',
-    '<button type="submit" class="btn-primary">Guardar Cliente</button>',
-    '<button type="button" class="btn-secondary" onclick="cerrarModalCliente()">Cancelar</button>',
-    '</div>',
-    '<div class="form-feedback" id="feedback-cliente"></div>',
-    '</form>'
-  ].join('');
-
-  acciones.parentNode.insertBefore(wrap, acciones.nextSibling);
-}
-
-function asegurarFormularioGrupo() {
-  if (el('formGrupo')) return;
-
-  var gruposVisual = el('grupos-visual');
-  var seccion = gruposVisual ? gruposVisual.parentNode : null;
-
-  if (!seccion) {
-    var acciones = findButtonActionContainer('abrirModalGrupo');
-    if (acciones) seccion = acciones.closest('.section');
-  }
-
-  if (!seccion) return;
-
-  var wrap = document.createElement('div');
-  wrap.id = 'panelGrupoInline';
-  wrap.className = 'form-section';
-  wrap.style.display = 'none';
-  wrap.style.marginBottom = '20px';
-
-  wrap.innerHTML = [
-    '<div class="form-header"><h3 class="section-title">Nuevo Grupo</h3></div>',
-    '<form id="formGrupo" onsubmit="return guardarGrupo(event)">',
-    '<div class="form-grid">',
-    '<div class="form-group">',
-    '<label for="grp-codigo">Código <span class="required">*</span></label>',
-    '<input type="text" id="grp-codigo" maxlength="30" placeholder="Ej. DISENO" required>',
-    '</div>',
-    '<div class="form-group">',
-    '<label for="grp-nombre">Nombre <span class="required">*</span></label>',
-    '<input type="text" id="grp-nombre" maxlength="150" placeholder="Nombre del grupo" required>',
-    '</div>',
-    '<div class="form-group full-width">',
-    '<label for="grp-descripcion">Descripción</label>',
-    '<input type="text" id="grp-descripcion" maxlength="250" placeholder="Descripción breve del grupo">',
-    '</div>',
-    '<div class="form-group">',
-    '<label for="grp-color">Color</label>',
-    '<select id="grp-color">',
-    '<option value="green">Verde</option>',
-    '<option value="blue">Azul</option>',
-    '<option value="purple">Púrpura</option>',
-    '<option value="orange">Naranja</option>',
-    '<option value="red">Rojo</option>',
-    '<option value="teal">Turquesa</option>',
-    '<option value="pink">Rosa</option>',
-    '<option value="gray">Gris</option>',
-    '</select>',
-    '</div>',
-    '<div class="form-group">',
-    '<label for="grp-orden">Orden</label>',
-    '<input type="number" id="grp-orden" min="1" step="1" value="99">',
-    '</div>',
-    '</div>',
-    '<div class="form-actions">',
-    '<button type="submit" class="btn-primary">Guardar Grupo</button>',
-    '<button type="button" class="btn-secondary" onclick="cerrarModalGrupo()">Cancelar</button>',
-    '</div>',
-    '<div class="form-feedback" id="feedback-grupo"></div>',
-    '</form>'
-  ].join('');
-
-  if (gruposVisual && gruposVisual.parentNode === seccion) {
-    seccion.insertBefore(wrap, gruposVisual);
-  } else {
-    seccion.appendChild(wrap);
-  }
-}
-
-function sugerirCodigoCliente() {
-  var clientes = safeGetArray('CLIENTES', 'gn_clientes');
-  return 'CLI-' + String(clientes.length + 1).padStart(3, '0');
-}
-
-function sugerirCodigoGrupo() {
-  var grupos = typeof obtenerGrupos === 'function' ? obtenerGrupos() : [];
-  grupos = Array.isArray(grupos) ? grupos : [];
-  return 'GRUPO-' + String(grupos.length + 1).padStart(3, '0');
-}
-
-function abrirModalCliente() {
-  switchSection('negocio');
-  switchSubSection('negocio', 'crm');
-  asegurarFormularioCliente();
-
-  var panel = el('panelClienteInline');
-  if (!panel) return false;
-
-  panel.style.display = 'block';
-
-  if (el('cli-codigo') && !valueOf('cli-codigo')) {
-    setValue('cli-codigo', sugerirCodigoCliente());
-  }
-
-  setTimeout(function () {
-    if (el('cli-codigo')) el('cli-codigo').focus();
-    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 50);
-
-  return false;
-}
-
-function cerrarModalCliente() {
-  if (el('panelClienteInline')) el('panelClienteInline').style.display = 'none';
-  if (el('formCliente')) el('formCliente').reset();
-  if (el('feedback-cliente')) el('feedback-cliente').textContent = '';
-  return false;
-}
-
-function abrirModalGrupo() {
-  switchSection('negocio');
-  switchSubSection('negocio', 'catalogo');
-  asegurarFormularioGrupo();
-
-  var panel = el('panelGrupoInline');
-  if (!panel) return false;
-
-  panel.style.display = 'block';
-
-  if (el('grp-codigo') && !valueOf('grp-codigo')) {
-    setValue('grp-codigo', sugerirCodigoGrupo());
-  }
-
-  setTimeout(function () {
-    if (el('grp-codigo')) el('grp-codigo').focus();
-    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 50);
-
-  return false;
-}
-
-function cerrarModalGrupo() {
-  if (el('panelGrupoInline')) el('panelGrupoInline').style.display = 'none';
-  if (el('formGrupo')) el('formGrupo').reset();
-  if (el('feedback-grupo')) el('feedback-grupo').textContent = '';
-  return false;
-}
-
-// ============================================================
-// FINANZAS
+// GASTOS
 // ============================================================
 
 function guardarGasto(event) {
   event.preventDefault();
 
-  if (typeof addItem !== 'function') return false;
-
+  var feedback = document.getElementById('feedback-gasto');
   var gasto = {
-    id: typeof generarId === 'function' ? generarId() : ('gasto_' + Date.now()),
+    id: typeof generarId === 'function' ? generarId() : String(Date.now()),
     tipo: 'gasto',
-    fecha: valueOf('gasto-fecha'),
-    categoria: valueOf('gasto-categoria'),
-    descripcion: String(valueOf('gasto-descripcion') || '').trim(),
-    monto: parseFloat(valueOf('gasto-monto')) || 0,
-    metodo: valueOf('gasto-metodo'),
-    proyectoId: el('gasto-proyecto') ? valueOf('gasto-proyecto') : null,
+    fecha: document.getElementById('gasto-fecha').value,
+    categoria: document.getElementById('gasto-categoria').value,
+    descripcion: document.getElementById('gasto-descripcion').value.trim(),
+    monto: parseFloat(document.getElementById('gasto-monto').value || 0),
+    metodo: document.getElementById('gasto-metodo').value,
+    proyectoId: document.getElementById('gasto-proyecto') ? document.getElementById('gasto-proyecto').value : null,
     creadoEn: new Date().toISOString()
   };
 
-  addItem(storageKey('GASTOS', 'gn_gastos'), gasto);
-
-  if (el('feedback-gasto')) {
-    el('feedback-gasto').className = 'form-feedback success';
-    el('feedback-gasto').textContent = '✅ Gasto guardado: ' + formatCurrencySafe(gasto.monto);
+  if (typeof addItem === 'function' && typeof STORAGE_KEYS !== 'undefined') {
+    addItem(STORAGE_KEYS.GASTOS, gasto);
   }
 
-  if (el('formGasto')) el('formGasto').reset();
-  setFechasPorDefecto();
+  if (feedback) {
+    feedback.className = 'form-feedback success';
+    feedback.textContent = '✅ Gasto guardado: ' + gnFormatMoney(gasto.monto);
+  }
 
-  callIfExists('renderRegistros');
-  callIfExists('actualizarKPIs');
-  callIfExists('renderChartBalance');
-  callIfExists('renderChartGastos');
+  var form = document.getElementById('formGasto');
+  if (form) form.reset();
+
+  var gastoFecha = document.getElementById('gasto-fecha');
+  if (gastoFecha) gastoFecha.value = gnGetFechaHoyISO();
+
+  renderRegistros();
+  actualizarKPIs();
+  gnRenderDashboardExtras();
+
+  if (typeof renderChartBalance === 'function') renderChartBalance();
+  if (typeof renderChartGastos === 'function') renderChartGastos();
 
   if (typeof PROYECTO_ACTUAL !== 'undefined' && PROYECTO_ACTUAL && gasto.proyectoId === PROYECTO_ACTUAL.id) {
-    callIfExists('cargarFinancieroProyecto', [PROYECTO_ACTUAL]);
-    callIfExists('cargarTimelineProyecto', [PROYECTO_ACTUAL]);
+    if (typeof cargarFinancieroProyecto === 'function') cargarFinancieroProyecto(PROYECTO_ACTUAL);
+    if (typeof cargarTimelineProyecto === 'function') cargarTimelineProyecto(PROYECTO_ACTUAL);
   }
 
   return false;
 }
+
+// ============================================================
+// PAGOS
+// ============================================================
 
 function guardarPago(event) {
   event.preventDefault();
 
-  if (typeof addItem !== 'function') return false;
-
+  var feedback = document.getElementById('feedback-pago');
   var pago = {
-    id: typeof generarId === 'function' ? generarId() : ('pago_' + Date.now()),
+    id: typeof generarId === 'function' ? generarId() : String(Date.now()),
     tipo: 'pago',
-    fecha: valueOf('pago-fecha'),
-    cliente: String(valueOf('pago-cliente') || '').trim(),
-    concepto: String(valueOf('pago-concepto') || '').trim(),
-    monto: parseFloat(valueOf('pago-monto')) || 0,
-    metodo: valueOf('pago-metodo'),
-    estado: valueOf('pago-estado'),
-    proyectoId: el('pago-proyecto') ? valueOf('pago-proyecto') : null,
+    fecha: document.getElementById('pago-fecha').value,
+    cliente: document.getElementById('pago-cliente').value.trim(),
+    concepto: document.getElementById('pago-concepto').value.trim(),
+    monto: parseFloat(document.getElementById('pago-monto').value || 0),
+    metodo: document.getElementById('pago-metodo').value,
+    estado: document.getElementById('pago-estado').value,
+    proyectoId: document.getElementById('pago-proyecto') ? document.getElementById('pago-proyecto').value : null,
     creadoEn: new Date().toISOString()
   };
 
-  addItem(storageKey('PAGOS', 'gn_pagos'), pago);
-
-  if (el('feedback-pago')) {
-    el('feedback-pago').className = 'form-feedback success';
-    el('feedback-pago').textContent = '✅ Pago registrado: ' + formatCurrencySafe(pago.monto);
+  if (typeof addItem === 'function' && typeof STORAGE_KEYS !== 'undefined') {
+    addItem(STORAGE_KEYS.PAGOS, pago);
   }
 
-  if (el('formPago')) el('formPago').reset();
-  setFechasPorDefecto();
+  if (feedback) {
+    feedback.className = 'form-feedback success';
+    feedback.textContent = '✅ Pago registrado: ' + gnFormatMoney(pago.monto);
+  }
 
-  callIfExists('renderRegistros');
-  callIfExists('actualizarKPIs');
-  callIfExists('renderChartBalance');
+  var form = document.getElementById('formPago');
+  if (form) form.reset();
+
+  var pagoFecha = document.getElementById('pago-fecha');
+  if (pagoFecha) pagoFecha.value = gnGetFechaHoyISO();
+
+  renderRegistros();
+  actualizarKPIs();
+  gnRenderDashboardExtras();
+
+  if (typeof renderChartBalance === 'function') renderChartBalance();
 
   if (typeof PROYECTO_ACTUAL !== 'undefined' && PROYECTO_ACTUAL && pago.proyectoId === PROYECTO_ACTUAL.id) {
-    callIfExists('cargarFinancieroProyecto', [PROYECTO_ACTUAL]);
-    callIfExists('cargarTimelineProyecto', [PROYECTO_ACTUAL]);
+    if (typeof cargarFinancieroProyecto === 'function') cargarFinancieroProyecto(PROYECTO_ACTUAL);
+    if (typeof cargarTimelineProyecto === 'function') cargarTimelineProyecto(PROYECTO_ACTUAL);
   }
 
   return false;
 }
 
-function renderRegistros() {
-  return callIfExists('generarEstadoCuenta');
+// ============================================================
+// PROYECTOS (lista simple para compatibilidad)
+// ============================================================
+
+function renderProyectosSimple() {
+  var tbody = document.getElementById('tbodyProyectos');
+  if (!tbody) return;
+
+  var proyectos = gnGetDataByKey('PROYECTOS', []);
+  proyectos.sort(function(a, b) {
+    return new Date(b.creadoEn || 0) - new Date(a.creadoEn || 0);
+  });
+
+  if (proyectos.length === 0) {
+    tbody.innerHTML =
+      '<tr><td colspan="8" class="tabla-vacia">' +
+      '<div class="tabla-vacia-icon">📁</div>No hay proyectos registrados' +
+      '</td></tr>';
+    return;
+  }
+
+  var html = '';
+
+  for (var i = 0; i < proyectos.length; i++) {
+    var p = proyectos[i];
+    var avancePct = Math.round(p.avance || 0);
+    var estadoClass =
+      p.estado === 'en_progreso' ? 'estado-cotizado' :
+      p.estado === 'completado' ? 'estado-aprobado' :
+      'estado-vencido';
+
+    var estadoText =
+      p.estado === 'en_progreso' ? 'En Progreso' :
+      p.estado === 'completado' ? 'Completado' :
+      'Pausado';
+
+    html +=
+      '<tr>' +
+        '<td><strong style="color:#a855f7;">#' + (i + 1) + '</strong></td>' +
+        '<td>' + (p.clienteNombre || '-') + '</td>' +
+        '<td>' + (p.nombre || '-') + '</td>' +
+        '<td class="td-monto">' + gnFormatMoney(p.presupuesto || 0) + '</td>' +
+        '<td>' +
+          '<div style="background:rgba(255,255,255,0.05);border-radius:4px;height:8px;overflow:hidden;">' +
+            '<div style="background:linear-gradient(90deg,#6bbd45,#4f8cff);height:100%;width:' + avancePct + '%;border-radius:4px;transition:width 0.5s;"></div>' +
+          '</div>' +
+          '<span style="font-size:11px;color:#8a8a96;margin-top:4px;display:block;">' + avancePct + '%</span>' +
+        '</td>' +
+        '<td><span class="estado-badge ' + estadoClass + '">' + estadoText + '</span></td>' +
+        '<td>' + gnFormatDate(p.fechaInicio) + '</td>' +
+        '<td class="td-actions">' +
+          '<button class="btn-icon" onclick="avanzarProyecto(\'' + p.id + '\')" title="Avanzar" style="background:rgba(107,189,69,0.1);color:#6bbd45;">➜</button>' +
+          '<button class="btn-icon" onclick="eliminarProyecto(\'' + p.id + '\')" title="Eliminar" style="margin-left:4px;">🗑️</button>' +
+        '</td>' +
+      '</tr>';
+  }
+
+  tbody.innerHTML = html;
 }
+
+function avanzarProyecto(id) {
+  if (typeof findItem !== 'function' || typeof updateItem !== 'function' || typeof STORAGE_KEYS === 'undefined') return;
+
+  var proyecto = findItem(STORAGE_KEYS.PROYECTOS, id);
+  if (!proyecto) return;
+
+  var nuevoAvance = Math.min((proyecto.avance || 0) + 25, 100);
+  var nuevoEstado = nuevoAvance >= 100 ? 'completado' : (proyecto.estado || 'en_progreso');
+
+  updateItem(STORAGE_KEYS.PROYECTOS, id, {
+    avance: nuevoAvance,
+    estado: nuevoEstado
+  });
+
+  if (typeof renderProyectos === 'function') {
+    renderProyectos();
+  } else {
+    renderProyectosSimple();
+  }
+
+  actualizarKPIs();
+}
+
+function eliminarProyecto(id) {
+  if (!confirm('¿Eliminar este proyecto?')) return;
+  if (typeof deleteItem !== 'function' || typeof STORAGE_KEYS === 'undefined') return;
+
+  deleteItem(STORAGE_KEYS.PROYECTOS, id);
+
+  if (typeof renderProyectos === 'function') {
+    renderProyectos();
+  } else {
+    renderProyectosSimple();
+  }
+
+  actualizarKPIs();
+}
+
+// ============================================================
+// REGISTROS
+// ============================================================
+
+function renderRegistros(filtro) {
+  var tbody = document.getElementById('tbodyRegistros');
+  if (!tbody) return;
+
+  var gastos = gnGetDataByKey('GASTOS', []);
+  var pagos = gnGetDataByKey('PAGOS', []);
+  var todos = [];
+
+  for (var i = 0; i < gastos.length; i++) {
+    todos.push(Object.assign({}, gastos[i], {
+      tipoLabel: 'Gasto',
+      categoriaLabel:
+        (typeof GASTO_LABELS !== 'undefined' && GASTO_LABELS[gastos[i].categoria]) ?
+        GASTO_LABELS[gastos[i].categoria] :
+        (gastos[i].categoria || 'Gasto')
+    }));
+  }
+
+  for (var j = 0; j < pagos.length; j++) {
+    todos.push(Object.assign({}, pagos[j], {
+      tipoLabel: 'Pago',
+      categoriaLabel: pagos[j].concepto || 'Pago'
+    }));
+  }
+
+  todos.sort(function(a, b) {
+    return new Date(b.fecha || 0) - new Date(a.fecha || 0);
+  });
+
+  if (filtro && filtro !== 'todos') {
+    todos = todos.filter(function(r) {
+      return r.tipo === filtro;
+    });
+  }
+
+  if (todos.length === 0) {
+    tbody.innerHTML =
+      '<tr><td colspan="6" class="tabla-vacia">' +
+      '<div class="tabla-vacia-icon">📭</div>No hay registros' +
+      '</td></tr>';
+    return;
+  }
+
+  var html = '';
+
+  for (var k = 0; k < todos.length; k++) {
+    var r = todos[k];
+    var tipoColor = r.tipo === 'gasto' ? '#ef4444' : '#6bbd45';
+
+    html +=
+      '<tr>' +
+        '<td>' + gnFormatDate(r.fecha) + '</td>' +
+        '<td><span style="color:' + tipoColor + ';font-weight:600;font-size:11px;text-transform:uppercase;">' + r.tipoLabel + '</span></td>' +
+        '<td>' + (r.categoriaLabel || '-') + '</td>' +
+        '<td>' + (r.descripcion || r.concepto || '-') + '</td>' +
+        '<td class="td-monto" style="color:' + tipoColor + ';">' + (r.tipo === 'gasto' ? '- ' : '') + gnFormatMoney(r.monto || 0) + '</td>' +
+        '<td>' + (r.metodo || '-') + '</td>' +
+      '</tr>';
+  }
+
+  tbody.innerHTML = html;
+}
+
+function filtrarRegistros(tipo) {
+  renderRegistros(tipo);
+}
+
+// ============================================================
+// KPIs
+// ============================================================
 
 function actualizarKPIs() {
-  var pagos = safeGetArray('PAGOS', 'gn_pagos');
-  var gastos = safeGetArray('GASTOS', 'gn_gastos');
-  var cotizaciones = safeGetArray('COTIZACIONES', 'gn_cotizaciones');
-  var proyectos = safeGetArray('PROYECTOS', 'gn_proyectos');
-  var clientes = safeGetArray('CLIENTES', 'gn_clientes');
+  var gastos = gnGetDataByKey('GASTOS', []);
+  var pagos = gnGetDataByKey('PAGOS', []);
+  var cotizaciones = gnGetDataByKey('COTIZACIONES', []);
+  var proyectos = gnGetDataByKey('PROYECTOS', []);
+  var clientes = gnGetDataByKey('CLIENTES', []);
 
-  var ingresosMes = sumMontoMes(pagos, 'fecha', 'monto');
-  var gastosMes = sumMontoMes(gastos, 'fecha', 'monto');
-  var balanceMes = ingresosMes - gastosMes;
-
-  var cotPendientes = 0;
-  for (var i = 0; i < cotizaciones.length; i++) {
-    var estadoCot = String((cotizaciones[i] && cotizaciones[i].estado) || '').toLowerCase();
-    if (!estadoCot || estadoCot === 'pendiente' || estadoCot === 'borrador' || estadoCot === 'enviada') {
-      cotPendientes++;
-    }
+  var totalGastos = 0;
+  for (var i = 0; i < gastos.length; i++) {
+    totalGastos += parseFloat(gastos[i].monto || 0);
   }
 
-  var proyectosActivos = 0;
-  for (var j = 0; j < proyectos.length; j++) {
-    var estadoProy = String((proyectos[j] && proyectos[j].estado) || '').toLowerCase();
-    if (estadoProy !== 'completado' && estadoProy !== 'cancelado' && estadoProy !== 'cerrado') {
-      proyectosActivos++;
-    }
+  var totalPagos = 0;
+  for (var j = 0; j < pagos.length; j++) {
+    totalPagos += parseFloat(pagos[j].monto || 0);
   }
 
-  setText('kpi-ingresos', formatCurrencySafe(ingresosMes));
-  setText('kpi-gastos', formatCurrencySafe(gastosMes));
-  setText('kpi-balance', formatCurrencySafe(balanceMes));
-  setText('kpi-cotizaciones', String(cotPendientes));
-  setText('kpi-proyectos', String(proyectosActivos));
-  setText('kpi-clientes', String(clientes.length));
+  var cotizacionesActivas = 0;
+  for (var k = 0; k < cotizaciones.length; k++) {
+    if (cotizaciones[k].estado === 'cotizado') cotizacionesActivas++;
+  }
 
-  if (el('trend-ingresos')) setText('trend-ingresos', '0%');
-  if (el('trend-gastos')) setText('trend-gastos', '0%');
-  if (el('trend-balance')) setText('trend-balance', '0%');
+  var proyectosEnCurso = 0;
+  for (var m = 0; m < proyectos.length; m++) {
+    if (proyectos[m].estado === 'en_progreso') proyectosEnCurso++;
+  }
 
-  return true;
+  var kpiIngresos = document.getElementById('kpi-ingresos');
+  var kpiGastos = document.getElementById('kpi-gastos');
+  var kpiBalance = document.getElementById('kpi-balance');
+  var kpiCot = document.getElementById('kpi-cotizaciones');
+  var kpiProy = document.getElementById('kpi-proyectos');
+  var kpiCli = document.getElementById('kpi-clientes');
+
+  if (kpiIngresos) kpiIngresos.textContent = gnFormatMoney(totalPagos);
+  if (kpiGastos) kpiGastos.textContent = gnFormatMoney(totalGastos);
+  if (kpiBalance) kpiBalance.textContent = gnFormatMoney(totalPagos - totalGastos);
+  if (kpiCot) kpiCot.textContent = cotizacionesActivas;
+  if (kpiProy) kpiProy.textContent = proyectosEnCurso;
+  if (kpiCli) kpiCli.textContent = clientes.length;
 }
 
 // ============================================================
-// PROYECTOS → ACCIONES DE PAGO / GASTO
+// ACTIVIDAD RECIENTE
 // ============================================================
 
-function abrirModalGastoProyecto() {
-  switchSection('finanzas');
-  switchSubSection('finanzas', 'estado-cuenta');
+function renderActividadReciente() {
+  var tbody = document.getElementById('tbodyActividadReciente');
+  if (!tbody) return;
 
-  var proyectoId = null;
+  var gastos = gnGetDataByKey('GASTOS', []);
+  var pagos = gnGetDataByKey('PAGOS', []);
+  var cotizaciones = gnGetDataByKey('COTIZACIONES', []);
+  var todos = [];
 
-  if (typeof PROYECTO_ACTUAL !== 'undefined' && PROYECTO_ACTUAL) {
-    proyectoId = PROYECTO_ACTUAL.id || null;
+  for (var i = 0; i < Math.min(gastos.length, 5); i++) {
+    todos.push({
+      fecha: gastos[i].fecha,
+      tipo: 'gasto',
+      descripcion: gastos[i].descripcion || '-',
+      monto: gastos[i].monto || 0,
+      estado: 'Completado'
+    });
   }
 
-  if (proyectoId) {
-    if (el('gasto-proyecto')) setValue('gasto-proyecto', proyectoId);
-    if (el('ec-proyecto')) setValue('ec-proyecto', proyectoId);
+  for (var j = 0; j < Math.min(pagos.length, 5); j++) {
+    todos.push({
+      fecha: pagos[j].fecha,
+      tipo: 'pago',
+      descripcion: pagos[j].concepto || '-',
+      monto: pagos[j].monto || 0,
+      estado: pagos[j].estado || 'Recibido'
+    });
   }
 
-  if (el('gasto-fecha') && !valueOf('gasto-fecha')) {
-    setValue('gasto-fecha', todayYMD());
+  for (var k = 0; k < Math.min(cotizaciones.length, 5); k++) {
+    todos.push({
+      fecha: cotizaciones[k].fecha,
+      tipo: 'cotizacion',
+      descripcion: cotizaciones[k].proyecto || '-',
+      monto: cotizaciones[k].total || 0,
+      estado: cotizaciones[k].estado || 'Cotizado'
+    });
   }
 
-  var target = el('gasto-monto') || el('gasto-descripcion');
-  if (target) {
-    setTimeout(function () {
-      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      target.focus();
-    }, 80);
+  todos.sort(function(a, b) {
+    return new Date(b.fecha || 0) - new Date(a.fecha || 0);
+  });
+
+  todos = todos.slice(0, 10);
+
+  if (todos.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="tabla-vacia">No hay actividad reciente</td></tr>';
+    return;
   }
 
-  return false;
-}
+  var html = '';
 
-function cerrarModalGastoProyecto() {
-  return false;
-}
+  for (var m = 0; m < todos.length; m++) {
+    var r = todos[m];
+    var tipoColor = r.tipo === 'gasto' ? '#ef4444' : (r.tipo === 'pago' ? '#6bbd45' : '#4f8cff');
+    var tipoLabel = r.tipo === 'gasto' ? 'Gasto' : (r.tipo === 'pago' ? 'Pago' : 'Cotización');
+    var estadoClass =
+      r.estado === 'aprobado' || r.estado === 'recibido' || r.estado === 'Completado'
+        ? 'estado-aprobado'
+        : 'estado-cotizado';
 
-function abrirModalPagoProyecto() {
-  switchSection('finanzas');
-  switchSubSection('finanzas', 'estado-cuenta');
-
-  var proyectoId = null;
-  var clienteNombre = '';
-
-  if (typeof PROYECTO_ACTUAL !== 'undefined' && PROYECTO_ACTUAL) {
-    proyectoId = PROYECTO_ACTUAL.id || null;
-    clienteNombre = PROYECTO_ACTUAL.clienteNombre || PROYECTO_ACTUAL.cliente || '';
+    html +=
+      '<tr>' +
+        '<td>' + gnFormatDate(r.fecha) + '</td>' +
+        '<td><span style="color:' + tipoColor + ';font-weight:600;font-size:11px;text-transform:uppercase;">' + tipoLabel + '</span></td>' +
+        '<td>' + (r.descripcion || '-') + '</td>' +
+        '<td class="td-monto">' + gnFormatMoney(r.monto || 0) + '</td>' +
+        '<td><span class="estado-badge ' + estadoClass + '">' + (r.estado || '-') + '</span></td>' +
+      '</tr>';
   }
 
-  if (proyectoId) {
-    if (el('pago-proyecto')) setValue('pago-proyecto', proyectoId);
-    if (el('ec-proyecto')) setValue('ec-proyecto', proyectoId);
-  }
-
-  if (el('pago-fecha') && !valueOf('pago-fecha')) {
-    setValue('pago-fecha', todayYMD());
-  }
-
-  var pagoCliente = el('pago-cliente');
-  if (pagoCliente && clienteNombre) {
-    if (pagoCliente.tagName === 'SELECT') {
-      for (var i = 0; i < pagoCliente.options.length; i++) {
-        if (pagoCliente.options[i].text === clienteNombre || pagoCliente.options[i].value === clienteNombre) {
-          pagoCliente.selectedIndex = i;
-          break;
-        }
-      }
-    } else {
-      pagoCliente.value = clienteNombre;
-    }
-  }
-
-  if (el('pago-concepto') && !valueOf('pago-concepto') && typeof PROYECTO_ACTUAL !== 'undefined' && PROYECTO_ACTUAL) {
-    setValue('pago-concepto', 'Pago - ' + (PROYECTO_ACTUAL.nombre || 'Proyecto'));
-  }
-
-  var target = el('pago-monto') || el('pago-concepto') || el('pago-cliente');
-  if (target) {
-    setTimeout(function () {
-      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      target.focus();
-    }, 80);
-  }
-
-  return false;
-}
-
-function cerrarModalPagoProyecto() {
-  return false;
+  tbody.innerHTML = html;
 }
 
 // ============================================================
-// COTIZACIONES — COMPATIBILIDAD GLOBAL
+// PIPELINE MINI
 // ============================================================
 
-function obtenerClientePorId(clienteId) {
-  if (!clienteId) return null;
+function renderPipelineMini() {
+  var container = document.getElementById('pipeline-mini');
+  if (!container) return;
 
-  var clientes = safeGetArray('CLIENTES', 'gn_clientes');
-  for (var i = 0; i < clientes.length; i++) {
-    if (clientes[i].id === clienteId) return clientes[i];
-  }
-
-  return null;
-}
-
-function actualizarInfoCliente() {
-  var clienteId = valueOf('cot-cliente');
-  var cliente = obtenerClientePorId(clienteId);
-
-  if (el('cot-atencion') && cliente && !valueOf('cot-atencion').trim()) {
-    setValue('cot-atencion', cliente.contacto || '');
-  }
-
-  var posiblesInfoIds = [
-    'cot-cliente-info',
-    'cot-info-cliente',
-    'info-cliente-cot',
-    'cliente-info-cot'
-  ];
-
-  var infoBox = null;
-  for (var i = 0; i < posiblesInfoIds.length; i++) {
-    if (el(posiblesInfoIds[i])) {
-      infoBox = el(posiblesInfoIds[i]);
-      break;
-    }
-  }
-
-  if (infoBox) {
-    if (!cliente) {
-      infoBox.innerHTML = '';
-      infoBox.style.display = 'none';
-    } else {
-      infoBox.style.display = 'block';
-      infoBox.innerHTML = [
-        '<div><strong>Cliente:</strong> ' + escapeHtml(cliente.nombre || '—') + '</div>',
-        '<div><strong>Contacto:</strong> ' + escapeHtml(cliente.contacto || '—') + '</div>',
-        '<div><strong>Teléfono:</strong> ' + escapeHtml(cliente.telefono || '—') + '</div>',
-        '<div><strong>Email:</strong> ' + escapeHtml(cliente.email || '—') + '</div>',
-        '<div><strong>Dirección:</strong> ' + escapeHtml(cliente.direccion || '—') + '</div>'
-      ].join('');
-    }
-  }
-
-  return false;
-}
-
-function obtenerResumenCotizacionDOM() {
-  return {
-    subtotal: el('cot-subtotal') ? el('cot-subtotal').textContent : formatCurrencySafe(0),
-    itbms: el('cot-itbms-monto') ? el('cot-itbms-monto').textContent : formatCurrencySafe(0),
-    descuento: el('cot-descuento-monto') ? el('cot-descuento-monto').textContent : formatCurrencySafe(0),
-    total: el('cot-total') ? el('cot-total').textContent : formatCurrencySafe(0)
+  var cotizaciones = gnGetDataByKey('COTIZACIONES', []);
+  var counts = {
+    cotizado: 0,
+    aprobado: 0,
+    en_progreso: 0,
+    vencido: 0,
+    rechazado: 0
   };
+
+  for (var i = 0; i < cotizaciones.length; i++) {
+    var estado = cotizaciones[i].estado;
+    if (counts[estado] !== undefined) counts[estado]++;
+  }
+
+  var total = cotizaciones.length || 1;
+  var pctCotizado = Math.round((counts.cotizado / total) * 100);
+  var pctAprobado = Math.round((counts.aprobado / total) * 100);
+  var pctProgreso = Math.round((counts.en_progreso / total) * 100);
+  var pctVencido = Math.round((counts.vencido / total) * 100);
+
+  container.innerHTML =
+    '<div class="pipeline-bar">' +
+      '<div class="pipeline-segment" style="width:' + pctCotizado + '%;background:#4f8cff;">' + counts.cotizado + ' Cotizados</div>' +
+      '<div class="pipeline-segment" style="width:' + pctAprobado + '%;background:#6bbd45;">' + counts.aprobado + ' Aprobados</div>' +
+      '<div class="pipeline-segment" style="width:' + pctProgreso + '%;background:#a855f7;">' + counts.en_progreso + ' En Progreso</div>' +
+      '<div class="pipeline-segment" style="width:' + pctVencido + '%;background:#64748b;">' + counts.vencido + ' Vencidos</div>' +
+    '</div>' +
+    '<div class="pipeline-legend">' +
+      '<span><span class="dot" style="background:#4f8cff;"></span> Cotizado</span>' +
+      '<span><span class="dot" style="background:#6bbd45;"></span> Aprobado</span>' +
+      '<span><span class="dot" style="background:#a855f7;"></span> En Progreso</span>' +
+      '<span><span class="dot" style="background:#ef4444;"></span> Rechazado</span>' +
+    '</div>';
 }
 
-function obtenerItemsCotizacionPreview() {
-  var rows = [];
-  var tbody = el('tbodyItemsCotizacion');
+// ============================================================
+// JSON PREVIEW
+// ============================================================
 
-  if (tbody) {
-    var trs = tbody.querySelectorAll('tr');
-    for (var i = 0; i < trs.length; i++) {
-      var tds = trs[i].querySelectorAll('td');
-      if (tds.length >= 6) {
-        rows.push({
-          descripcion: tds[1] ? tds[1].textContent.trim() : '',
-          cantidad: tds[2] ? tds[2].textContent.trim() : '',
-          unidad: tds[3] ? tds[3].textContent.trim() : '',
-          precio: tds[4] ? tds[4].textContent.trim() : '',
-          total: tds[5] ? tds[5].textContent.trim() : ''
-        });
-      }
-    }
-  }
+function actualizarVistaJSON() {
+  var el =
+    document.getElementById('json-preview') ||
+    document.getElementById('vista-json') ||
+    document.getElementById('jsonPreview');
 
-  if (rows.length === 0 && typeof itemsCotizacionActual !== 'undefined' && Array.isArray(itemsCotizacionActual)) {
-    for (var j = 0; j < itemsCotizacionActual.length; j++) {
-      var item = itemsCotizacionActual[j];
-      rows.push({
-        descripcion: (item.codigo ? '[' + item.codigo + '] ' : '') + (item.descripcion || ''),
-        cantidad: item.cantidad || 0,
-        unidad: item.unidad || '',
-        precio: formatCurrencySafe(item.precioUnitario || 0),
-        total: formatCurrencySafe((item.cantidad || 0) * (item.precioUnitario || 0))
-      });
-    }
-  }
+  if (!el || typeof getData !== 'function') return;
 
-  return rows;
-}
+  var data = {
+    servicios: gnGetDataByKey('SERVICIOS', []),
+    clientes: gnGetDataByKey('CLIENTES', []),
+    cotizaciones: gnGetDataByKey('COTIZACIONES', []),
+    proyectos: gnGetDataByKey('PROYECTOS', []),
+    gastos: gnGetDataByKey('GASTOS', []),
+    pagos: gnGetDataByKey('PAGOS', []),
+    grupos: getData('gn_grupos_servicios') || [],
+    tareas: getData('gn_tareas') || []
+  };
 
-function vistaPreviaCotizacion() {
-  var clienteId = valueOf('cot-cliente');
-  var cliente = obtenerClientePorId(clienteId);
-  var proyecto = String(valueOf('cot-proyecto') || '').trim();
-  var atencion = String(valueOf('cot-atencion') || '').trim();
-  var fecha = valueOf('cot-fecha') || todayYMD();
-  var alcance = String(valueOf('cot-alcance') || '').trim();
-  var resumen = obtenerResumenCotizacionDOM();
-  var items = obtenerItemsCotizacionPreview();
-
-  if (!clienteId) {
-    alert('Selecciona un cliente antes de ver la vista previa');
-    return false;
-  }
-
-  if (!proyecto) {
-    alert('Ingresa el nombre del proyecto');
-    return false;
-  }
-
-  var rows = '';
-  for (var i = 0; i < items.length; i++) {
-    rows += [
-      '<tr>',
-      '<td style="padding:8px;border:1px solid #ddd;">' + (i + 1) + '</td>',
-      '<td style="padding:8px;border:1px solid #ddd;">' + escapeHtml(items[i].descripcion) + '</td>',
-      '<td style="padding:8px;border:1px solid #ddd;text-align:center;">' + escapeHtml(items[i].cantidad) + '</td>',
-      '<td style="padding:8px;border:1px solid #ddd;text-align:center;">' + escapeHtml(items[i].unidad) + '</td>',
-      '<td style="padding:8px;border:1px solid #ddd;text-align:right;">' + escapeHtml(items[i].precio) + '</td>',
-      '<td style="padding:8px;border:1px solid #ddd;text-align:right;">' + escapeHtml(items[i].total) + '</td>',
-      '</tr>'
-    ].join('');
-  }
-
-  if (!rows) {
-    rows = '<tr><td colspan="6" style="padding:12px;border:1px solid #ddd;text-align:center;color:#666;">No hay items agregados</td></tr>';
-  }
-
-  var html = [
-    '<!DOCTYPE html>',
-    '<html lang="es">',
-    '<head>',
-    '<meta charset="UTF-8">',
-    '<title>Vista Previa Cotización</title>',
-    '<style>',
-    'body{font-family:Arial,sans-serif;margin:30px;color:#222;}',
-    'h1,h2,h3{margin:0 0 12px;}',
-    '.top{display:flex;justify-content:space-between;gap:20px;margin-bottom:24px;}',
-    '.box{margin-bottom:18px;}',
-    'table{width:100%;border-collapse:collapse;margin-top:16px;}',
-    '.totales{width:360px;margin-left:auto;margin-top:20px;border-collapse:collapse;}',
-    '.totales td{padding:8px;border:1px solid #ddd;}',
-    '.muted{color:#666;}',
-    '.actions{margin-bottom:20px;}',
-    'button{padding:10px 14px;margin-right:8px;border:none;border-radius:8px;cursor:pointer;}',
-    '.print{background:#6bbd45;color:#fff;}',
-    '</style>',
-    '</head>',
-    '<body>',
-    '<div class="actions"><button class="print" onclick="window.print()">Imprimir / PDF</button></div>',
-    '<div class="top">',
-    '<div><h1>GN Studio</h1><div class="muted">Vista previa de cotización</div></div>',
-    '<div>',
-    '<div><strong>Fecha:</strong> ' + escapeHtml(typeof formatDate === 'function' ? formatDate(fecha) : fecha) + '</div>',
-    '<div><strong>Proyecto:</strong> ' + escapeHtml(proyecto) + '</div>',
-    '</div>',
-    '</div>',
-    '<div class="box">',
-    '<h3>Cliente</h3>',
-    '<div><strong>Nombre:</strong> ' + escapeHtml(cliente ? cliente.nombre : '—') + '</div>',
-    '<div><strong>Contacto:</strong> ' + escapeHtml(atencion || (cliente ? cliente.contacto : '—')) + '</div>',
-    '<div><strong>Teléfono:</strong> ' + escapeHtml(cliente ? cliente.telefono : '—') + '</div>',
-    '<div><strong>Email:</strong> ' + escapeHtml(cliente ? cliente.email : '—') + '</div>',
-    '<div><strong>Dirección:</strong> ' + escapeHtml(cliente ? cliente.direccion : '—') + '</div>',
-    '</div>',
-    '<div class="box">',
-    '<h3>Alcance</h3>',
-    '<div>' + escapeHtml(alcance || 'Sin descripción de alcance') + '</div>',
-    '</div>',
-    '<table>',
-    '<thead>',
-    '<tr>',
-    '<th style="padding:8px;border:1px solid #ddd;">#</th>',
-    '<th style="padding:8px;border:1px solid #ddd;">Descripción</th>',
-    '<th style="padding:8px;border:1px solid #ddd;">Cant.</th>',
-    '<th style="padding:8px;border:1px solid #ddd;">Unidad</th>',
-    '<th style="padding:8px;border:1px solid #ddd;">Precio Unit.</th>',
-    '<th style="padding:8px;border:1px solid #ddd;">Total</th>',
-    '</tr>',
-    '</thead>',
-    '<tbody>' + rows + '</tbody>',
-    '</table>',
-    '<table class="totales">',
-    '<tr><td><strong>Subtotal</strong></td><td style="text-align:right;">' + escapeHtml(resumen.subtotal) + '</td></tr>',
-    '<tr><td><strong>ITBMS</strong></td><td style="text-align:right;">' + escapeHtml(resumen.itbms) + '</td></tr>',
-    '<tr><td><strong>Descuento</strong></td><td style="text-align:right;">' + escapeHtml(resumen.descuento) + '</td></tr>',
-    '<tr><td><strong>TOTAL</strong></td><td style="text-align:right;color:#6bbd45;"><strong>' + escapeHtml(resumen.total) + '</strong></td></tr>',
-    '</table>',
-    '</body>',
-    '</html>'
-  ].join('');
-
-  var preview = window.open('', '_blank');
-  if (!preview) {
-    alert('El navegador bloqueó la ventana emergente de vista previa');
-    return false;
-  }
-
-  preview.document.open();
-  preview.document.write(html);
-  preview.document.close();
-
-  return false;
-}
-
-function limpiarCotizacion() {
-  if (el('cot-cliente')) setValue('cot-cliente', '');
-  if (el('cot-proyecto')) setValue('cot-proyecto', '');
-  if (el('cot-atencion')) setValue('cot-atencion', '');
-  if (el('cot-fecha')) setValue('cot-fecha', todayYMD());
-  if (el('cot-alcance')) setValue('cot-alcance', '');
-  if (el('cot-itbms')) setValue('cot-itbms', '1');
-  if (el('cot-descuento')) setValue('cot-descuento', '0');
-
-  if (el('cot-item-servicio')) setValue('cot-item-servicio', '');
-  if (el('cot-item-cantidad-catalogo')) setValue('cot-item-cantidad-catalogo', '1');
-
-  if (el('cot-item-desc-manual')) setValue('cot-item-desc-manual', '');
-  if (el('cot-item-cantidad-manual')) setValue('cot-item-cantidad-manual', '1');
-  if (el('cot-item-unidad-manual')) setValue('cot-item-unidad-manual', 'und');
-  if (el('cot-item-precio-manual')) setValue('cot-item-precio-manual', '');
-  if (el('cot-item-itbms-manual')) setValue('cot-item-itbms-manual', '1');
-
-  if (typeof itemsCotizacionActual !== 'undefined' && Array.isArray(itemsCotizacionActual)) {
-    itemsCotizacionActual.length = 0;
-  }
-
-  if (el('tbodyItemsCotizacion')) el('tbodyItemsCotizacion').innerHTML = '';
-
-  if (el('items-agrupados-container')) {
-    el('items-agrupados-container').innerHTML = '<div class="tabla-vacia"><div class="tabla-vacia-icon">🧾</div>No hay items agregados</div>';
-  }
-
-  if (el('resumen-grupos')) el('resumen-grupos').innerHTML = '';
-
-  setText('cot-subtotal', formatCurrencySafe(0));
-  setText('cot-itbms-monto', formatCurrencySafe(0));
-  setText('cot-descuento-monto', formatCurrencySafe(0));
-  setText('cot-total', formatCurrencySafe(0));
-
-  if (el('feedback-cotizacion')) {
-    el('feedback-cotizacion').className = 'form-feedback';
-    el('feedback-cotizacion').textContent = '';
-  }
-
-  actualizarInfoCliente();
-  return false;
+  el.textContent = JSON.stringify(data, null, 2);
 }
 
 // ============================================================
@@ -1013,30 +679,27 @@ function limpiarCotizacion() {
 // ============================================================
 
 function exportarTodo() {
-  if (typeof localStorage === 'undefined') return false;
+  if (typeof getData !== 'function') return;
 
-  var data = {};
-  for (var i = 0; i < localStorage.length; i++) {
-    var key = localStorage.key(i);
-    if (key && key.indexOf('gn_') === 0) {
-      try {
-        data[key] = JSON.parse(localStorage.getItem(key));
-      } catch (e) {
-        data[key] = localStorage.getItem(key);
-      }
-    }
-  }
+  var data = {
+    servicios: gnGetDataByKey('SERVICIOS', []),
+    clientes: gnGetDataByKey('CLIENTES', []),
+    cotizaciones: gnGetDataByKey('COTIZACIONES', []),
+    proyectos: gnGetDataByKey('PROYECTOS', []),
+    gastos: gnGetDataByKey('GASTOS', []),
+    pagos: gnGetDataByKey('PAGOS', []),
+    grupos: getData('gn_grupos_servicios') || [],
+    tareas: getData('gn_tareas') || [],
+    exportadoEn: new Date().toISOString()
+  };
 
   var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
 
   a.href = url;
-  a.download = 'gnstudio-backup.json';
-  document.body.appendChild(a);
+  a.download = 'gn-studio-backup-' + new Date().toISOString().split('T')[0] + '.json';
   a.click();
-  document.body.removeChild(a);
 
   URL.revokeObjectURL(url);
-  return false;
 }
