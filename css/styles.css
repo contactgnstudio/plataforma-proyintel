@@ -3585,3 +3585,48 @@ body.gn-auth-locked .top-navbar {
     text-align: center;
   }
 }
+.gn-login-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(6, 6, 10, 0.86);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.gn-login-overlay.is-visible {
+  display: flex !important;
+}
+
+.gn-login-card {
+  width: 100%;
+  max-width: 460px;
+  background: #12121a;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+}
+
+.gn-logout-btn {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 100001;
+  display: none;
+}
+
+body.gn-auth-locked {
+  overflow: hidden;
+}
+
+body.gn-auth-locked .main-content,
+body.gn-auth-locked .top-navbar {
+  filter: blur(3px);
+  pointer-events: none;
+  user-select: none;
+}
