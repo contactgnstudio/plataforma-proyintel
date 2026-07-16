@@ -606,3 +606,84 @@ function abrirModalPagoProyectoDesdeId(id) {
   if (typeof abrirModalPagoProyecto === 'function') return abrirModalPagoProyecto();
   return false;
 }
+// ============================================================
+// FILTROS DE PROYECTOS
+// ============================================================
+
+function filtrarProyectos(estado) {
+  renderProyectos(estado || 'todos');
+
+  var botones = document.querySelectorAll('[onclick*="filtrarProyectos("]');
+  for (var i = 0; i < botones.length; i++) {
+    botones[i].classList.remove('active');
+    var onclick = botones[i].getAttribute('onclick') || '';
+    if (onclick.indexOf("'" + (estado || 'todos') + "'") !== -1 || onclick.indexOf('"' + (estado || 'todos') + '"') !== -1) {
+      botones[i].classList.add('active');
+    }
+  }
+
+  return false;
+}
+
+function buscarProyectos() {
+  var input = document.getElementById('buscar-proyecto');
+  var term = input ? input.value.trim().toLowerCase() : '';
+  var grid = document.getElementById('proyectos-grid');
+  if (!grid) return false;
+
+  inicializarProyectosEjemplo();
+
+  var proyectos = obtenerProyectos().filter(function(p) {
+    return (p.nombre || '').toLowerCase().indexOf(term) !== -1
+      || (p.clienteNombre || '').toLowerCase().indexOf(term) !== -1
+      || (p.alcance || '').toLowerCase().indexOf(term) !== -1;
+  });
+
+  if (proyectos.length === 0) {
+    grid.innerHTML = '<div class="empty-state">No se encontraron proyectos</div>';
+    return false;
+  }
+
+  var html = '';
+
+  for (var i = 0; i < proyectos.length; i++) {
+    var p = proyectos[i];
+    var estadoLabel = obtenerLabelEstadoProyecto(p.estado);
+    var pagos = obtenerPagosProyecto(p.id);
+    var cobrado = 0;
+
+    for (var j = 0; j < pagos.length; j++) {
+      cobrado += parseFloat(pagos[j].monto) || 0;
+    }
+
+    html += ''
+      + '<div class="project-card" style="border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px;margin-bottom:14px;">'
+      + '<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">'
+      + '<div>'
+      + '<div style="font-weight:700;font-size:1.05rem;">' + proyEscapeHtml(p.nombre) + '</div>'
+      + '<div style="opacity:.8;margin-top:4px;">' + proyEscapeHtml(p.clienteNombre || 'Sin cliente') + '</div>'
+      + '</div>'
+      + '<span style="padding:6px 10px;border-radius:999px;background:rgba(107,189,69,0.15);border:1px solid rgba(107,189,69,0.35);font-size:.88rem;">' + proyEscapeHtml(estadoLabel) + '</span>'
+      + '</div>'
+      + '<div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">'
+      + '<div><strong>Presupuesto:</strong><br>' + proyMoney(p.presupuesto) + '</div>'
+      + '<div><strong>Cobrado:</strong><br>' + proyMoney(cobrado) + '</div>'
+      + '<div><strong>Inicio:</strong><br>' + proyDate(p.fechaInicio) + '</div>'
+      + '<div><strong>Avance:</strong><br>' + (parseInt(p.avance) || 0) + '%</div>'
+      + '</div>'
+      + '<div style="margin-top:12px;">'
+      + '<div style="height:10px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden;">'
+      + '<div style="height:100%;width:' + (parseInt(p.avance) || 0) + '%;background:#6bbd45;"></div>'
+      + '</div>'
+      + '</div>'
+      + '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">'
+      + '<button type="button" class="btn-secondary" onclick="verProyecto(\'' + p.id + '\')">Ver detalle</button>'
+      + '<button type="button" class="btn-secondary" onclick="abrirModalGastoProyectoDesdeId(\'' + p.id + '\')">Registrar gasto</button>'
+      + '<button type="button" class="btn-primary" onclick="abrirModalPagoProyectoDesdeId(\'' + p.id + '\')">Registrar pago</button>'
+      + '</div>'
+      + '</div>';
+  }
+
+  grid.innerHTML = html;
+  return false;
+}
