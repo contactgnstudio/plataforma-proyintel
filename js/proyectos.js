@@ -159,18 +159,21 @@
     };
   }
 
-  function normalizeGasto(row) {
-    return {
-      id: row.id,
-      proyectoId: row.proyecto_id || row.proyectoId || '',
-      fecha: row.fecha || row.created_at || '',
-      categoria: row.categoria || row.tipo || 'General',
-      descripcion: row.descripcion || row.concepto || 'Gasto registrado',
-      monto: num(row.monto),
-      metodo: row.metodo || row.metodo_pago || row.forma_pago || '—',
-      createdAt: row.created_at || ''
-    };
-  }
+function normalizeGasto(row) {
+  return {
+    id: row.id,
+    proyectoId: row.proyecto_id || row.proyectoId || '',
+    fecha: row.fecha || row.created_at || '',
+    categoria: row.tipo || 'General',
+    descripcion: row.descripcion || row.referencia || 'Gasto registrado',
+    monto: num(row.monto),
+    metodo: row.metodo_pago || row.metodo || '—',
+    referencia: row.referencia || '',
+    clienteId: row.cliente_id || '',
+    cotizacionId: row.cotizacion_id || '',
+    createdAt: row.created_at || ''
+  };
+}
 
   function normalizePago(row) {
     return {
