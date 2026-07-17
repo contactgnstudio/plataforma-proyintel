@@ -1,5 +1,5 @@
 // ============================================================
-// js/finanzas.js — Estado de Cuenta + ITBMS + Registro básico
+// js/finanzas.js — Estado de Cuenta + ITBMS + Registro
 // de Gastos y Pagos enlazados a proyectos
 // ============================================================
 
@@ -32,8 +32,6 @@ function finDate(value) {
 function finEscapeHtml(str) {
   return String(str || '')
     .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
@@ -316,13 +314,10 @@ function generarReporteITBMS() {
 }
 
 // ============================================================
-// Registro básico de Gastos y Pagos desde formularios
-// (para conectar Finanzas con ProjectOS y Supabase)
+// Registro de Gastos y Pagos desde formularios de Finanzas
 // ============================================================
 
 async function guardarGastoDesdeFormulario(formValues) {
-  // formValues debe traer: fecha, referencia, descripcion, tipo, monto,
-  // metodoPago, proyectoId, cotizacionId, clienteId, notas
   var payload = {
     proyecto_id: formValues.proyectoId || null,
     cotizacion_id: formValues.cotizacionId || null,
@@ -346,8 +341,6 @@ async function guardarGastoDesdeFormulario(formValues) {
 }
 
 async function guardarPagoDesdeFormulario(formValues) {
-  // formValues debe traer: fecha, referencia, concepto, tipo, monto,
-  // metodoPago, proyectoId, cotizacionId, clienteId, estado, notas
   var payload = {
     proyecto_id: formValues.proyectoId || null,
     cotizacion_id: formValues.cotizacionId || null,
@@ -369,4 +362,150 @@ async function guardarPagoDesdeFormulario(formValues) {
 
   var saved = await window.addItem(window.STORAGE_KEYS.PAGOS, payload);
   return saved;
+}
+
+// ============================================================
+// Inicialización de formularios de Finanzas
+// ============================================================
+
+function finGetProyectoIdDesdeSelectGasto() {
+  var select = document.getElementById('gasto-proyecto');
+  return select ? (select.value || null) : null;
+}
+
+function finGetProyectoIdDesdeSelectPago() {
+  var select = document.getElementById('pago-proyecto');
+  return select ? (select.value || null) : null;
+}
+
+async function inicializarFormularioGastoFinanzas() {
+  var form = document.getElementById('form-gasto-finanzas');
+  if (!form) return;
+
+  var feedback = document.getElementById('feedback-gasto-finanzas');
+
+  function setFeedback(msg, type) {
+    if (!feedback) return;
+    feedback.className = 'form-feedback ' + (type || 'error');
+    feedback.textContent = msg || '';
+    feedback.style.display = msg ? 'block' : 'none';
+  }
+
+  form.addEventListener('submit', async function(event) {
+    event.preventDefault();
+
+    var fecha = document.getElementById('gasto-fecha') ? document.getElementById('gasto-fecha').value : '';
+    var referencia = document.getElementById('gasto-referencia') ? document.getElementById('gasto-referencia').value.trim() : '';
+    var descripcion = document.getElementById('gasto-descripcion') ? document.getElementById('gasto-descripcion').value.trim() : '';
+    var tipo = document.getElementById('gasto-tipo') ? document.getElementById('gasto-tipo').value.trim() : '';
+    var montoStr = document.getElementById('gasto-monto') ? document.getElementById('gasto-monto').value : '';
+    var metodoPago = document.getElementById('gasto-metodo') ? document.getElementById('gasto-metodo').value.trim() : '';
+    var proyectoId = finGetProyectoIdDesdeSelectGasto();
+    var notas = document.getElementById('gasto-notas') ? document.getElementById('gasto-notas').value.trim() : '';
+
+    var monto = parseFloat(montoStr || '0');
+
+    if (!fecha || !descripcion || !montoStr) {
+      setFeedback('❌ Completa al menos fecha, descripción y monto del gasto.', 'error');
+      return;
+    }
+
+    var formValues = {
+      proyectoId: proyectoId,
+      cotizacionId: null,
+      clienteId: null,
+      fecha: fecha,
+      referencia: referencia,
+      descripcion: descripcion,
+      tipo: tipo,
+      monto: monto,
+      metodoPago: metodoPago,
+      notas: notas
+    };
+
+    try {
+      var saved = await guardarGastoDesdeFormulario(formValues);
+
+      if (!saved) {
+        setFeedback('❌ No se pudo guardar el gasto.', 'error');
+        return;
+      }
+
+      setFeedback('✅ Gasto registrado correctamente.', 'success');
+      form.reset();
+
+      generarEstadoCuenta();
+      renderITBMS();
+    } catch (error) {
+      console.error('Error registrando gasto', error);
+      setFeedback('❌ Error inesperado al registrar el gasto.', 'error');
+    }
+  });
+}
+
+async function inicializarFormularioPagoFinanzas() {
+  var form = document.getElementById('form-pago-finanzas');
+  if (!form) return;
+
+  var feedback = document.getElementById('feedback-pago-finanzas');
+
+  function setFeedback(msg, type) {
+    if (!feedback) return;
+    feedback.className = 'form-feedback ' + (type || 'error');
+    feedback.textContent = msg || '';
+    feedback.style.display = msg ? 'block' : 'none';
+  }
+
+  form.addEventListener('submit', async function(event) {
+    event.preventDefault();
+
+    var fecha = document.getElementById('pago-fecha') ? document.getElementById('pago-fecha').value : '';
+    var referencia = document.getElementById('pago-referencia') ? document.getElementById('pago-referencia').value.trim() : '';
+    var concepto = document.getElementById('pago-concepto') ? document.getElementById('pago-concepto').value.trim() : '';
+    var tipo = document.getElementById('pago-tipo') ? document.getElementById('pago-tipo').value.trim() : '';
+    var montoStr = document.getElementById('pago-monto') ? document.getElementById('pago-monto').value : '';
+    var metodoPago = document.getElementById('pago-metodo') ? document.getElementById('pago-metodo').value.trim() : '';
+    var estado = document.getElementById('pago-estado') ? document.getElementById('pago-estado').value : 'registrado';
+    var proyectoId = finGetProyectoIdDesdeSelectPago();
+    var notas = document.getElementById('pago-notas') ? document.getElementById('pago-notas').value.trim() : '';
+
+    var monto = parseFloat(montoStr || '0');
+
+    if (!fecha || !concepto || !montoStr) {
+      setFeedback('❌ Completa al menos fecha, concepto y monto del pago.', 'error');
+      return;
+    }
+
+    var formValues = {
+      proyectoId: proyectoId,
+      cotizacionId: null,
+      clienteId: null,
+      fecha: fecha,
+      referencia: referencia,
+      concepto: concepto,
+      tipo: tipo,
+      monto: monto,
+      metodoPago: metodoPago,
+      estado: estado,
+      notas: notas
+    };
+
+    try {
+      var saved = await guardarPagoDesdeFormulario(formValues);
+
+      if (!saved) {
+        setFeedback('❌ No se pudo guardar el pago.', 'error');
+        return;
+      }
+
+      setFeedback('✅ Pago registrado correctamente.', 'success');
+      form.reset();
+
+      generarEstadoCuenta();
+      renderITBMS();
+    } catch (error) {
+      console.error('Error registrando pago', error);
+      setFeedback('❌ Error inesperado al registrar el pago.', 'error');
+    }
+  });
 }
