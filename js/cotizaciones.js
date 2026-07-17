@@ -1,6 +1,6 @@
 // ============================================================
 // js/cotizaciones.js — Módulo de Cotizaciones
-// Versión temporal estable para evitar llamadas legacy a setData
+// Versión conectada a Supabase: cotizaciones + cotizacion_items
 // ============================================================
 
 (function(window, document) {
@@ -13,6 +13,13 @@
     return 'USD ' + num.toFixed(2);
   };
   var escapeHtml = GNUtils.escapeHtml || function(value) { return String(value || ''); };
+  var showFeedback = GNUtils.showFeedback || function(target, message, type) {
+    var el = typeof target === 'string' ? byId(target) : target;
+    if (!el) return;
+    el.className = 'form-feedback ' + (type || 'error');
+    el.textContent = message || '';
+    el.style.display = message ? 'block' : 'none';
+  };
 
   var itemsCotizacionActual = [];
 
@@ -21,6 +28,15 @@
     return hoy.getFullYear()
       + '-' + String(hoy.getMonth() + 1).padStart(2, '0')
       + '-' + String(hoy.getDate()).padStart(2, '0');
+  }
+
+  function generarCodigoCotizacion() {
+    var now = new Date();
+    var yy = String(now.getFullYear()).slice(-2);
+    var mm = String(now.getMonth() + 1).padStart(2, '0');
+    var dd = String(now.getDate()).padStart(2, '0');
+    var nnn = String(Math.floor(Math.random() * 900) + 100);
+    return 'COT-' + yy + mm + dd + '-' + nnn;
   }
 
   async function inicializarCotizaciones() {
@@ -42,6 +58,13 @@
     return Array.isArray(rows) ? rows : [];
   }
 
+  async function obtenerCotizacionItems(cotizacionId) {
+    if (!cotizacionId || typeof window.getDataFiltered !== 'function') return [];
+    var key = window.STORAGE_KEYS && window.STORAGE_KEYS.COTIZACION_ITEMS ? window.STORAGE_KEYS.COTIZACION_ITEMS : 'cotizacion_items';
+    var rows = await window.getDataFiltered(key, { cotizacion_id: cotizacionId }, { orderBy: 'created_at', ascending: true });
+    return Array.isArray(rows) ? rows : [];
+  }
+
   async function actualizarSelectClientesCotizacion() {
     var select = byId('cot-cliente');
     if (!select || typeof window.obtenerClientes !== 'function') return;
@@ -53,7 +76,7 @@
     clientes.forEach(function(cliente) {
       var opt = document.createElement('option');
       opt.value = cliente.id;
-      opt.textContent = cliente.nombre || cliente.nombre_comercial || 'Cliente';
+      opt.textContent = cliente.nombre || cliente.nombre_comercial || cliente.empresa || 'Cliente';
       select.appendChild(opt);
     });
 
@@ -111,11 +134,19 @@
       return acc + (parseInt(item.itbms, 10) === 1 ? base * 0.07 : 0);
     }, 0);
 
-    var descuento = parseFloat((byId('cot-descuento-monto') || {}).value || 0) || 0;
+    var descuentoPct = parseFloat((byId('cot-descuento') || {}).value || 0) || 0;
+    var descuento = subtotal * (descuentoPct / 100);
     var total = Math.max(0, subtotal + itbms - descuento);
 
     if (byId('cot-subtotal')) byId('cot-subtotal').textContent = formatMoney(subtotal);
     if (byId('cot-itbms-monto')) byId('cot-itbms-monto').textContent = formatMoney(itbms);
+    if (byId('cot-descuento-monto')) {
+      if ('value' in byId('cot-descuento-monto')) {
+        byId('cot-descuento-monto').value = descuento.toFixed(2);
+      } else {
+        byId('cot-descuento-monto').textContent = formatMoney(descuento);
+      }
+    }
     if (byId('cot-total')) byId('cot-total').textContent = formatMoney(total);
 
     return {
@@ -232,39 +263,162 @@
       return ''
         + '<tr>'
         + '<td>' + escapeHtml(row.codigo || row.id || '-') + '</td>'
-        + '<td>' + escapeHtml(row.proyecto || row.titulo || '-') + '</td>'
+        + '<td>' + escapeHtml(row.proyecto || row.nombre_proyecto || row.titulo || '-') + '</td>'
         + '<td>' + escapeHtml(row.estado || 'borrador') + '</td>'
-        + '<td>' + escapeHtml(row.fecha || '-') + '</td>'
+        + '<td>' + escapeHtml(row.fecha || row.created_at || '-') + '</td>'
         + '<td>' + formatMoney(row.total || 0) + '</td>'
-        + '<td>En migración</td>'
+        + '<td>'
+        + '<button type="button" class="btn-table" onclick="verCotizacion(\'' + escapeHtml(row.id || '') + '\')">Ver</button> '
+        + '<button type="button" class="btn-table danger" onclick="eliminarCotizacion(\'' + escapeHtml(row.id || '') + '\')">Eliminar</button>'
+        + '</td>'
         + '</tr>';
     }).join('');
   }
 
   async function guardarCotizacion() {
-    window.alert('El guardado completo de cotizaciones se reconectará en la siguiente fase de migración.');
+    var feedback = byId('feedback-cotizacion') || byId('feedback-servicio');
+    var clienteId = ((byId('cot-cliente') || {}).value || '').trim();
+    var proyecto = ((byId('cot-proyecto') || {}).value || '').trim();
+    var atencion = ((byId('cot-atencion') || {}).value || '').trim();
+    var fecha = ((byId('cot-fecha') || {}).value || '').trim() || obtenerFechaHoy();
+    var alcance = ((byId('cot-alcance') || {}).value || '').trim();
+    var aplicaItbms = parseInt(((byId('cot-itbms') || {}).value || '1'), 10) === 1;
+    var descuentoPct = parseFloat(((byId('cot-descuento') || {}).value || '0')) || 0;
+
+    if (!clienteId || !proyecto) {
+      showFeedback(feedback, '❌ Selecciona un cliente y escribe el nombre del proyecto', 'error');
+      return false;
+    }
+
+    if (!itemsCotizacionActual.length) {
+      showFeedback(feedback, '❌ Agrega al menos un ítem a la cotización', 'error');
+      return false;
+    }
+
+    if (typeof window.addItem !== 'function') {
+      showFeedback(feedback, '❌ No hay conexión de datos disponible', 'error');
+      return false;
+    }
+
+    var totales = recalcularTotalesCotizacion();
+    var codigo = generarCodigoCotizacion();
+    var payload = {
+      codigo: codigo,
+      cliente_id: clienteId,
+      proyecto: proyecto,
+      atencion: atencion,
+      fecha: fecha,
+      alcance: alcance,
+      estado: 'borrador',
+      subtotal: totales.subtotal,
+      descuento: totales.descuento,
+      itbms: aplicaItbms ? totales.itbms : 0,
+      total: aplicaItbms ? totales.total : Math.max(0, totales.subtotal - totales.descuento)
+    };
+
+    var created = await window.addItem(window.STORAGE_KEYS.COTIZACIONES, payload);
+    if (!created || !created.id) {
+      showFeedback(feedback, '❌ No se pudo guardar la cotización', 'error');
+      return false;
+    }
+
+    for (var i = 0; i < itemsCotizacionActual.length; i++) {
+      var item = itemsCotizacionActual[i];
+      var itemPayload = {
+        cotizacion_id: created.id,
+        servicio_id: item.servicio_id || null,
+        descripcion: item.descripcion,
+        unidad: item.unidad || 'und',
+        cantidad: parseFloat(item.cantidad || 0) || 0,
+        precio_unitario: parseFloat(item.precio || 0) || 0,
+        aplica_itbms: parseInt(item.itbms, 10) === 1,
+        total: (parseFloat(item.cantidad || 0) || 0) * (parseFloat(item.precio || 0) || 0)
+      };
+
+      await window.addItem(window.STORAGE_KEYS.COTIZACION_ITEMS, itemPayload);
+    }
+
+    showFeedback(feedback, '✅ Cotización guardada correctamente', 'success');
+    limpiarCotizacion();
+    await renderCotizacionesGuardadas();
+
+    if (typeof window.actualizarKPIs === 'function') {
+      await window.actualizarKPIs();
+    }
+
     return false;
   }
 
+  async function verCotizacion(id) {
+    if (!id) return;
+    var rows = await obtenerCotizaciones();
+    var cotizacion = rows.find(function(row) { return row.id === id; });
+    if (!cotizacion) {
+      window.alert('No se encontró la cotización.');
+      return;
+    }
+
+    var items = await obtenerCotizacionItems(id);
+    var resumen = [
+      'Código: ' + (cotizacion.codigo || '-'),
+      'Proyecto: ' + (cotizacion.proyecto || '-'),
+      'Estado: ' + (cotizacion.estado || 'borrador'),
+      'Fecha: ' + (cotizacion.fecha || '-'),
+      'Total: ' + formatMoney(cotizacion.total || 0),
+      '',
+      'Ítems:'
+    ].concat(items.map(function(item) {
+      return '- ' + (item.descripcion || 'Servicio') + ' | ' + (item.cantidad || 0) + ' x ' + formatMoney(item.precio_unitario || 0);
+    }));
+
+    window.alert(resumen.join('\n'));
+  }
+
+  async function eliminarCotizacion(id) {
+    if (!id) return;
+    if (!window.confirm('¿Eliminar esta cotización?')) return;
+    if (typeof window.deleteItem !== 'function') return;
+
+    var items = await obtenerCotizacionItems(id);
+    for (var i = 0; i < items.length; i++) {
+      await window.deleteItem(window.STORAGE_KEYS.COTIZACION_ITEMS, items[i].id);
+    }
+
+    var ok = await window.deleteItem(window.STORAGE_KEYS.COTIZACIONES, id);
+    if (!ok) {
+      window.alert('No se pudo eliminar la cotización.');
+      return;
+    }
+
+    await renderCotizacionesGuardadas();
+
+    if (typeof window.actualizarKPIs === 'function') {
+      await window.actualizarKPIs();
+    }
+  }
+
   function vistaPreviaCotizacion() {
-    recalcularTotalesCotizacion();
-    window.alert('Vista previa temporal disponible después de completar la migración de cotizaciones.');
+    var totales = recalcularTotalesCotizacion();
+    window.alert('Vista previa\n\nSubtotal: ' + formatMoney(totales.subtotal) + '\nITBMS: ' + formatMoney(totales.itbms) + '\nDescuento: ' + formatMoney(totales.descuento) + '\nTotal: ' + formatMoney(totales.total));
   }
 
   function limpiarCotizacion() {
     itemsCotizacionActual = [];
 
-    ['cot-proyecto', 'cot-atencion', 'cot-alcance', 'cot-descuento', 'cot-descuento-monto'].forEach(function(id) {
+    ['cot-proyecto', 'cot-atencion', 'cot-alcance', 'cot-descuento'].forEach(function(id) {
       var field = byId(id);
       if (field) field.value = '';
     });
 
+    if (byId('cot-fecha')) byId('cot-fecha').value = obtenerFechaHoy();
     if (byId('cot-cliente')) byId('cot-cliente').value = '';
     if (byId('cot-item-servicio')) byId('cot-item-servicio').value = '';
+    if (byId('cot-item-cantidad-catalogo')) byId('cot-item-cantidad-catalogo').value = '1';
+    if (byId('cot-item-cantidad-manual')) byId('cot-item-cantidad-manual').value = '1';
+    if (byId('cot-itbms')) byId('cot-itbms').value = '1';
     renderItemsCotizacion();
   }
 
-  window.itemsCotizacionActual = itemsCotizacionActual;
   window.inicializarCotizaciones = inicializarCotizaciones;
   window.obtenerCotizaciones = obtenerCotizaciones;
   window.actualizarSelectServicios = actualizarSelectServicios;
@@ -276,6 +430,8 @@
   window.eliminarItemCotizacion = eliminarItemCotizacion;
   window.renderCotizacionesGuardadas = renderCotizacionesGuardadas;
   window.guardarCotizacion = guardarCotizacion;
+  window.verCotizacion = verCotizacion;
+  window.eliminarCotizacion = eliminarCotizacion;
   window.vistaPreviaCotizacion = vistaPreviaCotizacion;
   window.limpiarCotizacion = limpiarCotizacion;
 })(window, document);
