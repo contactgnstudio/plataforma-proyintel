@@ -210,9 +210,8 @@
     alert('La exportación global se reconectará después de migrar los módulos principales.');
   }
 
-  function generarEstadoCuenta() {
-    log('info', 'generarEstadoCuenta() pendiente de migración');
-  }
+  // Estas funciones de Finanzas ahora existen en js/finanzas.js,
+  // así que no redefinimos aquí su lógica para no pisarlas.
 
   function exportarEstadoCuentaPDF() {
     alert('Exportación PDF pendiente de migración.');
@@ -222,23 +221,35 @@
     alert('Exportación Excel pendiente de migración.');
   }
 
-  function generarDeclaracionITBMS() {
-    log('info', 'generarDeclaracionITBMS() pendiente de migración');
-  }
-
   function exportarITBMSPDF() {
     alert('Exportación ITBMS PDF pendiente de migración.');
   }
 
-  function filtrarProyectos() {
-    safeCall('renderProyectos');
+  // Módulo de Proyectos: estas funciones ya se implementan en js/proyectos.js,
+  // aquí solo dejamos wrappers ligeros donde hace falta.
+
+  function filtrarProyectos(estado) {
+    // Wrapper para botones que llaman filtrarProyectos() sin argumento.
+    if (typeof window.filtrarProyectos === 'function') {
+      window.filtrarProyectos(estado || 'todos');
+    }
   }
 
   function volverAListaProyectos() {
-    safeCall('renderProyectos');
+    if (typeof window.volverAListaProyectos === 'function') {
+      window.volverAListaProyectos();
+    } else {
+      safeCall('renderProyectos');
+    }
   }
 
   function switchProyectoTab(tabId) {
+    if (typeof window.switchProyectoTab === 'function') {
+      window.switchProyectoTab(tabId);
+      return;
+    }
+
+    // Fallback visual mínimo
     ['resumen', 'financiero', 'tareas', 'documentos'].forEach(function(key) {
       var pane = byId('proyecto-tab-' + key);
       if (pane) pane.style.display = key === tabId ? 'block' : 'none';
@@ -246,19 +257,50 @@
   }
 
   function abrirModalGastoProyecto() {
+    if (typeof window.abrirModalGastoProyecto === 'function') {
+      window.abrirModalGastoProyecto();
+      return;
+    }
     alert('Modal de gasto por proyecto pendiente de migración.');
   }
 
   function abrirModalPagoProyecto() {
+    if (typeof window.abrirModalPagoProyecto === 'function') {
+      window.abrirModalPagoProyecto();
+      return;
+    }
     alert('Modal de pago por proyecto pendiente de migración.');
   }
 
   function guardarNotasProyecto() {
+    if (typeof window.guardarNotasProyecto === 'function') {
+      window.guardarNotasProyecto();
+      return;
+    }
     alert('Notas de proyecto pendientes de migración.');
   }
 
   function sugerirGrupoIA() {
     alert('Sugerencia IA pendiente de migración.');
+  }
+
+  async function inicializarFinanzas() {
+    // Inicializa módulo Finanzas: select de proyectos, estado de cuenta, ITBMS y formularios.
+    if (typeof window.actualizarSelectProyectosFinanzas === 'function') {
+      window.actualizarSelectProyectosFinanzas();
+    }
+    if (typeof window.generarEstadoCuenta === 'function') {
+      window.generarEstadoCuenta();
+    }
+    if (typeof window.renderITBMS === 'function') {
+      window.renderITBMS();
+    }
+    if (typeof window.inicializarFormularioGastoFinanzas === 'function') {
+      window.inicializarFormularioGastoFinanzas();
+    }
+    if (typeof window.inicializarFormularioPagoFinanzas === 'function') {
+      window.inicializarFormularioPagoFinanzas();
+    }
   }
 
   async function inicializarAppGNStudio() {
@@ -270,6 +312,7 @@
     setDefaultDates();
     setTodayMonth();
 
+    // Inicializamos módulos principales
     await safeCallAsync('inicializarClientes');
     await safeCallAsync('inicializarCatalogo');
     safeCall('inicializarGrupos');
@@ -295,10 +338,8 @@
   window.actualizarKPIs = actualizarKPIs;
   window.actualizarVistaJSON = actualizarVistaJSON;
   window.exportarTodo = exportarTodo;
-  window.generarEstadoCuenta = generarEstadoCuenta;
   window.exportarEstadoCuentaPDF = exportarEstadoCuentaPDF;
   window.exportarEstadoCuentaExcel = exportarEstadoCuentaExcel;
-  window.generarDeclaracionITBMS = generarDeclaracionITBMS;
   window.exportarITBMSPDF = exportarITBMSPDF;
   window.filtrarProyectos = filtrarProyectos;
   window.volverAListaProyectos = volverAListaProyectos;
@@ -310,6 +351,7 @@
   window.inicializarAppGNStudio = inicializarAppGNStudio;
   window.renderActividadReciente = renderActividadReciente;
   window.renderPipelineMini = renderPipelineMini;
+  window.inicializarFinanzas = inicializarFinanzas;
 
   document.addEventListener('DOMContentLoaded', function() {
     if (typeof window.gnAuthInit === 'function') {
