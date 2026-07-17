@@ -113,11 +113,22 @@ async function renderClientes() {
 
 async function actualizarSelectClientes() {
   var clientes = await obtenerClientes();
-  var selects = document.querySelectorAll('.select-cliente');
+  var selects = Array.prototype.slice.call(document.querySelectorAll('.select-cliente'));
+  var selectCotizacion = document.getElementById('cot-cliente');
+
+  if (selectCotizacion) {
+    selects.push(selectCotizacion);
+  }
 
   selects.forEach(function(sel) {
+    if (!sel) return;
+
     var current = sel.value;
-    sel.innerHTML = '<option value="">-- Seleccionar cliente --</option>';
+    var placeholder = sel.id === 'cot-cliente'
+      ? '<option value="">Selecciona un cliente</option>'
+      : '<option value="">-- Seleccionar cliente --</option>';
+
+    sel.innerHTML = placeholder;
 
     clientes.forEach(function(c) {
       var opt = document.createElement('option');
