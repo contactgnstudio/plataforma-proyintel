@@ -123,39 +123,48 @@ function generarEstadoCuenta() {
   }
 
   if (proyectoId) {
-    gastos = gastos.filter(function(g) { return (g.proyectoId || '') === proyectoId; });
-    pagos = pagos.filter(function(p) { return (p.proyectoId || '') === proyectoId; });
-  }
+  gastos = gastos.filter(function(g) {
+    var pid = g.proyecto_id || g.proyectoId || '';
+    return String(pid) === String(proyectoId);
+  });
+
+  pagos = pagos.filter(function(p) {
+    var pid = p.proyecto_id || p.proyectoId || '';
+    return String(pid) === String(proyectoId);
+  });
+}
 
   var movimientos = [];
 
   if (tipo !== 'ingresos') {
-    for (var i = 0; i < gastos.length; i++) {
-      movimientos.push({
-        fecha: gastos[i].fecha || '',
-        tipo: 'gasto',
-        proyecto: finProjectLabel(gastos[i].proyectoId, proyectosMap),
-        descripcion: gastos[i].descripcion || 'Gasto',
-        ingreso: 0,
-        gasto: parseFloat(gastos[i].monto) || 0,
-        metodo: gastos[i].metodo || ''
-      });
-    }
+  for (var i = 0; i < gastos.length; i++) {
+    var gid = gastos[i].proyecto_id || gastos[i].proyectoId || '';
+    movimientos.push({
+      fecha: gastos[i].fecha || '',
+      tipo: 'gasto',
+      proyecto: finProjectLabel(gid, proyectosMap),
+      descripcion: gastos[i].descripcion || gastos[i].referencia || 'Gasto',
+      ingreso: 0,
+      gasto: parseFloat(gastos[i].monto) || 0,
+      metodo: gastos[i].metodo_pago || gastos[i].metodo || ''
+    });
   }
+}
 
-  if (tipo !== 'gastos') {
-    for (var j = 0; j < pagos.length; j++) {
-      movimientos.push({
-        fecha: pagos[j].fecha || '',
-        tipo: 'pago',
-        proyecto: finProjectLabel(pagos[j].proyectoId, proyectosMap) || pagos[j].cliente || 'General',
-        descripcion: pagos[j].concepto || 'Pago',
-        ingreso: parseFloat(pagos[j].monto) || 0,
-        gasto: 0,
-        metodo: pagos[j].metodo || ''
-      });
-    }
+ if (tipo !== 'gastos') {
+  for (var j = 0; j < pagos.length; j++) {
+    var pid = pagos[j].proyecto_id || pagos[j].proyectoId || '';
+    movimientos.push({
+      fecha: pagos[j].fecha || '',
+      tipo: 'pago',
+      proyecto: finProjectLabel(pid, proyectosMap) || pagos[j].cliente || 'General',
+      descripcion: pagos[j].concepto || pagos[j].referencia || 'Pago',
+      ingreso: parseFloat(pagos[j].monto) || 0,
+      gasto: 0,
+      metodo: pagos[j].metodo_pago || pagos[j].metodo || ''
+    });
   }
+}
 
   movimientos.sort(function(a, b) {
     return new Date(a.fecha) - new Date(b.fecha);
