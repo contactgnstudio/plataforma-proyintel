@@ -1,33 +1,56 @@
 // ============================================================
-// js/proyectos.js — Módulo de Proyectos (Supabase estable)
-// Mantiene lista + detalle, elimina seeds automáticos y setData en tablas migradas
+// js/proyectos.js — ProjectOS completo para GN Studio OS
+// Compatible con la UI actual en index.html
+// Enfoque: lista + detalle + tabs + tareas + gastos + pagos + notas
+// Fuente de datos: Supabase mediante helpers globales existentes
 // ============================================================
 
 (function(window, document) {
   'use strict';
 
   var PROYECTO_ACTUAL = null;
+  var CLIENTES_CACHE = [];
+  var CHART_PROYECTO = null;
 
-  function el(id) {
+  function byId(id) {
     return document.getElementById(id);
   }
 
-  function esc(str) {
-    return String(str || '')
+  function qsa(selector) {
+    return Array.prototype.slice.call(document.querySelectorAll(selector));
+  }
+
+  function esc(value) {
+    return String(value == null ? '' : value)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-      .replace(/\"/g, '&quot;')
+      .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
   }
 
-  function money(value) {
-    var n = parseFloat(value || 0) || 0;
-    if (typeof window.formatMoney === 'function') return window.formatMoney(n);
-    return 'USD ' + n.toFixed(2);
+  function text(value, fallback) {
+    if (value === null || value === undefined || value === '') return fallback || '—';
+    return String(value);
   }
 
-  function dateFmt(value) {
+  function num(value) {
+    var n = parseFloat(value);
+    return isNaN(n) ? 0 : n;
+  }
+
+  function intVal(value) {
+    var n = parseInt(value, 10);
+    return isNaN(n) ? 0 : n;
+  }
+
+  function money(value) {
+    var n = num(value);
+    if (typeof window.formatMoney === 'function') return window.formatMoney(n);
+    return '$' + n.toFixed(2);
+  }
+
+  function formatDateSafe(value) {
     if (!value) return '—';
     if (typeof window.formatDate === 'function') return window.formatDate(value);
     return value;
@@ -41,7 +64,7 @@
   function estadoLabel(estado) {
     var map = {
       pendiente: 'Pendiente',
-      en_progreso: 'En progreso',
+      en_progreso: 'En Progreso',
       pausado: 'Pausado',
       completado: 'Completado',
       cancelado: 'Cancelado'
@@ -49,137 +72,212 @@
     return map[estado] || estado || 'Pendiente';
   }
 
-  function proyKey(name, fallback) {
+  function estadoColor(estado) {
+    var map = {
+      pendiente: '#f59e0b',
+      en_progreso: '#4f8cff',
+      pausado: '#a78bfa',
+      completado: '#6bbd45',
+      cancelado: '#ef4444'
+    };
+    return map[estado] || '#6bbd45';
+  }
+
+  function getStorageKey(name, fallback) {
     if (window.STORAGE_KEYS && window.STORAGE_KEYS[name]) return window.STORAGE_KEYS[name];
     return fallback;
   }
 
   async function getAll(tableName, options) {
     if (typeof window.getData !== 'function') return [];
-    var data = await window.getData(tableName, options || {});
-    return Array.isArray(data) ? data : [];
+    var rows = await window.getData(tableName, options || {});
+    return Array.isArray(rows) ? rows : [];
   }
 
   async function getFiltered(tableName, filters, options) {
     if (typeof window.getDataFiltered !== 'function') return [];
-    var data = await window.getDataFiltered(tableName, filters || {}, options || {});
-    return Array.isArray(data) ? data : [];
+    var rows = await window.getDataFiltered(tableName, filters || {}, options || {});
+    return Array.isArray(rows) ? rows : [];
+  }
+
+  async function insertRow(tableName, payload) {
+    if (typeof window.addItem !== 'function') return null;
+    return await window.addItem(tableName, payload);
+  }
+
+  async function updateRow(tableName, id, payload) {
+    if (typeof window.updateItem !== 'function') return false;
+    return await window.updateItem(tableName, id, payload);
+  }
+
+  function normalizeCliente(row) {
+    return {
+      id: row && row.id ? row.id : '',
+      nombre: row && (row.nombre || row.nombre_comercial || row.empresa || row.razon_social) ? (row.nombre || row.nombre_comercial || row.empresa || row.razon_social) : 'Cliente'
+    };
+  }
+
+  function normalizeProyecto(row) {
+    return {
+      id: row.id,
+      nombre: row.nombre || 'Proyecto',
+      clienteId: row.clienteId || row.cliente_id || '',
+      presupuesto: num(row.presupuesto),
+      fechaInicio: row.fechaInicio || row.fecha_inicio || row.created_at || '',
+      estado: row.estado || 'pendiente',
+      avance: intVal(row.avance),
+      alcance: row.alcance || '',
+      notas: row.notas || '',
+      createdAt: row.createdAt || row.created_at || row.fecha_inicio || '',
+      updatedAt: row.updatedAt || row.updated_at || '',
+      raw: row
+    };
+  }
+
+  function normalizeGasto(row) {
+    return {
+      id: row.id,
+      proyectoId: row.proyectoId || row.proyecto_id || '',
+      fecha: row.fecha || row.created_at || '',
+      categoria: row.categoria || row.tipo || 'General',
+      descripcion: row.descripcion || row.concepto || 'Gasto registrado',
+      monto: num(row.monto),
+      metodo: row.metodo || row.metodo_pago || row.forma_pago || '—',
+      createdAt: row.created_at || ''
+    };
+  }
+
+  function normalizePago(row) {
+    return {
+      id: row.id,
+      proyectoId: row.proyectoId || row.proyecto_id || '',
+      fecha: row.fecha || row.created_at || '',
+      concepto: row.concepto || row.descripcion || 'Pago recibido',
+      monto: num(row.monto),
+      metodo: row.metodo || row.metodo_pago || row.forma_pago || '—',
+      estado: row.estado || 'registrado',
+      createdAt: row.created_at || ''
+    };
+  }
+
+  function normalizeTarea(row) {
+    return {
+      id: row.id,
+      proyectoId: row.proyectoId || row.proyecto_id || '',
+      titulo: row.titulo || row.nombre || 'Tarea',
+      asignado: row.asignado || row.responsable || '',
+      fechaLimite: row.fecha_limite || row.fechaLimite || '',
+      estado: row.estado || 'pendiente',
+      descripcion: row.descripcion || '',
+      createdAt: row.created_at || ''
+    };
+  }
+
+  async function obtenerClientes() {
+    var rows = await getAll(getStorageKey('CLIENTES', 'clientes'));
+    CLIENTES_CACHE = rows.map(normalizeCliente);
+    return CLIENTES_CACHE;
+  }
+
+  async function ensureClientesCache() {
+    if (!CLIENTES_CACHE.length) {
+      await obtenerClientes();
+    }
+    return CLIENTES_CACHE;
+  }
+
+  async function getClienteNombre(clienteId) {
+    if (!clienteId) return 'Sin cliente';
+    await ensureClientesCache();
+    for (var i = 0; i < CLIENTES_CACHE.length; i++) {
+      if (String(CLIENTES_CACHE[i].id) === String(clienteId)) return CLIENTES_CACHE[i].nombre;
+    }
+    return 'Sin cliente';
   }
 
   async function obtenerProyectos() {
-    return await getAll(proyKey('PROYECTOS', 'proyectos'));
+    var rows = await getAll(getStorageKey('PROYECTOS', 'proyectos'));
+    var proyectos = rows.map(normalizeProyecto);
+    for (var i = 0; i < proyectos.length; i++) {
+      proyectos[i].clienteNombre = await getClienteNombre(proyectos[i].clienteId);
+    }
+    return proyectos;
   }
 
   async function obtenerProyectoPorId(id) {
     var proyectos = await obtenerProyectos();
     for (var i = 0; i < proyectos.length; i++) {
-      if (proyectos[i].id === id) return proyectos[i];
+      if (String(proyectos[i].id) === String(id)) return proyectos[i];
     }
     return null;
   }
 
-  async function obtenerClientesProyecto() {
-    return await getAll(proyKey('CLIENTES', 'clientes'));
-  }
-
   async function obtenerGastosProyecto(proyectoId) {
-    if (!proyectoId) return [];
-    var rows = await getFiltered(proyKey('GASTOS', 'gastos'), { proyecto_id: proyectoId }, { orderBy: 'created_at', ascending: false });
-    return rows.map(function(row) {
-      return Object.assign({}, row, {
-        proyectoId: row.proyectoId || row.proyecto_id || '',
-        creadoEn: row.creadoEn || row.created_at || row.fecha || ''
-      });
-    });
+    var rows = await getFiltered(getStorageKey('GASTOS', 'gastos'), { proyecto_id: proyectoId }, { orderBy: 'fecha', ascending: false });
+    return rows.map(normalizeGasto);
   }
 
   async function obtenerPagosProyecto(proyectoId) {
-    if (!proyectoId) return [];
-    var rows = await getFiltered(proyKey('PAGOS', 'pagos'), { proyecto_id: proyectoId }, { orderBy: 'created_at', ascending: false });
-    return rows.map(function(row) {
-      return Object.assign({}, row, {
-        proyectoId: row.proyectoId || row.proyecto_id || '',
-        creadoEn: row.creadoEn || row.created_at || row.fecha || ''
-      });
-    });
+    var rows = await getFiltered(getStorageKey('PAGOS', 'pagos'), { proyecto_id: proyectoId }, { orderBy: 'fecha', ascending: false });
+    return rows.map(normalizePago);
   }
 
   async function obtenerTareasProyecto(proyectoId) {
-    if (!proyectoId) return [];
-    var key = window.STORAGE_KEYS && window.STORAGE_KEYS.TAREAS ? window.STORAGE_KEYS.TAREAS : 'tareas';
-    var rows = await getFiltered(key, { proyecto_id: proyectoId }, { orderBy: 'created_at', ascending: false });
-    return rows.map(function(row) {
-      return Object.assign({}, row, {
-        proyectoId: row.proyectoId || row.proyecto_id || '',
-        titulo: row.titulo || row.nombre || 'Tarea',
-        asignado: row.asignado || row.responsable || 'Sin asignar'
-      });
-    });
+    var rows = await getFiltered(getStorageKey('TAREAS', 'tareas'), { proyecto_id: proyectoId }, { orderBy: 'created_at', ascending: false });
+    return rows.map(normalizeTarea);
   }
 
   async function actualizarSelectClientesProyecto() {
-    var select = el('proy-cliente');
+    var select = byId('proy-cliente');
     if (!select) return;
 
-    var clientes = await obtenerClientesProyecto();
-    var current = select.value;
-    select.innerHTML = '<option value="">Selecciona un cliente</option>';
+    var clientes = await obtenerClientes();
+    var currentValue = select.value;
+    var html = '<option value="">Selecciona un cliente</option>';
 
-    clientes.forEach(function(cliente) {
-      var opt = document.createElement('option');
-      opt.value = cliente.id;
-      opt.textContent = cliente.nombre || cliente.nombre_comercial || cliente.empresa || 'Cliente';
-      select.appendChild(opt);
-    });
+    for (var i = 0; i < clientes.length; i++) {
+      html += '<option value="' + esc(clientes[i].id) + '">' + esc(clientes[i].nombre) + '</option>';
+    }
 
-    if (current) select.value = current;
+    select.innerHTML = html;
+    if (currentValue) select.value = currentValue;
   }
 
   async function guardarProyecto(event) {
     if (event) event.preventDefault();
 
-    var clienteSelect = el('proy-cliente');
-    var nombre = el('proy-nombre') ? el('proy-nombre').value.trim() : '';
-    var clienteId = clienteSelect ? clienteSelect.value : '';
-    var feedback = el('feedback-proyecto');
+    var form = byId('formProyecto');
+    if (!form) return false;
+
+    var nombre = byId('proy-nombre') ? byId('proy-nombre').value.trim() : '';
+    var clienteId = byId('proy-cliente') ? byId('proy-cliente').value : '';
+    var presupuesto = byId('proy-presupuesto') ? byId('proy-presupuesto').value : 0;
+    var fechaInicio = byId('proy-fecha') ? byId('proy-fecha').value : todayISO();
+    var alcance = byId('proy-alcance') ? byId('proy-alcance').value.trim() : '';
+    var feedback = byId('feedback-proyecto');
 
     if (!nombre || !clienteId) {
       if (feedback) {
         feedback.className = 'form-feedback error';
-        feedback.textContent = '❌ Completa al menos nombre y cliente del proyecto';
+        feedback.textContent = '❌ Completa nombre y cliente del proyecto';
         feedback.style.display = 'block';
       }
       return false;
-    }
-
-    var clienteNombre = '';
-    if (clienteSelect && clienteSelect.selectedIndex >= 0) {
-      clienteNombre = clienteSelect.options[clienteSelect.selectedIndex].text || '';
     }
 
     var payload = {
       nombre: nombre,
       cliente_id: clienteId,
-      cliente_nombre: clienteNombre,
-      presupuesto: parseFloat(el('proy-presupuesto') ? el('proy-presupuesto').value : 0) || 0,
-      fecha_inicio: el('proy-fecha') ? el('proy-fecha').value : todayISO(),
+      presupuesto: num(presupuesto),
+      fecha_inicio: fechaInicio || todayISO(),
       estado: 'en_progreso',
       avance: 0,
-      alcance: el('proy-alcance') ? el('proy-alcance').value.trim() : '',
-      notas: '',
-      created_at: new Date().toISOString()
+      alcance: alcance,
+      notas: ''
     };
 
-    if (typeof window.addItem !== 'function') {
-      if (feedback) {
-        feedback.className = 'form-feedback error';
-        feedback.textContent = '❌ No hay conexión de datos disponible';
-        feedback.style.display = 'block';
-      }
-      return false;
-    }
+    var result = await insertRow(getStorageKey('PROYECTOS', 'proyectos'), payload);
 
-    var result = await window.addItem(proyKey('PROYECTOS', 'proyectos'), payload);
     if (!result) {
       if (feedback) {
         feedback.className = 'form-feedback error';
@@ -191,209 +289,81 @@
 
     if (feedback) {
       feedback.className = 'form-feedback success';
-      feedback.textContent = '✅ Proyecto guardado correctamente';
+      feedback.textContent = '✅ Proyecto creado correctamente';
       feedback.style.display = 'block';
     }
 
-    if (el('formProyecto')) el('formProyecto').reset();
-    if (el('proy-fecha')) el('proy-fecha').value = todayISO();
+    form.reset();
+    if (byId('proy-fecha')) byId('proy-fecha').value = todayISO();
 
-    await renderProyectos();
+    await renderProyectos('todos');
     if (typeof window.actualizarKPIs === 'function') await window.actualizarKPIs();
     if (typeof window.actualizarSelectProyectosFinanzas === 'function') await window.actualizarSelectProyectosFinanzas();
 
     return false;
   }
 
+  function renderProyectoCard(p) {
+    var progreso = Math.max(0, Math.min(100, intVal(p.avance)));
+    var color = estadoColor(p.estado);
+
+    return ''
+      + '<div class="project-card" style="border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px;background:rgba(255,255,255,0.02);">'
+      + '  <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;">'
+      + '    <div>'
+      + '      <h3 style="margin:0 0 6px;">' + esc(p.nombre) + '</h3>'
+      + '      <div style="opacity:.8;">' + esc(p.clienteNombre || 'Sin cliente') + '</div>'
+      + '    </div>'
+      + '    <span class="estado-badge" style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + '55;">' + esc(estadoLabel(p.estado)) + '</span>'
+      + '  </div>'
+      + '  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:14px;">'
+      + '    <div><small>Presupuesto</small><br><strong>' + money(p.presupuesto) + '</strong></div>'
+      + '    <div><small>Inicio</small><br><strong>' + esc(formatDateSafe(p.fechaInicio)) + '</strong></div>'
+      + '    <div><small>Avance</small><br><strong>' + progreso + '%</strong></div>'
+      + '  </div>'
+      + '  <div style="margin-top:12px;height:10px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden;">'
+      + '    <div style="width:' + progreso + '%;height:100%;background:linear-gradient(90deg,#6bbd45,#4f8cff);"></div>'
+      + '  </div>'
+      + '  <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">'
+      + '    <button type="button" class="btn-primary" onclick="verProyecto(\'' + esc(p.id) + '\')">Ver Detalle</button>'
+      + '  </div>'
+      + '</div>';
+  }
+
   async function renderProyectos(filtro) {
-    var grid = el('proyectos-grid');
-    if (!grid) return;
+    var grid = byId('proyectos-grid');
+    if (!grid) return false;
 
     var proyectos = await obtenerProyectos();
-    proyectos = proyectos.map(function(row) {
-      return Object.assign({}, row, {
-        clienteId: row.clienteId || row.cliente_id || '',
-        clienteNombre: row.clienteNombre || row.cliente_nombre || 'Sin cliente',
-        fechaInicio: row.fechaInicio || row.fecha_inicio || row.created_at || '',
-        creadoEn: row.creadoEn || row.created_at || row.fecha_inicio || '',
-        avance: parseInt(row.avance || 0, 10) || 0,
-        presupuesto: parseFloat(row.presupuesto || 0) || 0,
-        alcance: row.alcance || '',
-        notas: row.notas || ''
-      });
-    });
 
     if (filtro && filtro !== 'todos') {
       proyectos = proyectos.filter(function(p) {
-        return (p.estado || '') === filtro;
+        return p.estado === filtro;
       });
     }
 
     proyectos.sort(function(a, b) {
-      return new Date(b.creadoEn || 0) - new Date(a.creadoEn || 0);
+      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
     });
 
     if (!proyectos.length) {
       grid.innerHTML = '<div class="empty-state">No hay proyectos registrados</div>';
-      return;
+      return false;
     }
 
-    var html = '';
-
-    for (var i = 0; i < proyectos.length; i++) {
-      var p = proyectos[i];
-      html += ''
-        + '<div class="project-card" style="border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px;margin-bottom:14px;">'
-        + '<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">'
-        + '<div>'
-        + '<div style="font-weight:700;font-size:1.05rem;">' + esc(p.nombre || 'Proyecto') + '</div>'
-        + '<div style="opacity:.8;margin-top:4px;">' + esc(p.clienteNombre || 'Sin cliente') + '</div>'
-        + '</div>'
-        + '<span style="padding:6px 10px;border-radius:999px;background:rgba(107,189,69,0.15);border:1px solid rgba(107,189,69,0.35);font-size:.88rem;">' + esc(estadoLabel(p.estado)) + '</span>'
-        + '</div>'
-        + '<div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">'
-        + '<div><strong>Presupuesto:</strong><br>' + money(p.presupuesto) + '</div>'
-        + '<div><strong>Inicio:</strong><br>' + dateFmt(p.fechaInicio) + '</div>'
-        + '<div><strong>Avance:</strong><br>' + (parseInt(p.avance, 10) || 0) + '%</div>'
-        + '</div>'
-        + '<div style="margin-top:12px;">'
-        + '<div style="height:10px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden;">'
-        + '<div style="height:100%;width:' + Math.min(100, Math.max(0, parseInt(p.avance, 10) || 0)) + '%;background:linear-gradient(90deg,#6bbd45,#4f8cff);"></div>'
-        + '</div>'
-        + '</div>'
-        + '<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">'
-        + '<button type="button" class="btn-secondary" onclick="verProyecto(\'' + esc(p.id || '') + '\')">Ver detalle</button>'
-        + '</div>'
-        + '</div>';
-    }
-
-    grid.innerHTML = html;
-  }
-
-  async function verProyecto(id) {
-    var proyecto = await obtenerProyectoPorId(id);
-    if (!proyecto) return false;
-    PROYECTO_ACTUAL = Object.assign({}, proyecto, {
-      clienteId: proyecto.clienteId || proyecto.cliente_id || '',
-      clienteNombre: proyecto.clienteNombre || proyecto.cliente_nombre || 'Sin cliente',
-      fechaInicio: proyecto.fechaInicio || proyecto.fecha_inicio || proyecto.created_at || '',
-      creadoEn: proyecto.creadoEn || proyecto.created_at || proyecto.fecha_inicio || '',
-      avance: parseInt(proyecto.avance || 0, 10) || 0,
-      presupuesto: parseFloat(proyecto.presupuesto || 0) || 0,
-      alcance: proyecto.alcance || '',
-      notas: proyecto.notas || ''
-    });
-    await renderDetalleProyecto(PROYECTO_ACTUAL);
+    grid.innerHTML = proyectos.map(renderProyectoCard).join('');
     return false;
-  }
-
-  async function renderDetalleProyecto(proyecto) {
-    var container = el('proyecto-detalle');
-    if (!container) return;
-
-    var tareas = await obtenerTareasProyecto(proyecto.id);
-    var pagos = await obtenerPagosProyecto(proyecto.id);
-    var gastos = await obtenerGastosProyecto(proyecto.id);
-
-    var totalGastos = gastos.reduce(function(acc, item) { return acc + (parseFloat(item.monto || 0) || 0); }, 0);
-    var totalPagos = pagos.reduce(function(acc, item) { return acc + (parseFloat(item.monto || 0) || 0); }, 0);
-    var porCobrar = Math.max(0, (parseFloat(proyecto.presupuesto || 0) || 0) - totalPagos);
-    var utilidad = totalPagos - totalGastos;
-
-    var tareasHtml = tareas.length
-      ? tareas.map(function(t) {
-          return ''
-            + '<div style="border:1px solid rgba(255,255,255,0.08);padding:10px 12px;border-radius:12px;margin-bottom:8px;">'
-            + '<div style="font-weight:600;">' + esc(t.titulo || 'Tarea') + '</div>'
-            + '<div style="opacity:.8;margin-top:4px;">' + esc(t.asignado || 'Sin asignar') + ' · ' + esc(t.estado || 'pendiente') + '</div>'
-            + '</div>';
-        }).join('')
-      : '<div class="empty-state">No hay tareas registradas</div>';
-
-    var gastosHtml = gastos.length
-      ? gastos.map(function(g) {
-          return '<tr><td>' + esc(dateFmt(g.fecha || g.created_at || '')) + '</td><td>' + esc(g.descripcion || 'Gasto') + '</td><td>' + money(g.monto || 0) + '</td></tr>';
-        }).join('')
-      : '<tr><td colspan="3" class="empty-state">No hay gastos registrados</td></tr>';
-
-    var pagosHtml = pagos.length
-      ? pagos.map(function(p) {
-          return '<tr><td>' + esc(dateFmt(p.fecha || p.created_at || '')) + '</td><td>' + esc(p.descripcion || p.metodo || 'Pago') + '</td><td>' + money(p.monto || 0) + '</td></tr>';
-        }).join('')
-      : '<tr><td colspan="3" class="empty-state">No hay pagos registrados</td></tr>';
-
-    container.style.display = 'block';
-    container.innerHTML = ''
-      + '<div style="border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:18px;">'
-      + '<div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;">'
-      + '<div>'
-      + '<h3 style="margin:0 0 8px;">' + esc(proyecto.nombre || 'Proyecto') + '</h3>'
-      + '<div style="opacity:.8;">' + esc(proyecto.clienteNombre || 'Sin cliente') + '</div>'
-      + '</div>'
-      + '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
-      + '<button type="button" class="btn-secondary" onclick="volverAListaProyectos()">Volver</button>'
-      + '</div>'
-      + '</div>'
-      + '<div style="margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">'
-      + '<div><strong>Estado</strong><br>' + esc(estadoLabel(proyecto.estado)) + '</div>'
-      + '<div><strong>Fecha de inicio</strong><br>' + dateFmt(proyecto.fechaInicio) + '</div>'
-      + '<div><strong>Presupuesto</strong><br>' + money(proyecto.presupuesto) + '</div>'
-      + '<div><strong>Avance</strong><br>' + (parseInt(proyecto.avance, 10) || 0) + '%</div>'
-      + '</div>'
-      + '<div style="margin-top:16px;">'
-      + '<strong>Alcance</strong>'
-      + '<div style="margin-top:6px;opacity:.9;">' + esc(proyecto.alcance || 'Sin alcance definido') + '</div>'
-      + '</div>'
-      + '<div style="margin-top:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">'
-      + '<div><strong>Gastos</strong><br>' + money(totalGastos) + '</div>'
-      + '<div><strong>Pagos</strong><br>' + money(totalPagos) + '</div>'
-      + '<div><strong>Por cobrar</strong><br>' + money(porCobrar) + '</div>'
-      + '<div><strong>Utilidad</strong><br>' + money(utilidad) + '</div>'
-      + '</div>'
-      + '<div style="margin-top:20px;">'
-      + '<h4 style="margin:0 0 10px;">Notas</h4>'
-      + '<textarea id="proyecto-notas" rows="4" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:10px;color:#fff;box-sizing:border-box;">' + esc(proyecto.notas || '') + '</textarea>'
-      + '<div style="margin-top:10px;"><button type="button" class="btn-primary" onclick="guardarNotasProyecto()">Guardar notas</button></div>'
-      + '</div>'
-      + '<div style="margin-top:24px;">'
-      + '<h4 style="margin:0 0 10px;">Tareas</h4>'
-      + tareasHtml
-      + '</div>'
-      + '<div style="margin-top:24px;">'
-      + '<h4 style="margin:0 0 10px;">Gastos</h4>'
-      + '<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Descripción</th><th>Monto</th></tr></thead><tbody>' + gastosHtml + '</tbody></table></div>'
-      + '</div>'
-      + '<div style="margin-top:24px;">'
-      + '<h4 style="margin:0 0 10px;">Pagos</h4>'
-      + '<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Descripción</th><th>Monto</th></tr></thead><tbody>' + pagosHtml + '</tbody></table></div>'
-      + '</div>'
-      + '</div>';
-  }
-
-  function volverAListaProyectos() {
-    var detalle = el('proyecto-detalle');
-    if (detalle) detalle.style.display = 'none';
-    PROYECTO_ACTUAL = null;
-    return false;
-  }
-
-  function switchProyectoTab(tab) {
-    return tab || false;
   }
 
   async function buscarProyectos() {
-    var input = el('buscar-proyecto');
-    var term = input ? input.value.trim().toLowerCase() : '';
-    var grid = el('proyectos-grid');
+    var input = byId('buscar-proyecto');
+    var grid = byId('proyectos-grid');
     if (!grid) return false;
 
+    var term = input ? input.value.trim().toLowerCase() : '';
     var proyectos = await obtenerProyectos();
-    proyectos = proyectos.map(function(row) {
-      return Object.assign({}, row, {
-        clienteNombre: row.clienteNombre || row.cliente_nombre || 'Sin cliente',
-        alcance: row.alcance || ''
-      });
-    }).filter(function(p) {
+
+    proyectos = proyectos.filter(function(p) {
       if (!term) return true;
       return (p.nombre || '').toLowerCase().indexOf(term) !== -1
         || (p.clienteNombre || '').toLowerCase().indexOf(term) !== -1
@@ -405,53 +375,359 @@
       return false;
     }
 
-    var html = '';
-    for (var i = 0; i < proyectos.length; i++) {
-      var p = proyectos[i];
-      html += ''
-        + '<div class="project-card" style="border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px;margin-bottom:14px;">'
-        + '<div style="font-weight:700;font-size:1.05rem;">' + esc(p.nombre || 'Proyecto') + '</div>'
-        + '<div style="opacity:.8;margin-top:4px;">' + esc(p.clienteNombre || 'Sin cliente') + '</div>'
-        + '<div style="margin-top:14px;"><button type="button" class="btn-secondary" onclick="verProyecto(\'' + esc(p.id || '') + '\')">Ver detalle</button></div>'
-        + '</div>';
-    }
-    grid.innerHTML = html;
+    grid.innerHTML = proyectos.map(renderProyectoCard).join('');
     return false;
   }
 
   async function filtrarProyectos(estado) {
     await renderProyectos(estado || 'todos');
-    var botones = document.querySelectorAll('[onclick*="filtrarProyectos("]');
-    for (var i = 0; i < botones.length; i++) {
-      botones[i].classList.remove('active');
-      var onclick = botones[i].getAttribute('onclick') || '';
-      if (onclick.indexOf("'" + (estado || 'todos') + "'") !== -1 || onclick.indexOf('"' + (estado || 'todos') + '"') !== -1) {
-        botones[i].classList.add('active');
+
+    qsa('[onclick*="filtrarProyectos("]').forEach(function(btn) {
+      btn.classList.remove('active');
+      var onclick = btn.getAttribute('onclick') || '';
+      if (
+        onclick.indexOf("'" + (estado || 'todos') + "'") !== -1 ||
+        onclick.indexOf('"' + (estado || 'todos') + '"') !== -1
+      ) {
+        btn.classList.add('active');
+      }
+    });
+
+    return false;
+  }
+
+  function setText(id, value) {
+    var el = byId(id);
+    if (el) el.textContent = value;
+  }
+
+  function setValue(id, value) {
+    var el = byId(id);
+    if (el) el.value = value;
+  }
+
+  function setDisplay(id, show) {
+    var el = byId(id);
+    if (el) el.style.display = show ? 'block' : 'none';
+  }
+
+  function actualizarProgresoVisual(avance) {
+    var pct = Math.max(0, Math.min(100, intVal(avance)));
+    var txt = byId('proyecto-progreso-pct');
+    if (txt) txt.textContent = pct + '%';
+
+    var wrap = byId('proyecto-progreso-visual');
+    if (wrap) {
+      var circles = wrap.querySelectorAll('circle');
+      if (circles.length > 1) {
+        var circumference = 283;
+        var offset = circumference - (pct / 100) * circumference;
+        circles[1].setAttribute('stroke-dashoffset', String(offset));
       }
     }
+  }
+
+  function renderTimeline(proyecto, tareas, gastos, pagos) {
+    var container = byId('proyecto-timeline');
+    if (!container) return;
+
+    var eventos = [];
+
+    if (proyecto.fechaInicio) {
+      eventos.push({
+        fecha: proyecto.fechaInicio,
+        icono: '🚀',
+        titulo: 'Inicio del proyecto',
+        descripcion: 'Se registró el inicio de ' + proyecto.nombre
+      });
+    }
+
+    tareas.forEach(function(t) {
+      eventos.push({
+        fecha: t.fechaLimite || t.createdAt || '',
+        icono: '✅',
+        titulo: t.titulo,
+        descripcion: 'Tarea ' + (t.estado || 'pendiente') + (t.asignado ? ' · ' + t.asignado : '')
+      });
+    });
+
+    gastos.forEach(function(g) {
+      eventos.push({
+        fecha: g.fecha || g.createdAt || '',
+        icono: '💸',
+        titulo: g.descripcion,
+        descripcion: 'Gasto ' + money(g.monto)
+      });
+    });
+
+    pagos.forEach(function(p) {
+      eventos.push({
+        fecha: p.fecha || p.createdAt || '',
+        icono: '💰',
+        titulo: p.concepto,
+        descripcion: 'Pago recibido ' + money(p.monto)
+      });
+    });
+
+    eventos = eventos.filter(function(e) { return e.fecha; });
+
+    eventos.sort(function(a, b) {
+      return new Date(b.fecha) - new Date(a.fecha);
+    });
+
+    if (!eventos.length) {
+      container.innerHTML = '<div class="empty-state">No hay actividad registrada en la línea de tiempo</div>';
+      return;
+    }
+
+    var html = '';
+    for (var i = 0; i < eventos.length; i++) {
+      html += ''
+        + '<div class="timeline-item" style="border-left:3px solid rgba(107,189,69,0.4);padding:10px 14px;margin-bottom:12px;background:rgba(255,255,255,0.02);border-radius:10px;">'
+        + '  <div style="font-weight:700;">' + esc(eventos[i].icono + ' ' + eventos[i].titulo) + '</div>'
+        + '  <div style="opacity:.8;margin-top:4px;">' + esc(formatDateSafe(eventos[i].fecha)) + '</div>'
+        + '  <div style="margin-top:6px;">' + esc(eventos[i].descripcion) + '</div>'
+        + '</div>';
+    }
+
+    container.innerHTML = html;
+  }
+
+  function renderTablaGastos(gastos) {
+    var tbody = byId('tbodyGastosProyecto');
+    if (!tbody) return;
+
+    if (!gastos.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No hay gastos registrados</td></tr>';
+      return;
+    }
+
+    var html = '';
+    for (var i = 0; i < gastos.length; i++) {
+      html += ''
+        + '<tr>'
+        + '  <td>' + esc(formatDateSafe(gastos[i].fecha)) + '</td>'
+        + '  <td>' + esc(gastos[i].categoria) + '</td>'
+        + '  <td>' + esc(gastos[i].descripcion) + '</td>'
+        + '  <td>' + money(gastos[i].monto) + '</td>'
+        + '  <td>' + esc(gastos[i].metodo) + '</td>'
+        + '</tr>';
+    }
+
+    tbody.innerHTML = html;
+  }
+
+  function renderTablaPagos(pagos) {
+    var tbody = byId('tbodyPagosProyecto');
+    if (!tbody) return;
+
+    if (!pagos.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No hay pagos registrados</td></tr>';
+      return;
+    }
+
+    var html = '';
+    for (var i = 0; i < pagos.length; i++) {
+      html += ''
+        + '<tr>'
+        + '  <td>' + esc(formatDateSafe(pagos[i].fecha)) + '</td>'
+        + '  <td>' + esc(pagos[i].concepto) + '</td>'
+        + '  <td>' + money(pagos[i].monto) + '</td>'
+        + '  <td>' + esc(pagos[i].metodo) + '</td>'
+        + '  <td>' + esc(estadoLabel(pagos[i].estado)) + '</td>'
+        + '</tr>';
+    }
+
+    tbody.innerHTML = html;
+  }
+
+  function renderListaTareas(tareas) {
+    var container = byId('lista-tareas-proyecto') || byId('listaTareasProyecto') || byId('tareasProyectoLista');
+    if (!container) {
+      var form = byId('formTareaProyecto');
+      if (form && form.parentNode) {
+        var existing = byId('lista-tareas-proyecto');
+        if (!existing) {
+          var wrap = document.createElement('div');
+          wrap.id = 'lista-tareas-proyecto';
+          wrap.style.marginTop = '18px';
+          form.parentNode.appendChild(wrap);
+          container = wrap;
+        }
+      }
+    }
+
+    if (!container) return;
+
+    if (!tareas.length) {
+      container.innerHTML = '<div class="empty-state">No hay tareas registradas</div>';
+      return;
+    }
+
+    var html = '';
+    for (var i = 0; i < tareas.length; i++) {
+      var color = estadoColor(tareas[i].estado);
+      html += ''
+        + '<div style="border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px;margin-bottom:10px;background:rgba(255,255,255,0.02);">'
+        + '  <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;">'
+        + '    <div>'
+        + '      <div style="font-weight:700;">' + esc(tareas[i].titulo) + '</div>'
+        + '      <div style="opacity:.8;margin-top:4px;">' + esc(tareas[i].descripcion || 'Sin descripción') + '</div>'
+        + '    </div>'
+        + '    <span class="estado-badge" style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + '55;">' + esc(estadoLabel(tareas[i].estado)) + '</span>'
+        + '  </div>'
+        + '  <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;opacity:.9;">'
+        + '    <span>👤 ' + esc(tareas[i].asignado || 'Sin asignar') + '</span>'
+        + '    <span>📅 ' + esc(formatDateSafe(tareas[i].fechaLimite || '')) + '</span>'
+        + '  </div>'
+        + '</div>';
+    }
+
+    container.innerHTML = html;
+  }
+
+  function destroyProyectoChart() {
+    if (CHART_PROYECTO && typeof CHART_PROYECTO.destroy === 'function') {
+      CHART_PROYECTO.destroy();
+      CHART_PROYECTO = null;
+    }
+  }
+
+  function renderProyectoChart(totalPagos, totalGastos, porCobrar) {
+    var canvas = byId('chartProyectoBalance');
+    if (!canvas || typeof window.Chart === 'undefined') return;
+
+    destroyProyectoChart();
+
+    var ctx = canvas.getContext('2d');
+    CHART_PROYECTO = new window.Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Pagos', 'Gastos', 'Por Cobrar'],
+        datasets: [{
+          data: [totalPagos, totalGastos, porCobrar],
+          backgroundColor: ['#6bbd45', '#ef4444', '#f59e0b'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: {
+              color: '#ffffff'
+            }
+          }
+        }
+      }
+    });
+  }
+
+  async function renderDetalleProyecto(proyecto) {
+    var gastos = await obtenerGastosProyecto(proyecto.id);
+    var pagos = await obtenerPagosProyecto(proyecto.id);
+    var tareas = await obtenerTareasProyecto(proyecto.id);
+
+    var totalGastos = gastos.reduce(function(acc, item) { return acc + item.monto; }, 0);
+    var totalPagos = pagos.reduce(function(acc, item) { return acc + item.monto; }, 0);
+    var presupuesto = num(proyecto.presupuesto);
+    var porCobrar = Math.max(0, presupuesto - totalPagos);
+    var utilidad = totalPagos - totalGastos;
+
+    setText('detalle-proyecto-nombre', text(proyecto.nombre, 'Proyecto'));
+    setText('detalle-proyecto-estado', estadoLabel(proyecto.estado));
+    setText('detalle-proyecto-cliente', text(proyecto.clienteNombre, 'Sin cliente'));
+    setText('detalle-proyecto-fecha', formatDateSafe(proyecto.fechaInicio));
+    setText('detalle-proyecto-presupuesto', money(proyecto.presupuesto));
+
+    setText('resumen-presupuesto', money(presupuesto));
+    setText('resumen-gastos', money(totalGastos));
+    setText('resumen-pagos', money(totalPagos));
+    setText('resumen-por-cobrar', money(porCobrar));
+    setText('resumen-utilidad', money(utilidad));
+
+    setValue('proyecto-notas', proyecto.notas || '');
+    actualizarProgresoVisual(proyecto.avance);
+    renderTimeline(proyecto, tareas, gastos, pagos);
+    renderTablaGastos(gastos);
+    renderTablaPagos(pagos);
+    renderListaTareas(tareas);
+    renderProyectoChart(totalPagos, totalGastos, porCobrar);
+
+    setDisplay('proyecto-detalle', true);
+
+    var panel = byId('proyecto-detalle');
+    if (panel && panel.scrollIntoView) {
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    switchProyectoTab('resumen');
+  }
+
+  async function verProyecto(id) {
+    var proyecto = await obtenerProyectoPorId(id);
+    if (!proyecto) return false;
+
+    PROYECTO_ACTUAL = proyecto;
+    await renderDetalleProyecto(proyecto);
+    return false;
+  }
+
+  function volverAListaProyectos() {
+    setDisplay('proyecto-detalle', false);
+    PROYECTO_ACTUAL = null;
+    destroyProyectoChart();
+    return false;
+  }
+
+  function switchProyectoTab(tabId) {
+    ['resumen', 'financiero', 'tareas', 'documentos'].forEach(function(key) {
+      var pane = byId('proyecto-tab-' + key);
+      if (pane) {
+        pane.style.display = key === tabId ? 'block' : 'none';
+        pane.classList.toggle('active', key === tabId);
+      }
+    });
+
+    qsa('.proyecto-tab').forEach(function(btn) {
+      var onclick = btn.getAttribute('onclick') || '';
+      var active = onclick.indexOf("'" + tabId + "'") !== -1 || onclick.indexOf('"' + tabId + '"') !== -1;
+      btn.classList.toggle('active', active);
+    });
+
     return false;
   }
 
   async function guardarNotasProyecto() {
-    if (!PROYECTO_ACTUAL || typeof window.updateItem !== 'function') return false;
+    if (!PROYECTO_ACTUAL) return false;
 
-    var notasEl = el('proyecto-notas');
+    var notasEl = byId('proyecto-notas');
     var notas = notasEl ? notasEl.value : '';
-    var ok = await window.updateItem(proyKey('PROYECTOS', 'proyectos'), PROYECTO_ACTUAL.id, { notas: notas });
-    if (!ok) return false;
 
-    PROYECTO_ACTUAL = await obtenerProyectoPorId(PROYECTO_ACTUAL.id);
+    var ok = await updateRow(getStorageKey('PROYECTOS', 'proyectos'), PROYECTO_ACTUAL.id, {
+      notas: notas
+    });
 
-    var container = el('proyecto-detalle');
+    if (!ok) {
+      alert('No se pudieron guardar las notas del proyecto.');
+      return false;
+    }
+
+    PROYECTO_ACTUAL.notas = notas;
+
+    var existing = document.querySelector('#proyecto-detalle .form-feedback');
+    if (existing) existing.remove();
+
+    var container = byId('proyecto-detalle');
     if (container) {
-      var existing = container.querySelector('.form-feedback');
-      if (existing) existing.remove();
       var feedback = document.createElement('div');
       feedback.className = 'form-feedback success';
       feedback.textContent = '✅ Notas guardadas';
       feedback.style.display = 'block';
-      feedback.style.marginTop = '10px';
+      feedback.style.marginTop = '12px';
       container.appendChild(feedback);
+
       setTimeout(function() {
         if (feedback.parentNode) feedback.parentNode.removeChild(feedback);
       }, 3000);
@@ -460,20 +736,84 @@
     return false;
   }
 
+  async function guardarTareaProyecto(event) {
+    if (event) event.preventDefault();
+    if (!PROYECTO_ACTUAL) return false;
+
+    var titulo = byId('tarea-titulo') ? byId('tarea-titulo').value.trim() : '';
+    var asignado = byId('tarea-asignado') ? byId('tarea-asignado').value.trim() : '';
+    var fechaLimite = byId('tarea-fecha-limite') ? byId('tarea-fecha-limite').value : '';
+    var estado = byId('tarea-estado') ? byId('tarea-estado').value : 'pendiente';
+    var descripcion = byId('tarea-descripcion') ? byId('tarea-descripcion').value.trim() : '';
+    var form = byId('formTareaProyecto');
+
+    if (!titulo) {
+      alert('Completa el título de la tarea.');
+      return false;
+    }
+
+    var payload = {
+      proyecto_id: PROYECTO_ACTUAL.id,
+      titulo: titulo,
+      asignado: asignado,
+      fecha_limite: fechaLimite || null,
+      estado: estado,
+      descripcion: descripcion
+    };
+
+    var result = await insertRow(getStorageKey('TAREAS', 'tareas'), payload);
+
+    if (!result) {
+      alert('No se pudo guardar la tarea.');
+      return false;
+    }
+
+    if (form) form.reset();
+    await renderDetalleProyecto(PROYECTO_ACTUAL);
+
+    return false;
+  }
+
+  function abrirModalGastoProyecto() {
+    alert('Registro rápido pendiente de modal. Por ahora inserta gastos desde Finanzas o te preparo el modal en el siguiente paso.');
+    return false;
+  }
+
+  function abrirModalPagoProyecto() {
+    alert('Registro rápido pendiente de modal. Por ahora inserta pagos desde Finanzas o te preparo el modal en el siguiente paso.');
+    return false;
+  }
+
   async function inicializarProyectos() {
+    await ensureClientesCache();
     await actualizarSelectClientesProyecto();
     await renderProyectos('todos');
+
+    if (byId('proy-fecha') && !byId('proy-fecha').value) {
+      byId('proy-fecha').value = todayISO();
+    }
+
+    if (byId('buscar-proyecto')) {
+      byId('buscar-proyecto').addEventListener('input', function() {
+        buscarProyectos();
+      });
+    }
   }
 
   window.inicializarProyectos = inicializarProyectos;
-  window.obtenerProyectos = obtenerProyectos;
   window.actualizarSelectClientesProyecto = actualizarSelectClientesProyecto;
   window.guardarProyecto = guardarProyecto;
+  window.obtenerProyectos = obtenerProyectos;
   window.renderProyectos = renderProyectos;
-  window.verProyecto = verProyecto;
   window.buscarProyectos = buscarProyectos;
   window.filtrarProyectos = filtrarProyectos;
-  window.guardarNotasProyecto = guardarNotasProyecto;
+  window.verProyecto = verProyecto;
+  window.renderDetalleProyecto = renderDetalleProyecto;
   window.volverAListaProyectos = volverAListaProyectos;
   window.switchProyectoTab = switchProyectoTab;
+  window.guardarNotasProyecto = guardarNotasProyecto;
+  window.guardarTareaProyecto = guardarTareaProyecto;
+  window.abrirModalGastoProyecto = abrirModalGastoProyecto;
+  window.abrirModalPagoProyecto = abrirModalPagoProyecto;
+
 })(window, document);
