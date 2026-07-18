@@ -346,9 +346,67 @@
       </div>
 
       <!-- SUB: CATÁLOGO & GRUPOS -->
-      <div id="negocio-catalogo" class="sub-section">
-        
-        <!-- Resumen compacto de grupos: chips que filtran el catálogo -->
+<div id="negocio-catalogo" class="sub-section">
+
+          <!-- 1) Formulario: Añadir Servicio al Catálogo -->
+          <div class="form-section">
+            <div class="form-header">
+              <h2 class="section-title">➕ Añadir Servicio al Catálogo</h2>
+            </div>
+            <form id="formServicio" onsubmit="return guardarServicio(event)">
+              <div class="form-grid">
+
+                <div class="form-group full-width">
+                  <label for="serv-descripcion">Descripción del servicio <span class="required">*</span></label>
+                  <input type="text" id="serv-descripcion"
+                         placeholder="Ej: Diseño de landing page de alto impacto"
+                         required maxlength="300">
+                </div>
+
+                <div class="form-group">
+                  <label for="serv-grupo">Grupo (opcional)</label>
+                  <select id="serv-grupo">
+                    <option value="">Sin grupo específico</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="serv-unidad">Unidad <span class="required">*</span></label>
+                  <select id="serv-unidad" required>
+                    <option value="und">und - Unidad</option>
+                    <option value="hr">hr - Hora</option>
+                    <option value="dia">día - Día</option>
+                    <option value="mes">mes - Mes</option>
+                    <option value="pagina">página - Página</option>
+                    <option value="proyecto">proyecto - Proyecto</option>
+                    <option value="paquete">paquete - Paquete</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="serv-precio">Precio Unitario (USD) <span class="required">*</span></label>
+                  <input type="number" id="serv-precio" placeholder="0.00"
+                         required min="0.01" step="0.01">
+                </div>
+
+                <div class="form-group">
+                  <label for="serv-itbms">¿Aplica ITBMS?</label>
+                  <select id="serv-itbms">
+                    <option value="1">Sí (7%)</option>
+                    <option value="0">No</option>
+                  </select>
+                </div>
+
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn-primary">💾 Guardar Servicio</button>
+                <button type="reset" class="btn-secondary">🔄 Limpiar</button>
+              </div>
+            </form>
+            <div class="form-feedback" id="feedback-servicio"></div>
+          </div>
+
+          <!-- 2) Resumen de Grupos (pequeño, como filtro del catálogo) -->
           <div class="section">
             <div class="section-header">
               <h2 class="section-title">📁 Grupos de Servicios</h2>
@@ -357,88 +415,42 @@
               </div>
             </div>
             <div id="gruposResumenCatalogo" class="grupos-resumen">
-              <!-- Se rellena por JS: chips con nombre + color + contador -->
+              <!-- Se rellena desde catalogo.js / grupos.js -->
             </div>
           </div>
 
-        <!-- Catálogo -->
-        <div class="form-section">
-          <div class="form-header">
-            <h2 class="section-title">➕ Añadir Servicio al Catálogo</h2>
+          <!-- 3) Lista del Catálogo de Servicios -->
+          <div class="section">
+            <div class="section-header">
+              <h2 class="section-title">📋 Servicios del Catálogo</h2>
+              <div class="section-actions">
+                <input type="text" id="buscar-servicio"
+                       placeholder="🔍 Buscar servicio..."
+                       onkeyup="filtrarServicios()" class="search-input">
+                <select id="filtro-servicio-grupo"
+                        onchange="filtrarServicios()" class="filter-btn">
+                  <option value="todos">Todos los grupos</option>
+                </select>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>Servicio</th>
+                    <th>Unidad</th>
+                    <th>Precio</th>
+                    <th>ITBMS</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyServicios"></tbody>
+              </table>
+            </div>
           </div>
-          <form id="formServicio" onsubmit="return guardarServicio(event)">
-            <div class="form-grid">
-              <div class="form-group">
-                            <label for="serv-grupo">Grupo <span class="optional">(opcional)</span></label>
-                          <select id="serv-grupo">
-                                <option value="">Sin grupo específico</option>
-                </select>
-              </div>
-              <div class="form-group full-width">
-                <label for="serv-descripcion">Descripción <span class="required">*</span></label>
-                <input type="text" id="serv-descripcion" placeholder="Ej: Diseño de landing page de alto impacto" required maxlength="300">
-              </div>
-              <div class="form-group">
-                <label for="serv-unidad">Unidad <span class="required">*</span></label>
-                <select id="serv-unidad" required>
-                  <option value="und">und - Unidad</option>
-                  <option value="hr">hr - Hora</option>
-                  <option value="dia">día - Día</option>
-                  <option value="mes">mes - Mes</option>
-                  <option value="pagina">página - Página</option>
-                  <option value="proyecto">proyecto - Proyecto</option>
-                  <option value="paquete">paquete - Paquete</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="serv-precio">Precio Unitario ($) <span class="required">*</span></label>
-                <input type="number" id="serv-precio" placeholder="0.00" required min="0.01" step="0.01">
-              </div>
-              <div class="form-group">
-                <label for="serv-itbms">¿Aplica ITBMS?</label>
-                <select id="serv-itbms">
-                  <option value="1">Sí (7%)</option>
-                  <option value="0">No</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-actions">
-              <button type="submit" class="btn-primary">💾 Guardar Servicio</button>
-              <button type="button" class="btn-secondary" onclick="sugerirGrupoIA()">🤖 Sugerir Grupo (IA)</button>
-              <button type="reset" class="btn-secondary">🔄 Limpiar</button>
-            </div>
-          </form>
-          <div class="form-feedback" id="feedback-servicio"></div>
-        </div>
 
-        <!-- Lista de Servicios -->
-        <div class="section">
-          <div class="section-header">
-                      <h2 class="section-title">📋 Servicios del Catálogo</h2>
-            <div class="section-actions">
-              <input type="text" id="buscar-servicio" placeholder="🔍 Buscar servicio..." onkeyup="filtrarServicios()" class="search-input">
-                        <select id="filtro-servicio-grupo" onchange="filtrarServicios()" class="filter-btn">
-            <option value="todos">Todos los grupos</option>
-          </select>
-            </div>
-          </div>
-                  <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Código</th>
-                <th>Servicio</th>
-                <th>Grupo</th>
-                <th>Unidad</th>
-                <th>Precio</th>
-                <th>ITBMS</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="tbodyServicios"></tbody>
-          </table>
         </div>
-      </div>
 
       <!-- SUB: COTIZACIONES (tu versión original, aún con lógica de items) -->
       <div id="negocio-cotizaciones" class="sub-section">
