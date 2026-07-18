@@ -343,4 +343,50 @@
   window.guardarCotizacion = guardarCotizacion;
   window.editarCotizacion = editarCotizacion;
 
+    // ============================================================
+  // Crear cotización a partir de una proforma de proyecto
+  // ============================================================
+  async function crearCotizacionDesdeProforma(datosProforma) {
+    var lista = await getCotizaciones();
+    lista = Array.isArray(lista) ? lista.slice() : [];
+
+    var codigo = generarCodigoCotizacion();
+
+    var nuevaCotizacion = {
+      codigo: codigo,
+      clienteId: datosProforma.clienteId,
+      clienteNombre: datosProforma.clienteNombre,
+      fecha: datosProforma.fecha,
+      descripcion: datosProforma.nombreProyecto,
+      total: datosProforma.total,
+      estado: 'cotizado',
+      alcanceHtml: datosProforma.alcanceHtml || '',
+      items: datosProforma.items || [],
+      createdAt: new Date().toISOString()
+    };
+
+    lista.push(nuevaCotizacion);
+    await setCotizaciones(lista);
+
+    if (typeof window.actualizarKPIs === 'function') {
+      window.actualizarKPIs();
+    }
+
+    if (typeof window.renderTablaCotizaciones === 'function') {
+      await window.renderTablaCotizaciones();
+    }
+
+    if (window.showToast) {
+      window.showToast({
+        type: 'success',
+        title: 'Cotización creada',
+        message: 'La cotización ' + codigo + ' se creó desde la proforma del proyecto.'
+      });
+    }
+
+    return nuevaCotizacion;
+  }
+
+  window.crearCotizacionDesdeProforma = crearCotizacionDesdeProforma;
+
 })(window, document);
