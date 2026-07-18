@@ -1115,4 +1115,47 @@
   window.agregarFilaProformaServicio = agregarFilaProformaServicio;
   window.abrirModalPagoProyecto = abrirModalPagoProyecto;
 
+    // ============================================================
+  // Conectar botones del editor de alcance con comandos de formato
+  // ============================================================
+  function inicializarEditorAlcance() {
+    var toolbar = document.querySelector('.editor-toolbar');
+    var editor = byId('pf-alcance-editor');
+
+    if (!toolbar || !editor) return;
+
+    toolbar.addEventListener('click', function(e) {
+      var btn = e.target.closest('button');
+      if (!btn) return;
+      e.preventDefault();
+
+      var cmd = btn.getAttribute('data-cmd');
+      if (!cmd) return;
+
+      editor.focus();
+
+      if (cmd === 'bold') {
+        document.execCommand('bold', false, null);
+      } else if (cmd === 'italic') {
+        document.execCommand('italic', false, null);
+      } else if (cmd === 'unorderedList') {
+        document.execCommand('insertUnorderedList', false, null);
+      } else if (cmd === 'orderedList') {
+        document.execCommand('insertOrderedList', false, null);
+      }
+    });
+  }
+
+  window.inicializarEditorAlcance = inicializarEditorAlcance;
+
+  // Inicializar editor al cargar el documento
+  document.addEventListener('DOMContentLoaded', function() {
+    inicializarEditorAlcance();
+    // Inicializar fecha con valor de hoy
+    var pfFecha = byId('pf-fecha');
+    if (pfFecha && !pfFecha.value) {
+      pfFecha.value = (new Date()).toISOString().slice(0, 10);
+    }
+  });
+
 })(window, document);
