@@ -21,7 +21,7 @@
     COTIZACIONES: 'cotizaciones',
     COTIZACION_ITEMS: 'cotizacion_items',
     PROYECTOS: 'proyectos',
-    GASTOS: 'gastos',
+        GASTOS: 'proyecto_gastos',
     PAGOS: 'pagos',
     TAREAS: 'tareas',
     GRUPOS_SERVICIOS: 'gn_grupos_servicios',
