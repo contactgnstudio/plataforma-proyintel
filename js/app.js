@@ -15,7 +15,9 @@
     var now = new Date();
     return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
   };
-  var formatMoney = GNUtils.formatMoney || function(value) { return 'USD ' + (parseFloat(value || 0) || 0).toFixed(2); };
+  var formatMoney = GNUtils.formatMoney || function(value) {
+    return 'USD ' + (parseFloat(value || 0) || 0).toFixed(2);
+  };
   var log = GNUtils.log || function(level, message, meta) {
     if (meta !== undefined) {
       console[level] ? console[level](message, meta) : console.log(message, meta);
@@ -98,7 +100,11 @@
     qsa('.sub-nav-link').forEach(function(link) {
       link.classList.remove('active');
       var attr = link.getAttribute('onclick') || '';
-      if (attr.indexOf("'" + parentId + "', '" + subId + "'") !== -1 || attr.indexOf("'" + parentId + "','" + subId + "'") !== -1) {
+      if (
+        attr.indexOf("'" + parentId + "', '" + subId + "'") !== -1 ||
+        attr.indexOf("'" + parentId + "','" + subId + "'") !== -1 ||
+        attr.indexOf('"' + parentId + '", "' + subId + '"') !== -1
+      ) {
         link.classList.add('active');
       }
     });
@@ -112,9 +118,9 @@
 
   function setDefaultDates() {
     var today = getTodayISO();
-    var ids = ['gasto-fecha', 'pago-fecha', 'cot-fecha', 'ec-desde', 'ec-hasta', 'itbms-periodo'];
 
-    ids.forEach(function(id) {
+    var dateIds = ['gasto-fecha', 'pago-fecha', 'cot-fecha', 'ec-desde', 'ec-hasta'];
+    dateIds.forEach(function(id) {
       var field = byId(id);
       if (field && !field.value) {
         field.value = today;
@@ -210,9 +216,6 @@
     alert('La exportación global se reconectará después de migrar los módulos principales.');
   }
 
-  // Estas funciones de Finanzas ahora existen en js/finanzas.js,
-  // así que no redefinimos aquí su lógica para no pisarlas.
-
   function exportarEstadoCuentaPDF() {
     alert('Exportación PDF pendiente de migración.');
   }
@@ -225,67 +228,11 @@
     alert('Exportación ITBMS PDF pendiente de migración.');
   }
 
-  // Módulo de Proyectos: estas funciones ya se implementan en js/proyectos.js,
-  // aquí solo dejamos wrappers ligeros donde hace falta.
-
-  function filtrarProyectos(estado) {
-    // Wrapper para botones que llaman filtrarProyectos() sin argumento.
-    if (typeof window.filtrarProyectos === 'function') {
-      window.filtrarProyectos(estado || 'todos');
-    }
-  }
-
-  function volverAListaProyectos() {
-    if (typeof window.volverAListaProyectos === 'function') {
-      window.volverAListaProyectos();
-    } else {
-      safeCall('renderProyectos');
-    }
-  }
-
-  function switchProyectoTab(tabId) {
-    if (typeof window.switchProyectoTab === 'function') {
-      window.switchProyectoTab(tabId);
-      return;
-    }
-
-    // Fallback visual mínimo
-    ['resumen', 'financiero', 'tareas', 'documentos'].forEach(function(key) {
-      var pane = byId('proyecto-tab-' + key);
-      if (pane) pane.style.display = key === tabId ? 'block' : 'none';
-    });
-  }
-
-  function abrirModalGastoProyecto() {
-    if (typeof window.abrirModalGastoProyecto === 'function') {
-      window.abrirModalGastoProyecto();
-      return;
-    }
-    alert('Modal de gasto por proyecto pendiente de migración.');
-  }
-
-  function abrirModalPagoProyecto() {
-    if (typeof window.abrirModalPagoProyecto === 'function') {
-      window.abrirModalPagoProyecto();
-      return;
-    }
-    alert('Modal de pago por proyecto pendiente de migración.');
-  }
-
-  function guardarNotasProyecto() {
-    if (typeof window.guardarNotasProyecto === 'function') {
-      window.guardarNotasProyecto();
-      return;
-    }
-    alert('Notas de proyecto pendientes de migración.');
-  }
-
   function sugerirGrupoIA() {
     alert('Sugerencia IA pendiente de migración.');
   }
 
   async function inicializarFinanzas() {
-    // Inicializa módulo Finanzas: select de proyectos, estado de cuenta, ITBMS y formularios.
     if (typeof window.actualizarSelectProyectosFinanzas === 'function') {
       window.actualizarSelectProyectosFinanzas();
     }
@@ -312,13 +259,12 @@
     setDefaultDates();
     setTodayMonth();
 
-    // Inicializamos módulos principales
     await safeCallAsync('inicializarClientes');
     await safeCallAsync('inicializarCatalogo');
     safeCall('inicializarGrupos');
     await safeCallAsync('inicializarCotizaciones');
     await safeCallAsync('inicializarProyectos');
-    await safeCallAsync('inicializarFinanzas');
+    await inicializarFinanzas();
     safeCall('inicializarCharts');
 
     await actualizarKPIs();
@@ -329,7 +275,10 @@
     switchSection('dashboard');
     switchSubSection('negocio', 'crm');
     switchSubSection('finanzas', 'estado-cuenta');
-    switchProyectoTab('resumen');
+
+    if (typeof window.switchProyectoTab === 'function') {
+      window.switchProyectoTab('resumen');
+    }
   }
 
   window.switchSection = switchSection;
@@ -341,12 +290,6 @@
   window.exportarEstadoCuentaPDF = exportarEstadoCuentaPDF;
   window.exportarEstadoCuentaExcel = exportarEstadoCuentaExcel;
   window.exportarITBMSPDF = exportarITBMSPDF;
-  window.filtrarProyectos = filtrarProyectos;
-  window.volverAListaProyectos = volverAListaProyectos;
-  window.switchProyectoTab = switchProyectoTab;
-  window.abrirModalGastoProyecto = abrirModalGastoProyecto;
-  window.abrirModalPagoProyecto = abrirModalPagoProyecto;
-  window.guardarNotasProyecto = guardarNotasProyecto;
   window.sugerirGrupoIA = sugerirGrupoIA;
   window.inicializarAppGNStudio = inicializarAppGNStudio;
   window.renderActividadReciente = renderActividadReciente;
