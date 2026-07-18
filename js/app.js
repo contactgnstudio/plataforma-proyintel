@@ -374,44 +374,70 @@
       '</tr>';
   }
 
-  function renderPipelineMini() {
-    var mini = byId('pipeline-mini');
-    if (!mini) return;
-
-    var bar = mini.querySelector('.pipeline-bar');
-    var legend = mini.querySelector('.pipeline-legend');
-
-    if (bar) {
-      bar.innerHTML =
-        '<div class="pipeline-segment" style="width:100%;background:#4f8cff;">' +
-          'Sin datos de pipeline aún' +
-        '</div>';
-    }
-    if (legend) {
-      legend.innerHTML =
-        '<span>Registra cotizaciones y proyectos para ver el pipeline en tiempo real.</span>';
-    }
-
-    var targets = {
-      cotizaciones: byId('kpi-cotizaciones'),
-      proyectos: byId('kpi-proyectos'),
-      clientes: byId('kpi-clientes'),
-      ingresos: byId('kpi-ingresos'),
-      gastos: byId('kpi-gastos'),
-      balance: byId('kpi-balance')
-    };
-
-    Object.keys(targets).forEach(function(key) {
-      if (!targets[key]) return;
-      if (key === 'ingresos' || key === 'gastos' || key === 'balance') {
-        targets[key].textContent = formatMoney(0);
-      } else {
-        targets[key].textContent = '0';
+// Helpers de conteo para pipeline
+    async function obtenerConteosCotizacionesPorEstado() {
+      var cotizaciones = await window.getData(window.STORAGE_KEYS.COTIZACIONES || 'cotizaciones');
+      var conteos = { cotizado: 0, aprobado: 0, rechazado: 0, vencido: 0 };
+      if (Array.isArray(cotizaciones)) {
+        cotizaciones.forEach(function(c) {
+          var estado = (c.estado || 'cotizado').toLowerCase();
+          if (conteos.hasOwnProperty(estado)) conteos[estado]++;
+        });
       }
-    });
+      return conteos;
+    }
 
-    resetTrends();
-  }
+    async function obtenerConteosProyectosPorEstado() {
+      var proyectos = await window.getData(window.STORAGE_KEYS.PROYECTOS || 'proyectos');
+      var conteos = { aprobado: 0, en_progreso: 0, completado: 0, cancelado: 0 };
+      if (Array.isArray(proyectos)) {
+        proyectos.forEach(function(p) {
+          var estado = (p.estado || '').toLowerCase().replace(/ /g, '_');
+          if (conteos.hasOwnProperty(estado)) conteos[estado]++;
+        });
+      }
+      return conteos;
+    }
+
+    async function renderDashboardPipeline() {
+      try {
+        var cot = await obtenerConteosCotizacionesPorEstado();
+        var proy = await obtenerConteosProyectosPorEstado();
+        var set = function(id, value) {
+          var el = byId(id);
+          if (el) el.textContent = String(value || 0);
+        };
+        set('pipeline-cotizado', cot.cotizado);
+        set('pipeline-aprobado', cot.aprobado);
+        set('pipeline-en-progreso', proy.en_progreso);
+        set('pipeline-completado', proy.completado);
+      } catch (e) {
+        console.error('Error al renderizar pipeline de ventas', e);
+      }
+    }
+
+    function renderPipelineMini() {
+      // Inicializar KPIs en 0 mientras cargan
+      var targets = {
+        cotizaciones: byId('kpi-cotizaciones'),
+        proyectos: byId('kpi-proyectos'),
+        clientes: byId('kpi-clientes'),
+        ingresos: byId('kpi-ingresos'),
+        gastos: byId('kpi-gastos'),
+        balance: byId('kpi-balance')
+      };
+      Object.keys(targets).forEach(function(key) {
+        if (!targets[key]) return;
+        if (key === 'ingresos' || key === 'gastos' || key === 'balance') {
+          targets[key].textContent = formatMoney(0);
+        } else {
+          targets[key].textContent = '0';
+        }
+      });
+      resetTrends();
+      // Renderizar pipeline con datos reales
+      renderDashboardPipeline();
+    }
 
   function resetTrends() {
     var trendIngresos = byId('trend-ingresos');
