@@ -2682,3 +2682,19 @@ body.gn-auth-locked .top-navbar {
   font-weight: 700;
   color: var(--gn-green);
 }
+
+
+/* Botón link en tabla de proyectos */
+.link-button {
+  border: none;
+  background: transparent;
+  color: var(--gn-green);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}
