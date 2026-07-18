@@ -66,13 +66,23 @@
   }
 
   // ============================================================
-  // TOASTS (success, error, info, warning)
+  // TOASTS (success, error, info, warning) — GN Studio OS
   // ============================================================
   var toastIdCounter = 0;
 
+  /**
+   * options:
+   *  - type: 'success' | 'error' | 'warning' | 'info'
+   *  - title: string
+   *  - message: string
+   *  - duration: ms (0 = no auto-cerrar)
+   */
   function showToast(options) {
     var container = byId('toast-container');
     if (!container) return;
+
+    // Aseguramos que el contenedor sea visible
+    container.style.display = 'block';
 
     var opts = typeof options === 'string'
       ? { message: options }
@@ -92,24 +102,25 @@
     var toast = document.createElement('div');
     var id = 'toast-' + (++toastIdCounter);
 
-    toast.className = 'gn-toast gn-toast-' + type;
+    toast.className = 'toast toast-' + type;
     toast.setAttribute('data-toast-id', id);
 
     toast.innerHTML =
-      '<div class="gn-toast-icon">' + getToastEmoji(type) + '</div>' +
-      '<div class="gn-toast-body">' +
-        '<div class="gn-toast-title">' + title + '</div>' +
-        (message ? '<div class="gn-toast-message">' + message + '</div>' : '') +
+      '<div class="toast-icon">' + getToastEmoji(type) + '</div>' +
+      '<div class="toast-body">' +
+        '<div class="toast-title">' + title + '</div>' +
+        (message ? '<div class="toast-message">' + message + '</div>' : '') +
       '</div>' +
-      '<button class="gn-toast-close" type="button" aria-label="Cerrar">×</button>';
+      '<button class="toast-close" type="button" aria-label="Cerrar">×</button>';
 
     container.appendChild(toast);
 
+    // Animación de entrada (clase opcional si luego la añades en CSS)
     requestAnimationFrame(function() {
-      toast.classList.add('gn-toast-visible');
+      toast.classList.add('toast-visible');
     });
 
-    var closeBtn = toast.querySelector('.gn-toast-close');
+    var closeBtn = toast.querySelector('.toast-close');
     if (closeBtn) {
       closeBtn.addEventListener('click', function() {
         hideToast(toast);
@@ -124,23 +135,50 @@
   }
 
   function hideToast(toast) {
+    var container = byId('toast-container');
     if (!toast || !toast.parentNode) return;
-    toast.classList.remove('gn-toast-visible');
-    toast.classList.add('gn-toast-leaving');
+
+    toast.classList.remove('toast-visible');
+    toast.classList.add('toast-leaving');
+
     setTimeout(function() {
       if (toast.parentNode) {
         toast.parentNode.removeChild(toast);
+      }
+      // Si ya no quedan toasts, ocultamos el contenedor
+      if (container && !container.hasChildNodes()) {
+        container.style.display = 'none';
       }
     }, 200);
   }
 
   function getToastEmoji(type) {
     switch (type) {
-      case 'success': return '✅';
-      case 'error': return '⚠️';
-      case 'warning': return '⚠️';
-      default: return 'ℹ️';
+      case 'success': return '✔';
+      case 'error':   return '⚠';
+      case 'warning': return '⚠';
+      default:        return 'ℹ';
     }
+  }
+
+  // Helper específico para el toast de inicio de GN Studio OS
+  function mostrarToastOSListo() {
+    showToast({
+      type: 'success',
+      title: 'GN Studio OS listo',
+      message: 'La plataforma se inicializó correctamente.',
+      duration: 5000
+    });
+  }
+
+  // Cierre manual desde el HTML del toast “base” (por si lo usas)
+  function cerrarToast() {
+    var container = byId('toast-container');
+    if (!container) return;
+    // Eliminamos todos los toasts activos
+    Array.prototype.slice.call(container.children).forEach(function(toast) {
+      hideToast(toast);
+    });
   }
 
   // ============================================================
