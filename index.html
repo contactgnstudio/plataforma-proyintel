@@ -11,50 +11,47 @@
 </head>
 <body>
 
- <!-- LOGIN OVERLAY -->
-<div id="gn-login-overlay" class="gn-login-overlay">
-  <div class="gn-login-card">
-    <div class="gn-login-logo">GN Studio OS</div>
-    <h2>Acceso privado</h2>
-    <p>Ingresa con tu correo y contraseña para ver la información interna.</p>
+  <!-- LOGIN OVERLAY -->
+  <div id="gn-login-overlay" class="gn-login-overlay">
+    <div class="gn-login-card">
+      <div class="gn-login-logo">GN Studio OS</div>
+      <h2>Acceso privado</h2>
+      <p>Ingresa con tu correo y contraseña para ver la información interna.</p>
 
-    <form id="login-form" onsubmit="return false;">
-      <div class="form-group">
-        <label for="login-usuario">CORREO</label>
-        <input
-          type="email"
-          id="login-usuario"
-          placeholder="contact@gnstudio.space"
-          autocomplete="email"
-          required
-        >
-      </div>
+      <form id="login-form" onsubmit="return false;">
+        <div class="form-group">
+          <label for="login-usuario">CORREO</label>
+          <input
+            type="email"
+            id="login-usuario"
+            placeholder="contact@gnstudio.space"
+            autocomplete="email"
+            required
+          >
+        </div>
 
-      <div class="form-group">
-        <label for="login-password">CONTRASEÑA</label>
-        <input
-          type="password"
-          id="login-password"
-          placeholder="Tu contraseña"
-          autocomplete="current-password"
-          required
-        >
-      </div>
+        <div class="form-group">
+          <label for="login-password">CONTRASEÑA</label>
+          <input
+            type="password"
+            id="login-password"
+            placeholder="Tu contraseña"
+            autocomplete="current-password"
+            required
+          >
+        </div>
 
-      <div class="form-feedback" id="feedback-login"></div>
+        <div class="form-feedback" id="feedback-login"></div>
 
-      <div class="gn-login-actions">
-        <button type="submit" class="btn-primary">Entrar</button>
-        <a href="#" class="gn-login-link" onclick="return gnRecuperarPassword()">Olvidé mi contraseña</a>
-      </div>
-    </form>
+        <div class="gn-login-actions">
+          <button type="submit" class="btn-primary">Entrar</button>
+          <a href="#" class="gn-login-link" onclick="return gnRecuperarPassword()">Olvidé mi contraseña</a>
+        </div>
+      </form>
+    </div>
   </div>
-</div>
 
-<button id="gn-logout-btn" class="gn-logout-btn" onclick="gnCerrarSesion()">
-  Cerrar sesión
-</button>
-  
+  <!-- (BOTÓN FLOTANTE ANTIGUO SE ELIMINA) -->
   <!-- ============================================================
        TOP NAVBAR
        ============================================================ -->
@@ -89,12 +86,12 @@
       </a>
     </div>
     
-        <div class="nav-actions">
+    <div class="nav-actions">
       <button class="btn-header" onclick="exportarTodo()" title="Exportar todo">⬇️</button>
       <button class="btn-header" onclick="window.print()" title="Imprimir">🖨️</button>
 
-      <!-- Menú de usuario / sesión -->
-      <div class="nav-user" id="nav-user">
+      <!-- Menú de usuario / sesión (todo el chip es clicable) -->
+      <div class="nav-user" id="nav-user" onclick="toggleUserMenu()">
         <div class="nav-user-avatar">GF</div>
         <div class="nav-user-info">
           <span class="nav-user-name" id="nav-user-name">Cuenta iniciada</span>
@@ -103,7 +100,6 @@
         <button
           class="nav-user-toggle"
           type="button"
-          onclick="toggleUserMenu()"
           aria-label="Menú de usuario"
         >
           ▾
@@ -139,7 +135,7 @@
         <div class="kpi-card kpi-highlight">
           <div class="kpi-icon" style="background:rgba(107,189,69,0.12);color:#6bbd45;">💰</div>
           <div class="kpi-info">
-            <span class="kpi-value" id="kpi-ingresos">$0.00</span>
+            <span class="kpi-value" id="kpi-ingresos">USD 0.00</span>
             <span class="kpi-label">Ingresos del Mes</span>
             <span class="kpi-trend" id="trend-ingresos">→ 0%</span>
           </div>
@@ -147,7 +143,7 @@
         <div class="kpi-card">
           <div class="kpi-icon" style="background:rgba(231,76,60,0.12);color:#e74c3c;">💸</div>
           <div class="kpi-info">
-            <span class="kpi-value" id="kpi-gastos">$0.00</span>
+            <span class="kpi-value" id="kpi-gastos">USD 0.00</span>
             <span class="kpi-label">Gastos del Mes</span>
             <span class="kpi-trend" id="trend-gastos">→ 0%</span>
           </div>
@@ -155,7 +151,7 @@
         <div class="kpi-card">
           <div class="kpi-icon" style="background:rgba(79,140,255,0.12);color:#4f8cff;">📈</div>
           <div class="kpi-info">
-            <span class="kpi-value" id="kpi-balance">$0.00</span>
+            <span class="kpi-value" id="kpi-balance">USD 0.00</span>
             <span class="kpi-label">Balance Neto</span>
             <span class="kpi-trend" id="trend-balance">→ 0%</span>
           </div>
@@ -465,96 +461,183 @@
         </div>
       </div>
 
-       <!-- SUB: COTIZACIONES -->
+      <!-- SUB: COTIZACIONES (tu versión original, aún con lógica de items) -->
       <div id="negocio-cotizaciones" class="sub-section">
         
         <!-- Nueva Cotización -->
         <div class="form-section">
           <div class="form-header">
             <h2 class="section-title">📄 Nueva Cotización</h2>
-            <p class="section-desc">
-              Crea cotizaciones ligadas a clientes existentes. Los totales se usarán luego
-              para KPIs y reportes financieros.
-            </p>
           </div>
           
-          <form id="formCotizacion" onsubmit="return false;">
-            <!-- Info Cliente -->
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="cot-cliente">Cliente <span class="required">*</span></label>
-                <select id="cot-cliente" required onchange="actualizarInfoCliente()">
-                  <option value="">Selecciona un cliente</option>
-                  <!-- Se llena dinámicamente desde clientes.js -->
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="cot-fecha">Fecha de cotización <span class="required">*</span></label>
-                <input type="date" id="cot-fecha" required>
-              </div>
-              <div class="form-group full-width">
-                <label for="cot-descripcion">Descripción breve <span class="required">*</span></label>
-                <input
-                  type="text"
-                  id="cot-descripcion"
-                  placeholder="Ej: Desarrollo de sitio web corporativo con landing y blog"
-                  maxlength="200"
-                  required
-                >
-              </div>
+          <!-- Info Cliente -->
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="cot-cliente">Cliente <span class="required">*</span></label>
+              <select id="cot-cliente" required onchange="actualizarInfoCliente()">
+                <option value="">Selecciona un cliente</option>
+              </select>
             </div>
-
-            <!-- Items / Total (versión simple 0.2) -->
-            <div class="sub-title">Resumen de opción seleccionada</div>
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="cot-total">Total estimado (USD) <span class="required">*</span></label>
-                <input
-                  type="number"
-                  id="cot-total"
-                  min="0.01"
-                  step="0.01"
-                  placeholder="0.00"
-                  required
-                >
-              </div>
-              <div class="form-group">
-                <label for="cot-estado">Estado inicial</label>
-                <select id="cot-estado">
-                  <option value="cotizado">Cotizado</option>
-                  <option value="aprobado">Aprobado</option>
-                  <option value="rechazado">Rechazado</option>
-                </select>
-              </div>
+            <div class="form-group">
+              <label for="cot-proyecto">Nombre del Proyecto <span class="required">*</span></label>
+              <input type="text" id="cot-proyecto" placeholder="Ej: Rediseño web corporativo" required>
             </div>
-
-            <div class="form-actions">
-              <button type="submit" class="btn-primary" onclick="guardarCotizacion(event)">💾 Guardar Cotización</button>
-              <button type="reset" class="btn-secondary">🔄 Limpiar</button>
+            <div class="form-group">
+              <label for="cot-atencion">Atención a</label>
+              <input type="text" id="cot-atencion" placeholder="Ej: Gerente de Marketing">
             </div>
-
-            <div class="form-feedback" id="feedback-cotizacion"></div>
-          </form>
-        </div>
-
-        <!-- Lista de Cotizaciones -->
-        <div class="section">
-          <div class="section-header">
-            <h2 class="section-title">📄 Cotizaciones registradas</h2>
-            <div class="section-actions">
-              <button class="filter-btn" onclick="switchSection('finanzas')">Ver impacto en Finanzas</button>
+            <div class="form-group">
+              <label for="cot-fecha">Fecha <span class="required">*</span></label>
+              <input type="date" id="cot-fecha" required>
+            </div>
+            <div class="form-group full-width">
+              <label for="cot-alcance">Alcance del Proyecto</label>
+              <textarea id="cot-alcance" rows="3" placeholder="Descripción general del alcance..."></textarea>
+            </div>
+            <div class="form-group">
+              <label for="cot-itbms">¿Aplica ITBMS?</label>
+              <select id="cot-itbms">
+                <option value="1">Sí (7%)</option>
+                <option value="0">No</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="cot-descuento">Descuento (%)</label>
+              <input type="number" id="cot-descuento" placeholder="0" min="0" max="100" step="0.01" value="0">
             </div>
           </div>
 
+          <!-- Items -->
+          <div class="items-cotizacion">
+            <h3 class="sub-title">🛒 Items de la Cotización</h3>
+            
+            <div class="items-opcion">
+              <h4 class="opcion-titulo">📋 Desde Catálogo</h4>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="cot-item-servicio">Servicio</label>
+                  <select id="cot-item-servicio" onchange="cargarPrecioServicio()">
+                    <option value="">Selecciona del catálogo</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="cot-item-cantidad-catalogo">Cantidad</label>
+                  <input type="number" id="cot-item-cantidad-catalogo" placeholder="1" min="1" step="1" value="1">
+                </div>
+                <div class="form-group">
+                  <label>&nbsp;</label>
+                  <button type="button" class="btn-primary" onclick="agregarItemDesdeCatalogo()">➕ Agregar</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="items-separador"><span>o</span></div>
+
+            <div class="items-opcion">
+              <h4 class="opcion-titulo">✏️ Manual</h4>
+              <div class="form-grid">
+                <div class="form-group full-width">
+                  <label for="cot-item-desc-manual">Descripción</label>
+                  <input type="text" id="cot-item-desc-manual" placeholder="Ej: Diseño de 5 banners">
+                </div>
+                <div class="form-group">
+                  <label for="cot-item-cantidad-manual">Cantidad</label>
+                  <input type="number" id="cot-item-cantidad-manual" placeholder="1" min="1" step="1" value="1">
+                </div>
+                <div class="form-group">
+                  <label for="cot-item-unidad-manual">Unidad</label>
+                  <select id="cot-item-unidad-manual">
+                    <option value="und">und</option>
+                    <option value="hr">hr</option>
+                    <option value="dia">día</option>
+                    <option value="mes">mes</option>
+                    <option value="pagina">página</option>
+                    <option value="proyecto">proyecto</option>
+                    <option value="paquete">paquete</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="cot-item-precio-manual">Precio Unit. ($)</label>
+                  <input type="number" id="cot-item-precio-manual" placeholder="0.00" min="0.01" step="0.01">
+                </div>
+                <div class="form-group">
+                  <label for="cot-item-itbms-manual">ITBMS?</label>
+                  <select id="cot-item-itbms-manual">
+                    <option value="1">Sí</option>
+                    <option value="0">No</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>&nbsp;</label>
+                  <button type="button" class="btn-primary" onclick="agregarItemManual()">➕ Agregar</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Items Agrupados -->
+            <div id="items-agrupados-container" style="margin-top:20px;">
+              <div class="tabla-vacia">
+                <div class="tabla-vacia-icon">📋</div>
+                No hay items agregados
+              </div>
+            </div>
+            <div id="resumen-grupos"></div>
+            
+            <!-- Totales -->
+            <div class="table-wrap" style="margin-top:20px;">
+              <table>
+                <tfoot>
+                  <tr class="total-row">
+                    <td style="text-align:right" colspan="6"><strong>Subtotal:</strong></td>
+                    <td id="cot-subtotal" class="td-monto">$0.00</td>
+                    <td></td>
+                  </tr>
+                  <tr class="total-row" id="row-itbms">
+                    <td style="text-align:right" colspan="6"><strong>ITBMS (7%):</strong></td>
+                    <td id="cot-itbms-monto" class="td-monto">$0.00</td>
+                    <td></td>
+                  </tr>
+                  <tr class="total-row" id="row-descuento">
+                    <td style="text-align:right" colspan="6"><strong>Descuento:</strong></td>
+                    <td id="cot-descuento-monto" class="td-monto">$0.00</td>
+                    <td></td>
+                  </tr>
+                  <tr class="total-row grand-total">
+                    <td style="text-align:right" colspan="6"><strong>TOTAL:</strong></td>
+                    <td id="cot-total" class="td-monto" style="color:#6bbd45;font-size:18px;">$0.00</td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-primary" onclick="guardarCotizacion()">💾 Guardar Cotización</button>
+            <button type="button" class="btn-secondary" onclick="vistaPreviaCotizacion()">👁️ Vista Previa</button>
+            <button type="button" class="btn-secondary" onclick="limpiarCotizacion()">🔄 Nueva</button>
+          </div>
+          <div class="form-feedback" id="feedback-cotizacion"></div>
+        </div>
+
+        <!-- Cotizaciones Guardadas -->
+        <div class="section">
+          <div class="section-header">
+            <h2 class="section-title">📋 Historial de Cotizaciones</h2>
+            <div class="section-actions">
+              <input type="text" id="buscar-cotizacion" placeholder="🔍 Buscar..." onkeyup="filtrarCotizaciones()" class="search-input">
+            </div>
+          </div>
           <div class="table-wrap">
             <table id="tablaCotizaciones">
               <thead>
                 <tr>
-                  <th>Código</th>
-                  <th>Fecha</th>
+                  <th>Número</th>
                   <th>Cliente</th>
+                  <th>Proyecto</th>
                   <th>Total</th>
                   <th>Estado</th>
+                  <th>Fecha</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -563,6 +646,7 @@
           </div>
         </div>
       </div>
+    </section>
 
     <!-- ============================================================
          SECCION: PROYECTOS (Lista + Detalle Interno)
@@ -591,7 +675,7 @@
         
         <!-- Header del Proyecto -->
         <div class="proyecto-header">
-          <button class="btn-secondary" onclick="volverAListaProyectos()">← Volver</button>
+          <button class="btn-secondary" onclick="volverAListaProyectos()">&larr; Volver</button>
           <div class="proyecto-title-area">
             <h2 id="detalle-proyecto-nombre">Nombre del Proyecto</h2>
             <span class="estado-badge" id="detalle-proyecto-estado">En Progreso</span>
@@ -872,147 +956,7 @@
           </div>
         </div>
       </div>
-      
-      <!-- SUB: REGISTRO DE GASTOS Y PAGOS -->
-      <div class="sub-section">
-        
-        <!-- Registro de Gasto -->
-        <div class="section">
-          <div class="section-header">
-            <h2 class="section-title">💸 Registrar Gasto</h2>
-            <p class="section-desc">
-              Registra gastos operativos y vincúlalos a un proyecto para que aparezcan en el Estado de Cuenta y en el detalle del proyecto.
-            </p>
-          </div>
 
-          <form id="form-gasto-finanzas" class="form-section" onsubmit="return registrarGastoFinanzas(event)">
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="gasto-fecha">Fecha</label>
-                <input type="date" id="gasto-fecha" required>
-              </div>
-
-              <div class="form-group">
-                <label for="gasto-proyecto">Proyecto</label>
-                <select id="gasto-proyecto">
-                  <option value="">Sin proyecto (general)</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label for="gasto-tipo">Tipo de gasto</label>
-                <select id="gasto-tipo">
-                  <option value="operativo">Operativo</option>
-                  <option value="materiales">Materiales</option>
-                  <option value="servicios">Servicios de terceros</option>
-                  <option value="viajes">Viajes</option>
-                  <option value="otros">Otros</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label for="gasto-descripcion">Descripción</label>
-                <input type="text" id="gasto-descripcion" placeholder="Ej: Compra de materiales, gasolina, etc." required>
-              </div>
-
-              <div class="form-group">
-                <label for="gasto-referencia">Factura / Referencia</label>
-                <input type="text" id="gasto-referencia" placeholder="Ej: FAC-00123, REF-7890">
-              </div>
-
-              <div class="form-group">
-                <label for="gasto-monto">Monto</label>
-                <input type="number" id="gasto-monto" step="0.01" min="0" required>
-              </div>
-
-              <div class="form-group">
-                <label for="gasto-metodo">Método de pago</label>
-                <select id="gasto-metodo">
-                  <option value="efectivo">Efectivo</option>
-                  <option value="transferencia">Transferencia</option>
-                  <option value="tarjeta">Tarjeta</option>
-                  <option value="cheque">Cheque</option>
-                  <option value="otros">Otros</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label>&nbsp;</label>
-                <button type="submit" class="btn-primary">💾 Guardar Gasto</button>
-              </div>
-            </div>
-            <div class="form-feedback" id="feedback-gasto-finanzas" style="display:none;"></div>
-          </form>
-        </div>
-
-        <!-- Registro de Pago -->
-        <div class="section">
-          <div class="section-header">
-            <h2 class="section-title">💰 Registrar Pago de Cliente</h2>
-            <p class="section-desc">
-              Registra pagos recibidos de clientes y vincúlalos al proyecto correspondiente para reflejar avances de cobro.
-            </p>
-          </div>
-
-          <form id="form-pago-finanzas" class="form-section" onsubmit="return registrarPagoFinanzas(event)">
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="pago-fecha">Fecha</label>
-                <input type="date" id="pago-fecha" required>
-              </div>
-
-              <div class="form-group">
-                <label for="pago-proyecto">Proyecto</label>
-                <select id="pago-proyecto">
-                  <option value="">Selecciona proyecto</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label for="pago-concepto">Concepto / Descripción</label>
-                <input type="text" id="pago-concepto" placeholder="Ej: Adelanto, pago parcial, pago final" required>
-              </div>
-
-              <div class="form-group">
-                <label for="pago-referencia">Referencia</label>
-                <input type="text" id="pago-referencia" placeholder="Ej: TRANS-1234, DEP-5678">
-              </div>
-
-              <div class="form-group">
-                <label for="pago-monto">Monto recibido</label>
-                <input type="number" id="pago-monto" step="0.01" min="0" required>
-              </div>
-
-              <div class="form-group">
-                <label for="pago-metodo">Método de pago</label>
-                <select id="pago-metodo">
-                  <option value="transferencia">Transferencia</option>
-                  <option value="efectivo">Efectivo</option>
-                  <option value="tarjeta">Tarjeta</option>
-                  <option value="cheque">Cheque</option>
-                  <option value="otros">Otros</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label for="pago-estado">Estado del pago</label>
-                <select id="pago-estado">
-                  <option value="registrado">Registrado</option>
-                  <option value="confirmado">Confirmado</option>
-                  <option value="reversado">Reversado</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label>&nbsp;</label>
-                <button type="submit" class="btn-primary">💾 Guardar Pago</button>
-              </div>
-            </div>
-            <div class="form-feedback" id="feedback-pago-finanzas" style="display:none;"></div>
-          </form>
-        </div>
-
-      </div>
       <!-- SUB: DECLARACIÓN ITBMS -->
       <div id="finanzas-itbms" class="sub-section">
         
@@ -1148,6 +1092,9 @@
 
   </main>
 
+  <!-- Contenedor de toasts -->
+  <div id="toast-container" class="gn-toast-container"></div>
+
   <!-- SCRIPTS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -1163,8 +1110,5 @@
   <script src="js/finanzas.js"></script>
   <script src="js/charts.js"></script>
   <script src="js/app.js"></script>
-
-  <!-- Contenedor de toasts (nuevo, para GN Studio OS 0.2) -->
-  <div id="toast-container" class="toast-container"></div>
 </body>
 </html>
