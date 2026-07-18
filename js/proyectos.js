@@ -1083,6 +1083,36 @@
 
   window.guardarProformaProyecto = guardarProformaProyecto;
   window.abrirModalGastoProyecto = abrirModalGastoProyecto;
+
+    // Agregar fila editable a la tabla de servicios de proforma
+  function agregarFilaProformaServicio() {
+    var tbody = byId('tbodyProformaServicios');
+    if (!tbody) return;
+
+    var tr = document.createElement('tr');
+    tr.innerHTML = [
+      '<td contenteditable="true" style="min-width:180px;">Servicio</td>',
+      '<td contenteditable="true" style="min-width:80px;">Global</td>',
+      '<td contenteditable="true" style="min-width:60px;">1</td>',
+      '<td contenteditable="true" style="min-width:100px;">0.00</td>',
+      '<td style="min-width:100px;">0.00</td>',
+      '<td><button type="button" onclick="this.closest(\'tr\').remove()" style="background:none;border:none;color:#e74c3c;cursor:pointer;font-size:16px;">&#x1F5D1;</button></td>'
+    ].join('');
+
+    // Actualizar total cuando se edita cantidad o precio
+    var celdas = tr.querySelectorAll('td');
+    function actualizarTotal() {
+      var cant = parseFloat((celdas[2].textContent || '0').replace(',', '.')) || 0;
+      var precio = parseFloat((celdas[3].textContent || '0').replace(',', '.')) || 0;
+      celdas[4].textContent = (cant * precio).toFixed(2);
+    }
+    celdas[2].addEventListener('input', actualizarTotal);
+    celdas[3].addEventListener('input', actualizarTotal);
+
+    tbody.appendChild(tr);
+  }
+
+  window.agregarFilaProformaServicio = agregarFilaProformaServicio;
   window.abrirModalPagoProyecto = abrirModalPagoProyecto;
 
 })(window, document);
