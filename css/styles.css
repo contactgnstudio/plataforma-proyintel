@@ -349,8 +349,8 @@ body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .section {
@@ -670,7 +670,16 @@ body {
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(107,189,69,0.35);
 }
+.btn-primary:active {
+  transform: scale(0.98);
+  box-shadow: none;
+}
 
+.btn-secondary:active,
+.btn-header:active,
+.btn-table:active {
+  transform: scale(0.98);
+}
 .btn-secondary {
   padding: 11px 22px;
   border-radius: 10px;
@@ -996,6 +1005,7 @@ cat-otros { background: rgba(127,140,141,0.12); color: #aab7b8; }
   margin-bottom: 24px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
 }
 
 .sub-nav-item {
@@ -1465,7 +1475,8 @@ cat-otros { background: rgba(127,140,141,0.12); color: #aab7b8; }
   color: var(--gn-green);
   border-bottom-color: var(--gn-green);
 }
-
+  scroll-behavior: smooth;
+}
 .proyecto-tab-content { display: none; }
 .proyecto-tab-content.active {
   display: block;
@@ -2122,6 +2133,13 @@ body.gn-auth-locked .top-navbar {
   body { background: #fff; color: #000; }
 }
 
+/* ============================================================
+   Focus visible (accesibilidad)
+   ============================================================ */
+:where(button, a, input, select, textarea).focus-visible {
+  outline: 2px solid var(--gn-green);
+  outline-offset: 2px;
+}
 /* ============================================================
    RESPONSIVE
    ============================================================ */
