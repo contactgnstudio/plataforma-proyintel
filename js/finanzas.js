@@ -7,14 +7,6 @@ function finEl(id) {
   return document.getElementById(id);
 }
 
-function finGetFirst(ids) {
-  for (var i = 0; i < ids.length; i++) {
-    var node = document.getElementById(ids[i]);
-    if (node) return node;
-  }
-  return null;
-}
-
 function finSafeArray(value) {
   return Array.isArray(value) ? value : [];
 }
@@ -51,7 +43,7 @@ function finGetData(name, fallback) {
 }
 
 function finGetProjectsMap() {
-  var proyectos = finGetData('PROYECTOS', 'gn_proyectos');
+  var proyectos = finGetData('PROYECTOS', 'proyectos');
   var map = {};
 
   for (var i = 0; i < proyectos.length; i++) {
@@ -69,20 +61,42 @@ function finProjectLabel(proyectoId, proyectosMap) {
   return proyectoId;
 }
 
+// ============================================================
+// Selects de proyecto en Finanzas
+// ============================================================
+
 function actualizarSelectProyectosFinanzas() {
-  var select = finEl('ec-proyecto');
-  if (!select) return;
+  var proyectos = finGetData('PROYECTOS', 'proyectos');
+  var proyectosMap = finGetProjectsMap();
 
-  var proyectos = finGetData('PROYECTOS', 'gn_proyectos');
-  var actual = select.value || '';
-  var html = '<option value="">Todos los proyectos</option>';
+  var selects = [
+    finEl('ec-proyecto'),
+    finEl('gasto-proyecto'),
+    finEl('pago-proyecto')
+  ];
 
-  for (var i = 0; i < proyectos.length; i++) {
-    html += '<option value="' + finEscapeHtml(proyectos[i].id || '') + '">' + finEscapeHtml(proyectos[i].nombre || 'Proyecto') + '</option>';
+  for (var s = 0; s < selects.length; s++) {
+    var select = selects[s];
+    if (!select) continue;
+
+    var current = select.value || '';
+
+    var html = '';
+    if (select.id === 'gasto-proyecto') {
+      html += '<option value="">Sin proyecto (general)</option>';
+    } else {
+      html += '<option value="">Todos los proyectos</option>';
+    }
+
+    for (var i = 0; i < proyectos.length; i++) {
+      var id = proyectos[i].id || '';
+      var nombre = proyectos[i].nombre || finProjectLabel(id, proyectosMap);
+      html += '<option value="' + finEscapeHtml(id) + '">' + finEscapeHtml(nombre) + '</option>';
+    }
+
+    select.innerHTML = html;
+    if (current) select.value = current;
   }
-
-  select.innerHTML = html;
-  if (actual) select.value = actual;
 }
 
 function finSetText(ids, value) {
@@ -92,11 +106,51 @@ function finSetText(ids, value) {
   }
 }
 
-function finSetHtml(ids, value) {
-  for (var i = 0; i < ids.length; i++) {
-    var node = document.getElementById(ids[i]);
-    if (node) node.innerHTML = value;
+// ============================================================
+// Helpers de Supabase / Storage
+// ============================================================
+
+function finGetStorageKey(name, fallback) {
+  if (typeof STORAGE_KEYS !== 'undefined' && STORAGE_KEYS && STORAGE_KEYS[name]) {
+    return STORAGE_KEYS[name];
   }
+  return fallback;
+}
+
+async function finInsertRow(tableKey, payload) {
+  var tableName = finGetStorageKey(tableKey, tableKey.toLowerCase());
+
+  if (typeof window.addItem !== 'function') {
+    console.error('addItem no está disponible para', tableName);
+    return null;
+  }
+
+  try {
+    return await window.addItem(tableName, payload);
+  } catch (error) {
+    console.error('Error insertando en', tableName, error);
+    return null;
+  }
+}
+
+async function finRefreshAfterChange() {
+  // Refresca KPIs
+  if (typeof window.actualizarKPIs === 'function') {
+    await window.actualizarKPIs();
+  }
+
+  // Refresca Estado de Cuenta
+  if (typeof window.generarEstadoCuenta === 'function') {
+    window.generarEstadoCuenta();
+  }
+
+  // Refresca detalle del proyecto actual (si existe)
+  if (typeof window.PROYECTO_ACTUAL !== 'undefined' && window.PROYECTO_ACTUAL && typeof window.verProyecto === 'function') {
+    await window.verProyecto(window.PROYECTO_ACTUAL.id);
+  }
+
+  // Refresca ITBMS
+  renderITBMS();
 }
 
 // ============================================================
@@ -109,8 +163,8 @@ function generarEstadoCuenta() {
   var tipo = finEl('ec-tipo') ? finEl('ec-tipo').value : 'todos';
   var proyectoId = finEl('ec-proyecto') ? finEl('ec-proyecto').value : '';
 
-  var gastos = finGetData('GASTOS', 'gn_gastos');
-  var pagos = finGetData('PAGOS', 'gn_pagos');
+  var gastos = finGetData('GASTOS', 'gastos');
+  var pagos = finGetData('PAGOS', 'pagos');
   var proyectosMap = finGetProjectsMap();
 
   if (desde) {
@@ -123,7 +177,7 @@ function generarEstadoCuenta() {
     pagos = pagos.filter(function(p) { return String(p.fecha || '') <= hasta; });
   }
 
-  // Filtro por proyecto: compatible con proyecto_id (Supabase) y proyectoId (legacy)
+  // Filtro por proyecto: compatible con proyecto_id y legacy
   if (proyectoId) {
     gastos = gastos.filter(function(g) {
       var pid = g.proyecto_id || g.proyectoId || '';
@@ -174,12 +228,10 @@ function generarEstadoCuenta() {
     return new Date(a.fecha) - new Date(b.fecha);
   });
 
-  var tbody = finGetFirst([
-    'tbodyMovimientos',
-    'tbodyEstadoCuenta',
-    'estadoCuentaBody',
-    'movimientos-body'
-  ]);
+  var tbody = document.getElementById('tbodyEstadoCuenta') ||
+              document.getElementById('tbodyMovimientos') ||
+              document.getElementById('estadoCuentaBody') ||
+              document.getElementById('movimientos-body');
 
   var saldo = 0;
   var totalIngresos = 0;
@@ -212,9 +264,9 @@ function generarEstadoCuenta() {
 
   var balance = totalIngresos - totalGastos;
 
-  finSetText(['ec-total-ingresos', 'ec-ingresos-total', 'resumen-ingresos'], finMoney(totalIngresos));
-  finSetText(['ec-total-gastos', 'ec-gastos-total', 'resumen-gastos'], finMoney(totalGastos));
-  finSetText(['ec-balance-total', 'ec-total-balance', 'resumen-balance'], finMoney(balance));
+  finSetText(['ec-total-ingresos', 'resumen-ingresos'], finMoney(totalIngresos));
+  finSetText(['ec-total-gastos', 'resumen-gastos'], finMoney(totalGastos));
+  finSetText(['ec-balance', 'resumen-balance'], finMoney(balance));
 
   return {
     movimientos: movimientos,
@@ -235,11 +287,11 @@ function calcularITBMSPeriodo() {
     periodo = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0');
   }
 
-  var pagos = finGetData('PAGOS', 'gn_pagos').filter(function(p) {
+  var pagos = finGetData('PAGOS', 'pagos').filter(function(p) {
     return String(p.fecha || '').indexOf(periodo) === 0;
   });
 
-  var gastos = finGetData('GASTOS', 'gn_gastos').filter(function(g) {
+  var gastos = finGetData('GASTOS', 'gastos').filter(function(g) {
     return String(g.fecha || '').indexOf(periodo) === 0;
   });
 
@@ -271,101 +323,25 @@ function calcularITBMSPeriodo() {
 function renderITBMS() {
   var data = calcularITBMSPeriodo();
 
-  finSetText(['itbms-ventas-gravadas', 'itbms-base-imponible'], finMoney(data.ventasGravadas));
-  finSetText(['itbms-debito-fiscal', 'itbms-por-cobrar'], finMoney(data.debitoFiscal));
-  finSetText(['itbms-credito-fiscal', 'itbms-por-descontar'], finMoney(data.creditoFiscal));
-  finSetText(['itbms-total-pagar', 'itbms-pagar'], finMoney(data.itbmsPagar));
+  finSetText(['itbms-ventas-gravadas'], finMoney(data.ventasGravadas));
+  finSetText(['itbms-debito'], finMoney(data.debitoFiscal));
+  finSetText(['itbms-credito'], finMoney(data.creditoFiscal));
+  finSetText(['itbms-a-pagar'], finMoney(data.itbmsPagar));
 
-  var container = finGetFirst([
-    'itbms-resultado',
-    'itbms-resumen',
-    'itbms-html',
-    'itbmsResultado'
-  ]);
-
+  var container = document.getElementById('itbms-resumen-container');
   if (container) {
-    container.innerHTML = ''
-      + '<div class="itbms-card" style="border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px;">'
-      + '<div style="font-weight:700;margin-bottom:10px;">Resumen ITBMS ' + finEscapeHtml(data.periodo) + '</div>'
-      + '<div style="display:grid;gap:8px;">'
-      + '<div><strong>Total cobrado:</strong> ' + finMoney(data.totalCobrado) + '</div>'
-      + '<div><strong>Ventas gravadas estimadas:</strong> ' + finMoney(data.ventasGravadas) + '</div>'
-      + '<div><strong>Débito fiscal estimado:</strong> ' + finMoney(data.debitoFiscal) + '</div>'
-      + '<div><strong>Crédito fiscal:</strong> ' + finMoney(data.creditoFiscal) + '</div>'
-      + '<div><strong>ITBMS estimado a pagar:</strong> <span style="color:#6bbd45;font-weight:700;">' + finMoney(data.itbmsPagar) + '</span></div>'
-      + '<div style="opacity:.75;font-size:.92em;margin-top:6px;">Nota: este cálculo usa los pagos registrados del período y no descuenta crédito fiscal de gastos porque los gastos actuales no guardan ITBMS desglosado.</div>'
-      + '</div>'
-      + '</div>';
+    container.style.display = 'block';
   }
 
   return data;
-}
-
-function generarITBMS() {
-  return renderITBMS();
 }
 
 function generarDeclaracionITBMS() {
   return renderITBMS();
 }
 
-function generarReporteITBMS() {
-  return renderITBMS();
-}
-
 // ============================================================
-// Registro de Gastos y Pagos desde formularios de Finanzas
-// ============================================================
-
-async function guardarGastoDesdeFormulario(formValues) {
-  var payload = {
-    proyecto_id: formValues.proyectoId || null,
-    cotizacion_id: formValues.cotizacionId || null,
-    cliente_id: formValues.clienteId || null,
-    fecha: formValues.fecha || null,            // 'YYYY-MM-DD'
-    referencia: formValues.referencia || null,  // factura / referencia
-    descripcion: formValues.descripcion || '',
-    tipo: formValues.tipo || null,              // categoría de gasto
-    monto: parseFloat(formValues.monto) || 0,
-    metodo_pago: formValues.metodoPago || null,
-    notas: formValues.notas || null
-  };
-
-  if (typeof window.addItem !== 'function' || !window.STORAGE_KEYS) {
-    console.error('addItem/STORAGE_KEYS no disponibles para guardar gasto');
-    return null;
-  }
-
-  var saved = await window.addItem(window.STORAGE_KEYS.GASTOS, payload);
-  return saved;
-}
-
-async function guardarPagoDesdeFormulario(formValues) {
-  var payload = {
-    proyecto_id: formValues.proyectoId || null,
-    cotizacion_id: formValues.cotizacionId || null,
-    cliente_id: formValues.clienteId || null,
-    fecha: formValues.fecha || null,            // 'YYYY-MM-DD'
-    referencia: formValues.referencia || null,  // referencia bancaria
-    concepto: formValues.concepto || '',
-    tipo: formValues.tipo || null,              // 'abono', 'pago_total', etc.
-    monto: parseFloat(formValues.monto) || 0,
-    metodo_pago: formValues.metodoPago || null,
-    estado: formValues.estado || 'registrado',
-    notas: formValues.notas || null
-  };
-
-  if (typeof window.addItem !== 'function' || !window.STORAGE_KEYS) {
-    console.error('addItem/STORAGE_KEYS no disponibles para guardar pago');
-    return null;
-  }
-
-  var saved = await window.addItem(window.STORAGE_KEYS.PAGOS, payload);
-  return saved;
-}
-
-// ============================================================
-// Inicialización de formularios de Finanzas
+// Registro de Gastos y Pagos — Formularios Finanzas
 // ============================================================
 
 function finGetProyectoIdDesdeSelectGasto() {
@@ -378,7 +354,7 @@ function finGetProyectoIdDesdeSelectPago() {
   return select ? (select.value || null) : null;
 }
 
-async function inicializarFormularioGastoFinanzas() {
+function inicializarFormularioGastoFinanzas() {
   var form = document.getElementById('form-gasto-finanzas');
   if (!form) return;
 
@@ -391,59 +367,63 @@ async function inicializarFormularioGastoFinanzas() {
     feedback.style.display = msg ? 'block' : 'none';
   }
 
+  // Fecha por defecto
+  var fecha = document.getElementById('gasto-fecha');
+  if (fecha && !fecha.value && typeof GNUtils !== 'undefined' && typeof GNUtils.getTodayISO === 'function') {
+    fecha.value = GNUtils.getTodayISO();
+  }
+
   form.addEventListener('submit', async function(event) {
     event.preventDefault();
 
-    var fecha = document.getElementById('gasto-fecha') ? document.getElementById('gasto-fecha').value : '';
+    var fechaVal = fecha ? fecha.value : '';
     var referencia = document.getElementById('gasto-referencia') ? document.getElementById('gasto-referencia').value.trim() : '';
     var descripcion = document.getElementById('gasto-descripcion') ? document.getElementById('gasto-descripcion').value.trim() : '';
-    var tipo = document.getElementById('gasto-tipo') ? document.getElementById('gasto-tipo').value.trim() : '';
+    var tipo = document.getElementById('gasto-tipo') ? document.getElementById('gasto-tipo').value.trim() : 'operativo';
     var montoStr = document.getElementById('gasto-monto') ? document.getElementById('gasto-monto').value : '';
-    var metodoPago = document.getElementById('gasto-metodo') ? document.getElementById('gasto-metodo').value.trim() : '';
+    var metodoPago = document.getElementById('gasto-metodo') ? document.getElementById('gasto-metodo').value.trim() : 'efectivo';
     var proyectoId = finGetProyectoIdDesdeSelectGasto();
-    var notas = document.getElementById('gasto-notas') ? document.getElementById('gasto-notas').value.trim() : '';
 
     var monto = parseFloat(montoStr || '0');
 
-    if (!fecha || !descripcion || !montoStr) {
-      setFeedback('❌ Completa al menos fecha, descripción y monto del gasto.', 'error');
+    if (!fechaVal || !descripcion || !montoStr || monto <= 0) {
+      setFeedback('❌ Completa fecha, descripción y monto del gasto.', 'error');
       return;
     }
 
-    var formValues = {
-      proyectoId: proyectoId,
-      cotizacionId: null,
-      clienteId: null,
-      fecha: fecha,
-      referencia: referencia,
-      descripcion: descripcion,
+    var payload = {
+      fecha: fechaVal,
+      proyecto_id: proyectoId || null,
       tipo: tipo,
+      descripcion: descripcion,
+      referencia: referencia || null,
       monto: monto,
-      metodoPago: metodoPago,
-      notas: notas
+      metodo_pago: metodoPago
     };
 
-    try {
-      var saved = await guardarGastoDesdeFormulario(formValues);
+    var result = await finInsertRow('GASTOS', payload);
 
-      if (!saved) {
-        setFeedback('❌ No se pudo guardar el gasto.', 'error');
-        return;
-      }
-
-      setFeedback('✅ Gasto registrado correctamente.', 'success');
-      form.reset();
-
-      generarEstadoCuenta();
-      renderITBMS();
-    } catch (error) {
-      console.error('Error registrando gasto', error);
-      setFeedback('❌ Error inesperado al registrar el gasto.', 'error');
+    if (!result) {
+      setFeedback('❌ No se pudo guardar el gasto.', 'error');
+      return;
     }
+
+    setFeedback('✅ Gasto registrado correctamente.', 'success');
+
+    if (fecha && typeof GNUtils !== 'undefined' && typeof GNUtils.getTodayISO === 'function') {
+      fecha.value = GNUtils.getTodayISO();
+    }
+    document.getElementById('gasto-descripcion').value = '';
+    document.getElementById('gasto-referencia').value = '';
+    document.getElementById('gasto-monto').value = '';
+    document.getElementById('gasto-tipo').value = 'operativo';
+    document.getElementById('gasto-metodo').value = 'efectivo';
+
+    await finRefreshAfterChange();
   });
 }
 
-async function inicializarFormularioPagoFinanzas() {
+function inicializarFormularioPagoFinanzas() {
   var form = document.getElementById('form-pago-finanzas');
   if (!form) return;
 
@@ -456,56 +436,69 @@ async function inicializarFormularioPagoFinanzas() {
     feedback.style.display = msg ? 'block' : 'none';
   }
 
+  var fecha = document.getElementById('pago-fecha');
+  if (fecha && !fecha.value && typeof GNUtils !== 'undefined' && typeof GNUtils.getTodayISO === 'function') {
+    fecha.value = GNUtils.getTodayISO();
+  }
+
   form.addEventListener('submit', async function(event) {
     event.preventDefault();
 
-    var fecha = document.getElementById('pago-fecha') ? document.getElementById('pago-fecha').value : '';
-    var referencia = document.getElementById('pago-referencia') ? document.getElementById('pago-referencia').value.trim() : '';
-    var concepto = document.getElementById('pago-concepto') ? document.getElementById('pago-concepto').value.trim() : '';
-    var tipo = document.getElementById('pago-tipo') ? document.getElementById('pago-tipo').value.trim() : '';
-    var montoStr = document.getElementById('pago-monto') ? document.getElementById('pago-monto').value : '';
-    var metodoPago = document.getElementById('pago-metodo') ? document.getElementById('pago-metodo').value.trim() : '';
-    var estado = document.getElementById('pago-estado') ? document.getElementById('pago-estado').value : 'registrado';
+    var fechaVal = fecha ? fecha.value : '';
     var proyectoId = finGetProyectoIdDesdeSelectPago();
-    var notas = document.getElementById('pago-notas') ? document.getElementById('pago-notas').value.trim() : '';
+    var concepto = document.getElementById('pago-concepto') ? document.getElementById('pago-concepto').value.trim() : '';
+    var referencia = document.getElementById('pago-referencia') ? document.getElementById('pago-referencia').value.trim() : '';
+    var montoStr = document.getElementById('pago-monto') ? document.getElementById('pago-monto').value : '';
+    var metodoPago = document.getElementById('pago-metodo') ? document.getElementById('pago-metodo').value.trim() : 'transferencia';
+    var estado = document.getElementById('pago-estado') ? document.getElementById('pago-estado').value : 'registrado';
 
     var monto = parseFloat(montoStr || '0');
 
-    if (!fecha || !concepto || !montoStr) {
-      setFeedback('❌ Completa al menos fecha, concepto y monto del pago.', 'error');
+    if (!fechaVal || !proyectoId || !concepto || !montoStr || monto <= 0) {
+      setFeedback('❌ Completa fecha, proyecto, concepto y monto del pago.', 'error');
       return;
     }
 
-    var formValues = {
-      proyectoId: proyectoId,
-      cotizacionId: null,
-      clienteId: null,
-      fecha: fecha,
-      referencia: referencia,
+    var payload = {
+      fecha: fechaVal,
+      proyecto_id: proyectoId,
       concepto: concepto,
-      tipo: tipo,
+      referencia: referencia || null,
       monto: monto,
-      metodoPago: metodoPago,
-      estado: estado,
-      notas: notas
+      metodo_pago: metodoPago,
+      estado: estado
     };
 
-    try {
-      var saved = await guardarPagoDesdeFormulario(formValues);
+    var result = await finInsertRow('PAGOS', payload);
 
-      if (!saved) {
-        setFeedback('❌ No se pudo guardar el pago.', 'error');
-        return;
-      }
-
-      setFeedback('✅ Pago registrado correctamente.', 'success');
-      form.reset();
-
-      generarEstadoCuenta();
-      renderITBMS();
-    } catch (error) {
-      console.error('Error registrando pago', error);
-      setFeedback('❌ Error inesperado al registrar el pago.', 'error');
+    if (!result) {
+      setFeedback('❌ No se pudo guardar el pago.', 'error');
+      return;
     }
+
+    setFeedback('✅ Pago registrado correctamente.', 'success');
+
+    if (fecha && typeof GNUtils !== 'undefined' && typeof GNUtils.getTodayISO === 'function') {
+      fecha.value = GNUtils.getTodayISO();
+    }
+    document.getElementById('pago-concepto').value = '';
+    document.getElementById('pago-referencia').value = '';
+    document.getElementById('pago-monto').value = '';
+    document.getElementById('pago-metodo').value = 'transferencia';
+    document.getElementById('pago-estado').value = 'registrado';
+
+    await finRefreshAfterChange();
   });
 }
+
+// ============================================================
+// Exportaciones mínimas a window
+// ============================================================
+
+window.actualizarSelectProyectosFinanzas = actualizarSelectProyectosFinanzas;
+window.generarEstadoCuenta = generarEstadoCuenta;
+window.renderITBMS = renderITBMS;
+window.generarDeclaracionITBMS = generarDeclaracionITBMS;
+window.inicializarFormularioGastoFinanzas = inicializarFormularioGastoFinanzas;
+window.inicializarFormularioPagoFinanzas = inicializarFormularioPagoFinanzas;
+window.finRefreshAfterChange = finRefreshAfterChange;
