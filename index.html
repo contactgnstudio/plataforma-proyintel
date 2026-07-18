@@ -327,121 +327,120 @@
       </div>
 
       <!-- SUB: CATÁLOGO & GRUPOS -->
-   <div id="negocio-catalogo" class="sub-section">
+      <div id="negocio-catalogo" class="sub-section">
         
-  <!-- Grupos -->
-  <div class="section">
-    <div class="section-header">
-      <h2 class="section-title">📁 Grupos de Servicios</h2>
-      <div class="section-actions">
-        <button class="btn-secondary" onclick="abrirModalGrupo()">➕ Nuevo Grupo</button>
-      </div>
-    </div>
+        <!-- Grupos -->
+        <div class="section">
+          <div class="section-header">
+            <h2 class="section-title">📁 Grupos de Servicios</h2>
+            <div class="section-actions">
+              <button class="btn-secondary" onclick="abrirModalGrupo()">➕ Nuevo Grupo</button>
+            </div>
+          </div>
 
-    <div class="grupos-grid" id="gruposVisuales">
-      <!-- Se renderizan como tarjetas visuales -->
-    </div>
+          <div class="grupos-grid" id="gruposVisuales">
+            <!-- Se renderizan como tarjetas visuales -->
+          </div>
 
-    <div class="table-container" style="margin-top:20px;">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Código</th>
-            <th>Nombre</th>
-            <th>Descripción</th>
-            <th>Color</th>
-            <th>Orden</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="tbodyGrupos"></tbody>
-      </table>
-    </div>
+          <div class="table-container" style="margin-top:20px;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Nombre</th>
+                  <th>Descripción</th>
+                  <th>Color</th>
+                  <th>Orden</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyGrupos"></tbody>
+            </table>
+          </div>
 
-    <div class="dashboard-grid" style="margin-top:20px;">
-      <div class="section">
-        <div class="section-header">
-          <h3 class="section-title">🗂️ Servicios por Grupo</h3>
+          <div class="dashboard-grid" style="margin-top:20px;">
+            <div class="section">
+              <div class="section-header">
+                <h3 class="section-title">🗂️ Servicios por Grupo</h3>
+              </div>
+              <div id="serviciosPorGrupo"></div>
+            </div>
+            <div class="section">
+              <div class="section-header">
+                <h3 class="section-title">📌 Servicios sin Grupo</h3>
+              </div>
+              <div id="serviciosSinGrupo"></div>
+            </div>
+          </div>
         </div>
-        <div id="serviciosPorGrupo"></div>
-      </div>
 
-      <div class="section">
-        <div class="section-header">
-          <h3 class="section-title">📌 Servicios sin Grupo</h3>
+        <!-- Catálogo -->
+        <div class="form-section">
+          <div class="form-header">
+            <h2 class="section-title">➕ Añadir Servicio al Catálogo</h2>
+          </div>
+          <form id="formServicio" onsubmit="return guardarServicio(event)">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="serv-codigo">Código <span class="required">*</span></label>
+                <input type="text" id="serv-codigo" placeholder="Ej: WEB-001" required maxlength="30">
+              </div>
+              <div class="form-group">
+                <label for="serv-grupo">Grupo <span class="required">*</span></label>
+                <select id="serv-grupo" required>
+                  <option value="">Selecciona un grupo</option>
+                </select>
+              </div>
+              <div class="form-group full-width">
+                <label for="serv-descripcion">Descripción <span class="required">*</span></label>
+                <input type="text" id="serv-descripcion" placeholder="Ej: Diseño de landing page de alto impacto" required maxlength="300">
+              </div>
+              <div class="form-group">
+                <label for="serv-unidad">Unidad <span class="required">*</span></label>
+                <select id="serv-unidad" required>
+                  <option value="und">und - Unidad</option>
+                  <option value="hr">hr - Hora</option>
+                  <option value="dia">día - Día</option>
+                  <option value="mes">mes - Mes</option>
+                  <option value="pagina">página - Página</option>
+                  <option value="proyecto">proyecto - Proyecto</option>
+                  <option value="paquete">paquete - Paquete</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="serv-precio">Precio Unitario ($) <span class="required">*</span></label>
+                <input type="number" id="serv-precio" placeholder="0.00" required min="0.01" step="0.01">
+              </div>
+              <div class="form-group">
+                <label for="serv-itbms">¿Aplica ITBMS?</label>
+                <select id="serv-itbms">
+                  <option value="1">Sí (7%)</option>
+                  <option value="0">No</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn-primary">💾 Guardar Servicio</button>
+              <button type="button" class="btn-secondary" onclick="sugerirGrupoIA()">🤖 Sugerir Grupo (IA)</button>
+              <button type="reset" class="btn-secondary">🔄 Limpiar</button>
+            </div>
+          </form>
+          <div class="form-feedback" id="feedback-servicio"></div>
         </div>
-        <div id="serviciosSinGrupo"></div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Catálogo -->
-  <div class="form-section">
-    <div class="form-header">
-      <h2 class="section-title">➕ Añadir Servicio al Catálogo</h2>
-    </div>
-    <form id="formServicio" onsubmit="return guardarServicio(event)">
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="serv-codigo">Código <span class="required">*</span></label>
-          <input type="text" id="serv-codigo" placeholder="Ej: WEB-001" required maxlength="30">
-        </div>
-        <div class="form-group">
-          <label for="serv-grupo">Grupo <span class="required">*</span></label>
-          <select id="serv-grupo" required>
-            <option value="">Selecciona un grupo</option>
-          </select>
-        </div>
-        <div class="form-group full-width">
-          <label for="serv-descripcion">Descripción <span class="required">*</span></label>
-          <input type="text" id="serv-descripcion" placeholder="Ej: Diseño de landing page de alto impacto" required maxlength="300">
-        </div>
-        <div class="form-group">
-          <label for="serv-unidad">Unidad <span class="required">*</span></label>
-          <select id="serv-unidad" required>
-            <option value="und">und - Unidad</option>
-            <option value="hr">hr - Hora</option>
-            <option value="dia">día - Día</option>
-            <option value="mes">mes - Mes</option>
-            <option value="pagina">página - Página</option>
-            <option value="proyecto">proyecto - Proyecto</option>
-            <option value="paquete">paquete - Paquete</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="serv-precio">Precio Unitario ($) <span class="required">*</span></label>
-          <input type="number" id="serv-precio" placeholder="0.00" required min="0.01" step="0.01">
-        </div>
-        <div class="form-group">
-          <label for="serv-itbms">¿Aplica ITBMS?</label>
-          <select id="serv-itbms">
-            <option value="1">Sí (7%)</option>
-            <option value="0">No</option>
-          </select>
+        <!-- Lista de Servicios -->
+        <div class="section">
+          <div class="section-header">
+            <h2 class="section-title">📋 Servicios por Grupo</h2>
+            <div class="section-actions">
+              <input type="text" id="buscar-servicio" placeholder="🔍 Buscar servicio..." onkeyup="filtrarServicios()" class="search-input">
+            </div>
+          </div>
+          <div id="servicios-por-grupo">
+            <!-- Se renderizan agrupados visualmente -->
+          </div>
         </div>
       </div>
-      <div class="form-actions">
-        <button type="submit" class="btn-primary">💾 Guardar Servicio</button>
-        <button type="button" class="btn-secondary" onclick="sugerirGrupoIA()">🤖 Sugerir Grupo (IA)</button>
-        <button type="reset" class="btn-secondary">🔄 Limpiar</button>
-      </div>
-    </form>
-    <div class="form-feedback" id="feedback-servicio"></div>
-  </div>
-
-  <!-- Lista de Servicios -->
-  <div class="section">
-    <div class="section-header">
-      <h2 class="section-title">📋 Servicios por Grupo</h2>
-      <div class="section-actions">
-        <input type="text" id="buscar-servicio" placeholder="🔍 Buscar servicio..." onkeyup="filtrarServicios()" class="search-input">
-      </div>
-    </div>
-    <div id="servicios-por-grupo">
-      <!-- Se renderizan agrupados visualmente -->
-    </div>
-  </div>
-</div>
 
       <!-- SUB: COTIZACIONES -->
       <div id="negocio-cotizaciones" class="sub-section">
@@ -1229,5 +1228,8 @@
   <script src="js/finanzas.js"></script>
   <script src="js/charts.js"></script>
   <script src="js/app.js"></script>
+
+  <!-- Contenedor de toasts (nuevo, para GN Studio OS 0.2) -->
+  <div id="toast-container" class="toast-container"></div>
 </body>
 </html>
