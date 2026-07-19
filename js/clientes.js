@@ -213,78 +213,78 @@ function abrirModalCliente(id) {
   modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
 
   modal.innerHTML = `
-    <div style="background:#1a1a2e;border-radius:12px;padding:32px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;border:1px solid #2a2a4a;">
+    <div style="background:#111E17;border-radius:12px;padding:32px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;border:1px solid rgba(18,53,36,0.25);">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
-        <h3 style="margin:0;color:#fff;font-size:18px;">${titulo}</h3>
-        <button type="button" onclick="cerrarModalCliente()" style="background:none;border:none;color:#aaa;font-size:24px;cursor:pointer;">&#x2715;</button>
+        <h3 style="margin:0;color:#F0F0F5;font-size:18px;">${titulo}</h3>
+        <button type="button" onclick="cerrarModalCliente()" style="background:none;border:none;color:#9CA3AF;font-size:24px;cursor:pointer;">&#x2715;</button>
       </div>
 
       <form id="form-cliente" onsubmit="return guardarCliente(event);">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
           <div style="grid-column:1/-1;">
-            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">NOMBRE *</label>
-            <input id="cli-nombre" type="text" placeholder="Nombre completo o razón social" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+            <label style="color:#9CA3AF;font-size:12px;display:block;margin-bottom:6px;">NOMBRE *</label>
+            <input id="cli-nombre" type="text" placeholder="Nombre completo o razón social" style="width:100%;padding:10px;background:#0D1611;border:1px solid rgba(18,53,36,0.25);border-radius:8px;color:#F0F0F5;box-sizing:border-box;" />
           </div>
 
           <div>
-            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">NOMBRE COMERCIAL</label>
-            <input id="cli-nombre-comercial" type="text" placeholder="Nombre comercial" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+            <label style="color:#9CA3AF;font-size:12px;display:block;margin-bottom:6px;">NOMBRE COMERCIAL</label>
+            <input id="cli-nombre-comercial" type="text" placeholder="Nombre comercial" style="width:100%;padding:10px;background:#0D1611;border:1px solid rgba(18,53,36,0.25);border-radius:8px;color:#F0F0F5;box-sizing:border-box;" />
           </div>
 
           <div>
-            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">CONTACTO</label>
-            <input id="cli-contacto" type="text" placeholder="Persona de contacto" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+            <label style="color:#9CA3AF;font-size:12px;display:block;margin-bottom:6px;">CONTACTO</label>
+            <input id="cli-contacto" type="text" placeholder="Persona de contacto" style="width:100%;padding:10px;background:#0D1611;border:1px solid rgba(18,53,36,0.25);border-radius:8px;color:#F0F0F5;box-sizing:border-box;" />
           </div>
 
           <div>
-            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">RUC</label>
-            <input id="cli-ruc" type="text" placeholder="RUC" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+            <label style="color:#9CA3AF;font-size:12px;display:block;margin-bottom:6px;">RUC</label>
+            <input id="cli-ruc" type="text" placeholder="RUC" style="width:100%;padding:10px;background:#0D1611;border:1px solid rgba(18,53,36,0.25);border-radius:8px;color:#F0F0F5;box-sizing:border-box;" />
           </div>
 
           <div>
-            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">DV</label>
-            <input id="cli-dv" type="text" placeholder="DV" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+            <label style="color:#9CA3AF;font-size:12px;display:block;margin-bottom:6px;">DV</label>
+            <input id="cli-dv" type="text" placeholder="DV" style="width:100%;padding:10px;background:#0D1611;border:1px solid rgba(18,53,36,0.25);border-radius:8px;color:#F0F0F5;box-sizing:border-box;" />
           </div>
 
           <div>
-            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">TIPO CONTRIBUYENTE</label>
-            <input id="cli-tipo-contrib" type="text" placeholder="Natural / Jurídico" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+            <label style="color:#9CA3AF;font-size:12px;display:block;margin-bottom:6px;">TIPO CONTRIBUYENTE</label>
+            <input id="cli-tipo-contrib" type="text" placeholder="Natural / Jurídico" style="width:100%;padding:10px;background:#0D1611;border:1px solid rgba(18,53,36,0.25);border-radius:8px;color:#F0F0F5;box-sizing:border-box;" />
           </div>
 
           <div>
-            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">CORREO</label>
-            <input id="cli-correo" type="email" placeholder="correo@cliente.com" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+            <label style="color:#9CA3AF;font-size:12px;display:block;margin-bottom:6px;">CORREO</label>
+            <input id="cli-correo" type="email" placeholder="correo@cliente.com" style="width:100%;padding:10px;background:#0D1611;border:1px solid rgba(18,53,36,0.25);border-radius:8px;color:#F0F0F5;box-sizing:border-box;" />
           </div>
 
           <div>
-            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">TELÉFONO</label>
-            <input id="cli-telefono" type="text" placeholder="Teléfono principal / WhatsApp" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+            <label style="color:#9CA3AF;font-size:12px;display:block;margin-bottom:6px;">TELÉFONO</label>
+            <input id="cli-telefono" type="text" placeholder="Teléfono principal / WhatsApp" style="width:100%;padding:10px;background:#0D1611;border:1px solid rgba(18,53,36,0.25);border-radius:8px;color:#F0F0F5;box-sizing:border-box;" />
           </div>
 
           <div>
-            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">TELÉFONO SECUNDARIO</label>
-            <input id="cli-telefono2" type="text" placeholder="Teléfono secundario" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+            <label style="color:#9CA3AF;font-size:12px;display:block;margin-bottom:6px;">TELÉFONO SECUNDARIO</label>
+            <input id="cli-telefono2" type="text" placeholder="Teléfono secundario" style="width:100%;padding:10px;background:#0D1611;border:1px solid rgba(18,53,36,0.25);border-radius:8px;color:#F0F0F5;box-sizing:border-box;" />
           </div>
 
           <div>
-            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">PROVINCIA</label>
-            <input id="cli-provincia" type="text" placeholder="Provincia" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+            <label style="color:#9CA3AF;font-size:12px;display:block;margin-bottom:6px;">PROVINCIA</label>
+            <input id="cli-provincia" type="text" placeholder="Provincia" style="width:100%;padding:10px;background:#0D1611;border:1px solid rgba(18,53,36,0.25);border-radius:8px;color:#F0F0F5;box-sizing:border-box;" />
           </div>
 
           <div style="grid-column:1/-1;">
-            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">DIRECCIÓN</label>
-            <input id="cli-direccion" type="text" placeholder="Dirección completa" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+            <label style="color:#9CA3AF;font-size:12px;display:block;margin-bottom:6px;">DIRECCIÓN</label>
+            <input id="cli-direccion" type="text" placeholder="Dirección completa" style="width:100%;padding:10px;background:#0D1611;border:1px solid rgba(18,53,36,0.25);border-radius:8px;color:#F0F0F5;box-sizing:border-box;" />
           </div>
 
           <div style="grid-column:1/-1;">
-            <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">NOTAS</label>
-            <textarea id="cli-notas" rows="4" placeholder="Notas internas del cliente" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;resize:vertical;"></textarea>
+            <label style="color:#9CA3AF;font-size:12px;display:block;margin-bottom:6px;">NOTAS</label>
+            <textarea id="cli-notas" rows="4" placeholder="Notas internas del cliente" style="width:100%;padding:10px;background:#0D1611;border:1px solid rgba(18,53,36,0.25);border-radius:8px;color:#F0F0F5;box-sizing:border-box;resize:vertical;"></textarea>
           </div>
         </div>
 
         <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;">
-          <button type="button" onclick="cerrarModalCliente()" style="padding:10px 20px;background:#333;border:none;border-radius:8px;color:#fff;cursor:pointer;">Cancelar</button>
-          <button type="submit" style="padding:10px 20px;background:#2563eb;border:none;border-radius:8px;color:#fff;cursor:pointer;">Guardar Cliente</button>
+          <button type="button" onclick="cerrarModalCliente()" style="padding:10px 20px;background:rgba(18,53,36,0.25);border:none;border-radius:8px;color:#F0F0F5;cursor:pointer;">Cancelar</button>
+          <button type="submit" style="padding:10px 20px;background:#C5A253;border:none;border-radius:8px;color:#F0F0F5;cursor:pointer;">Guardar Cliente</button>
         </div>
       </form>
     </div>
