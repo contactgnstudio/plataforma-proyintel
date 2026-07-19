@@ -9,183 +9,6 @@
   var PROYECTO_ACTUAL = null;
   var CLIENTES_CACHE = [];
   var CHART_PROYECTO = null;
-  // ============================================================
-  // Toggle del panel de proforma
-  // ============================================================
-  function togglePanelProforma() {
-    var panel = byId('proyecto-proforma-panel');
-    if (!panel) return;
-    var isHidden = panel.style.display === 'none';
-    panel.style.display = isHidden ? 'block' : 'none';
-    if (isHidden) {
-      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      // Cargar clientes y servicios del catálogo cuando se abre
-      cargarSelectClientesProforma();
-      cargarSelectServiciosCatalogo();
-    }
-  }
-
-  // ============================================================
-  // Cargar clientes en el select de proforma
-  // ============================================================
-  async function cargarSelectClientesProforma() {
-    var select = byId('pf-cliente');
-    if (!select) return;
-
-    var clientes = await obtenerClientes();
-    var currentValue = select.value;
-
-    var html = '<option value="">Selecciona un cliente</option>';
-    for (var i = 0; i < clientes.length; i++) {
-      html += '<option value="' + esc(clientes[i].id) + '">' + esc(clientes[i].nombre) + '</option>';
-    }
-
-    select.innerHTML = html;
-    if (currentValue) select.value = currentValue;
-  }
-
-  // ============================================================
-  // Cargar servicios del catálogo en el select de proforma
-  // ============================================================
-  async function cargarSelectServiciosCatalogo() {
-    var select = byId('pf-select-servicio-catalogo');
-    if (!select) return;
-
-    var servicios = [];
-    if (typeof window.obtenerServicios === 'function') {
-      servicios = await window.obtenerServicios();
-    }
-    servicios = Array.isArray(servicios) ? servicios : [];
-
-    var html = '<option value="">-- Selecciona un servicio del catálogo --</option>';
-    for (var i = 0; i < servicios.length; i++) {
-      var s = servicios[i];
-      var nombre = s.descripcion || s.nombre || s.codigo || 'Servicio';
-      var precio = parseFloat(s.precio || 0) || 0;
-      var unidad = s.unidad || 'und';
-      var itbms = parseInt(s.itbms, 10) === 1 ? 1 : 0;
-      html += '<option value="' + esc(s.id || '') + '" ' +
-              'data-nombre="' + esc(nombre) + '" ' +
-              'data-precio="' + precio + '" ' +
-              'data-unidad="' + esc(unidad) + '" ' +
-              'data-itbms="' + itbms + '">' +
-              esc(nombre) + ' — ' + money(precio) + ' / ' + esc(unidad) +
-              '</option>';
-    }
-
-    select.innerHTML = html;
-  }
-
-  // ============================================================
-  // Agregar servicio del catálogo a la proforma
-  // ============================================================
-  function agregarServicioCatalogoAProforma() {
-    var select = byId('pf-select-servicio-catalogo');
-    if (!select || !select.value) {
-      if (window.showToast) {
-        window.showToast({ type: 'warning', title: 'Selecciona un servicio', message: 'Elige un servicio del catálogo para agregarlo a la propuesta.' });
-      }
-      return;
-    }
-
-    var option = select.options[select.selectedIndex];
-    var nombre = option.getAttribute('data-nombre') || 'Servicio';
-    var precio = parseFloat(option.getAttribute('data-precio') || 0) || 0;
-    var unidad = option.getAttribute('data-unidad') || 'und';
-    var itbms = parseInt(option.getAttribute('data-itbms') || '0', 10);
-
-    agregarFilaProforma(nombre, unidad, '', '', itbms);
-    select.value = '';
-  }
-
-  // ============================================================
-  // Agregar fila vacía a la proforma (línea manual)
-  // ============================================================
-  function agregarFilaProformaVacia() {
-    agregarFilaProforma('', '', '', '', 0);
-  }
-
-  // ============================================================
-  // Agregar fila a la proforma con datos
-  // ============================================================
-  function agregarFilaProforma(nombre, unidad, cantidad, precio, itbms) {
-    var tbody = byId('tbodyProformaServicios');
-    if (!tbody) return;
-
-    var tr = document.createElement('tr');
-    tr.innerHTML = [
-      '<td><input type="text" class="pf-input-nombre" value="' + esc(nombre) + '" placeholder="Descripción del servicio" style="width:100%;padding:6px 8px;background:transparent;border:1px solid var(--gn-border);border-radius:6px;color:var(--gn-text);font-size:13px;"></td>',
-      '<td><input type="text" class="pf-input-unidad" value="' + esc(unidad) + '" placeholder="und" style="width:80px;padding:6px 8px;background:transparent;border:1px solid var(--gn-border);border-radius:6px;color:var(--gn-text);font-size:13px;text-align:center;"></td>',
-      '<td><input type="number" class="pf-input-cantidad" value="' + esc(cantidad) + '" placeholder="0" min="0" step="0.01" style="width:80px;padding:6px 8px;background:transparent;border:1px solid var(--gn-border);border-radius:6px;color:var(--gn-text);font-size:13px;text-align:center;"></td>',
-      '<td><input type="number" class="pf-input-precio" value="' + esc(precio) + '" placeholder="0.00" min="0" step="0.01" style="width:100px;padding:6px 8px;background:transparent;border:1px solid var(--gn-border);border-radius:6px;color:var(--gn-text);font-size:13px;text-align:right;"></td>',
-      '<td style="text-align:center;"><input type="checkbox" class="pf-check-itbms" ' + (itbms ? 'checked' : '') + ' style="width:18px;height:18px;accent-color:#C5A253;cursor:pointer;"></td>',
-      '<td class="pf-total-fila" style="font-weight:600;text-align:right;">0.00</td>',
-      '<td style="text-align:center;"><button type="button" onclick="this.closest('tr').remove();actualizarTotalesProforma();" style="background:none;border:none;color:#F87171;cursor:pointer;font-size:16px;"><i class="ph ph-trash"></i></button></td>'
-    ].join('');
-
-    // Event listeners para calcular totales
-    var inputs = tr.querySelectorAll('input');
-    inputs.forEach(function(inp) {
-      inp.addEventListener('input', function() { actualizarTotalesProforma(); });
-      inp.addEventListener('change', function() { actualizarTotalesProforma(); });
-    });
-
-    tbody.appendChild(tr);
-    actualizarTotalesProforma();
-  }
-
-  // ============================================================
-  // Actualizar totales de la proforma
-  // ============================================================
-  function actualizarTotalesProforma() {
-    var tbody = byId('tbodyProformaServicios');
-    if (!tbody) return;
-
-    var filas = tbody.querySelectorAll('tr');
-    var subtotal = 0;
-    var itbmsTotal = 0;
-
-    filas.forEach(function(tr) {
-      var cantidad = parseFloat(tr.querySelector('.pf-input-cantidad')?.value || 0) || 0;
-      var precio = parseFloat(tr.querySelector('.pf-input-precio')?.value || 0) || 0;
-      var aplicaItbms = tr.querySelector('.pf-check-itbms')?.checked || false;
-      var totalFila = cantidad * precio;
-
-      var totalCell = tr.querySelector('.pf-total-fila');
-      if (totalCell) totalCell.textContent = totalFila.toFixed(2);
-
-      subtotal += totalFila;
-      if (aplicaItbms) {
-        itbmsTotal += totalFila * 0.07;
-      }
-    });
-
-    // Verificar ITBMS global
-    var itbmsGlobal = byId('pf-aplica-itbms');
-    if (itbmsGlobal && itbmsGlobal.checked) {
-      // ITBMS global: 7% sobre todo el subtotal
-      itbmsTotal = subtotal * 0.07;
-    } else {
-      // Solo ITBMS por línea
-    }
-
-    var total = subtotal + itbmsTotal;
-
-    var elSubtotal = byId('pf-subtotal-propuesta');
-    var elItbms = byId('pf-itbms-total');
-    var elTotal = byId('pf-total-propuesta');
-    var elItbmsMonto = byId('pf-itbms-monto');
-
-    if (elSubtotal) elSubtotal.textContent = money(subtotal);
-    if (elItbms) elItbms.textContent = money(itbmsTotal);
-    if (elTotal) elTotal.textContent = money(total);
-    if (elItbmsMonto) elItbmsMonto.textContent = itbmsTotal > 0 ? 'ITBMS incluido: ' + money(itbmsTotal) : '';
-  }
-
-  // ============================================================
-  // Reemplazar agregarFilaProformaServicio por la nueva versión
-  // ============================================================
-
 
   function byId(id) {
     return document.getElementById(id);
@@ -1143,10 +966,6 @@ async function buscarProyectos() {
     await actualizarSelectClientesProyecto();
     await renderProyectos('todos');
 
-    // Cargar selects de proforma
-    await cargarSelectClientesProforma();
-    await cargarSelectServiciosCatalogo();
-
     if (byId('proy-fecha') && !byId('proy-fecha').value) {
       byId('proy-fecha').value = todayISO();
     }
@@ -1157,7 +976,6 @@ async function buscarProyectos() {
       });
     }
 
-    // Listener para checkbox de ITBMS global
     var itbmsGlobal = byId('pf-aplica-itbms');
     if (itbmsGlobal) {
       itbmsGlobal.addEventListener('change', actualizarTotalesProforma);
@@ -1177,13 +995,6 @@ async function buscarProyectos() {
   window.switchProyectoTab = switchProyectoTab;
   window.guardarNotasProyecto = guardarNotasProyecto;
   window.guardarTareaProyecto = guardarTareaProyecto;
-  window.togglePanelProforma = togglePanelProforma;
-  window.cargarSelectClientesProforma = cargarSelectClientesProforma;
-  window.cargarSelectServiciosCatalogo = cargarSelectServiciosCatalogo;
-  window.agregarServicioCatalogoAProforma = agregarServicioCatalogoAProforma;
-  window.agregarFilaProformaVacia = agregarFilaProformaVacia;
-  window.agregarFilaProforma = agregarFilaProforma;
-  window.actualizarTotalesProforma = actualizarTotalesProforma;
 
     // ============================================================
   // Guardar proyecto + cotización desde formulario de proforma
@@ -1267,7 +1078,6 @@ async function buscarProyectos() {
         });
       }
 
-      // Verificar ITBMS global
       var itbmsGlobal = byId('pf-aplica-itbms');
       if (itbmsGlobal && itbmsGlobal.checked) {
         itbmsTotal = subtotal * 0.07;
@@ -1355,7 +1165,7 @@ async function buscarProyectos() {
   window.guardarProformaProyecto = guardarProformaProyecto;
   window.abrirModalGastoProyecto = abrirModalGastoProyecto;
 
-    // Función legacy — ahora usa agregarFilaProformaVacia
+    // Funcion legacy — ahora usa agregarFilaProformaVacia
   function agregarFilaProformaServicio() {
     agregarFilaProformaVacia();
   }
@@ -1405,5 +1215,182 @@ async function buscarProyectos() {
       pfFecha.value = (new Date()).toISOString().slice(0, 10);
     }
   });
+
+
+  // ============================================================
+  // NUEVAS FUNCIONES — Panel de Proforma (v2.2)
+  // ============================================================
+
+  function togglePanelProforma() {
+    var panel = byId('proyecto-proforma-panel');
+    if (!panel) return;
+    var isHidden = panel.style.display === 'none';
+    panel.style.display = isHidden ? 'block' : 'none';
+    if (isHidden) {
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      cargarSelectClientesProforma();
+      cargarSelectServiciosCatalogo();
+    }
+  }
+
+  async function cargarSelectClientesProforma() {
+    var select = byId('pf-cliente');
+    if (!select) return;
+
+    var clientes = await obtenerClientes();
+    var currentValue = select.value;
+
+    var html = '<option value="">Selecciona un cliente</option>';
+    for (var i = 0; i < clientes.length; i++) {
+      html += '<option value="' + esc(clientes[i].id) + '">' + esc(clientes[i].nombre) + '</option>';
+    }
+
+    select.innerHTML = html;
+    if (currentValue) select.value = currentValue;
+  }
+
+  async function cargarSelectServiciosCatalogo() {
+    var select = byId('pf-select-servicio-catalogo');
+    if (!select) return;
+
+    var servicios = [];
+    if (typeof window.obtenerServicios === 'function') {
+      servicios = await window.obtenerServicios();
+    }
+    servicios = Array.isArray(servicios) ? servicios : [];
+
+    var html = '<option value="">-- Selecciona un servicio del catalogo --</option>';
+    for (var i = 0; i < servicios.length; i++) {
+      var s = servicios[i];
+      var nombre = s.descripcion || s.nombre || s.codigo || 'Servicio';
+      var precio = parseFloat(s.precio || 0) || 0;
+      var unidad = s.unidad || 'und';
+      var itbms = parseInt(s.itbms, 10) === 1 ? 1 : 0;
+      html += '<option value="' + esc(s.id || '') + '" ' +
+              'data-nombre="' + esc(nombre) + '" ' +
+              'data-precio="' + precio + '" ' +
+              'data-unidad="' + esc(unidad) + '" ' +
+              'data-itbms="' + itbms + '">' +
+              esc(nombre) + ' — ' + money(precio) + ' / ' + esc(unidad) +
+              '</option>';
+    }
+
+    select.innerHTML = html;
+  }
+
+  function agregarServicioCatalogoAProforma() {
+    var select = byId('pf-select-servicio-catalogo');
+    if (!select || !select.value) {
+      if (window.showToast) {
+        window.showToast({ type: 'warning', title: 'Selecciona un servicio', message: 'Elige un servicio del catalogo para agregarlo a la propuesta.' });
+      }
+      return;
+    }
+
+    var option = select.options[select.selectedIndex];
+    var nombre = option.getAttribute('data-nombre') || 'Servicio';
+    var precio = parseFloat(option.getAttribute('data-precio') || 0) || 0;
+    var unidad = option.getAttribute('data-unidad') || 'und';
+    var itbms = parseInt(option.getAttribute('data-itbms') || '0', 10);
+
+    agregarFilaProforma(nombre, unidad, '', '', itbms);
+    select.value = '';
+  }
+
+  function agregarFilaProformaVacia() {
+    agregarFilaProforma('', '', '', '', 0);
+  }
+
+  function agregarFilaProforma(nombre, unidad, cantidad, precio, itbms) {
+    var tbody = byId('tbodyProformaServicios');
+    if (!tbody) return;
+
+    var tr = document.createElement('tr');
+
+    var html = '';
+    html += '<td><input type="text" class="pf-input-nombre" value="' + esc(nombre) + '" placeholder="Descripcion del servicio" style="width:100%;padding:6px 8px;background:transparent;border:1px solid rgba(18,53,36,0.25);border-radius:6px;color:#F0F0F5;font-size:13px;"></td>';
+    html += '<td><input type="text" class="pf-input-unidad" value="' + esc(unidad) + '" placeholder="und" style="width:80px;padding:6px 8px;background:transparent;border:1px solid rgba(18,53,36,0.25);border-radius:6px;color:#F0F0F5;font-size:13px;text-align:center;"></td>';
+    html += '<td><input type="number" class="pf-input-cantidad" value="' + esc(cantidad) + '" placeholder="0" min="0" step="0.01" style="width:80px;padding:6px 8px;background:transparent;border:1px solid rgba(18,53,36,0.25);border-radius:6px;color:#F0F0F5;font-size:13px;text-align:center;"></td>';
+    html += '<td><input type="number" class="pf-input-precio" value="' + esc(precio) + '" placeholder="0.00" min="0" step="0.01" style="width:100px;padding:6px 8px;background:transparent;border:1px solid rgba(18,53,36,0.25);border-radius:6px;color:#F0F0F5;font-size:13px;text-align:right;"></td>';
+    html += '<td style="text-align:center;"><input type="checkbox" class="pf-check-itbms" ' + (itbms ? 'checked' : '') + ' style="width:18px;height:18px;accent-color:#C5A253;cursor:pointer;"></td>';
+    html += '<td class="pf-total-fila" style="font-weight:600;text-align:right;">0.00</td>';
+    html += '<td style="text-align:center;"><button type="button" class="btn-eliminar-fila" style="background:none;border:none;color:#F87171;cursor:pointer;font-size:16px;"><i class="ph ph-trash"></i></button></td>';
+
+    tr.innerHTML = html;
+
+    var btnEliminar = tr.querySelector('.btn-eliminar-fila');
+    if (btnEliminar) {
+      btnEliminar.addEventListener('click', function() {
+        tr.remove();
+        actualizarTotalesProforma();
+      });
+    }
+
+    var inputs = tr.querySelectorAll('input');
+    for (var k = 0; k < inputs.length; k++) {
+      inputs[k].addEventListener('input', function() { actualizarTotalesProforma(); });
+      inputs[k].addEventListener('change', function() { actualizarTotalesProforma(); });
+    }
+
+    tbody.appendChild(tr);
+    actualizarTotalesProforma();
+  }
+
+  function actualizarTotalesProforma() {
+    var tbody = byId('tbodyProformaServicios');
+    if (!tbody) return;
+
+    var filas = tbody.querySelectorAll('tr');
+    var subtotal = 0;
+    var itbmsTotal = 0;
+
+    for (var i = 0; i < filas.length; i++) {
+      var tr = filas[i];
+      var cantidadInput = tr.querySelector('.pf-input-cantidad');
+      var precioInput = tr.querySelector('.pf-input-precio');
+      var itbmsCheck = tr.querySelector('.pf-check-itbms');
+      var totalCell = tr.querySelector('.pf-total-fila');
+
+      var cantidad = parseFloat(cantidadInput ? cantidadInput.value : 0) || 0;
+      var precio = parseFloat(precioInput ? precioInput.value : 0) || 0;
+      var aplicaItbms = itbmsCheck ? itbmsCheck.checked : false;
+      var totalFila = cantidad * precio;
+
+      if (totalCell) totalCell.textContent = totalFila.toFixed(2);
+
+      subtotal += totalFila;
+      if (aplicaItbms) {
+        itbmsTotal += totalFila * 0.07;
+      }
+    }
+
+    var itbmsGlobal = byId('pf-aplica-itbms');
+    if (itbmsGlobal && itbmsGlobal.checked) {
+      itbmsTotal = subtotal * 0.07;
+    }
+
+    var total = subtotal + itbmsTotal;
+
+    var elSubtotal = byId('pf-subtotal-propuesta');
+    var elItbms = byId('pf-itbms-total');
+    var elTotal = byId('pf-total-propuesta');
+    var elItbmsMonto = byId('pf-itbms-monto');
+
+    if (elSubtotal) elSubtotal.textContent = money(subtotal);
+    if (elItbms) elItbms.textContent = money(itbmsTotal);
+    if (elTotal) elTotal.textContent = money(total);
+    if (elItbmsMonto) elItbmsMonto.textContent = itbmsTotal > 0 ? 'ITBMS incluido: ' + money(itbmsTotal) : '';
+  }
+
+  // ============================================================
+  // EXPONER NUEVAS FUNCIONES A WINDOW
+  // ============================================================
+  window.togglePanelProforma = togglePanelProforma;
+  window.cargarSelectClientesProforma = cargarSelectClientesProforma;
+  window.cargarSelectServiciosCatalogo = cargarSelectServiciosCatalogo;
+  window.agregarServicioCatalogoAProforma = agregarServicioCatalogoAProforma;
+  window.agregarFilaProformaVacia = agregarFilaProformaVacia;
+  window.agregarFilaProforma = agregarFilaProforma;
+  window.actualizarTotalesProforma = actualizarTotalesProforma;
 
 })(window, document);
