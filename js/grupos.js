@@ -24,14 +24,14 @@
   var GRUPO_SERVICIOS_KEY = 'gn_grupo_servicio_map';
 
   var COLORES_GRUPO = {
-    green:  { bg: 'rgba(107,189,69,0.15)',  border: '#6bbd45', label: 'Verde',     icon: '🟢' },
-    blue:   { bg: 'rgba(79,140,255,0.15)',  border: '#4f8cff', label: 'Azul',      icon: '🔵' },
-    purple: { bg: 'rgba(168,85,247,0.15)',  border: '#a855f7', label: 'Púrpura',   icon: '🟣' },
-    orange: { bg: 'rgba(245,158,11,0.15)',  border: '#f59e0b', label: 'Naranja',   icon: '🟠' },
-    red:    { bg: 'rgba(239,68,68,0.15)',   border: '#ef4444', label: 'Rojo',      icon: '🔴' },
-    teal:   { bg: 'rgba(20,184,166,0.15)',  border: '#14b8a6', label: 'Turquesa',  icon: '🩵' },
-    pink:   { bg: 'rgba(236,72,153,0.15)',  border: '#ec4899', label: 'Rosa',      icon: '🩷' },
-    gray:   { bg: 'rgba(100,116,139,0.15)', border: '#64748b', label: 'Gris',      icon: '⚪' }
+    green:  { bg: 'rgba(107,189,69,0.15)',  border: '#2D8B5E', label: 'Verde',     icon: '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2D8B5E;"></span>' },
+    blue:   { bg: 'rgba(79,140,255,0.15)',  border: '#C5A253', label: 'Azul',      icon: '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#C5A253;"></span>' },
+    purple: { bg: 'rgba(168,85,247,0.15)',  border: '#C5A253', label: 'Púrpura',   icon: '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#C5A253;"></span>' },
+    orange: { bg: 'rgba(245,158,11,0.15)',  border: '#C5A253', label: 'Naranja',   icon: '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#C5A253;"></span>' },
+    red:    { bg: 'rgba(239,68,68,0.15)',   border: '#F87171', label: 'Rojo',      icon: '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#F87171;"></span>' },
+    teal:   { bg: 'rgba(20,184,166,0.15)',  border: '#2D8B5E', label: 'Turquesa',  icon: '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2D8B5E;"></span>' },
+    pink:   { bg: 'rgba(236,72,153,0.15)',  border: '#ec4899', label: 'Rosa',      icon: '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#C5A253;"></span>' },
+    gray:   { bg: 'rgba(100,116,139,0.15)', border: '#64748b', label: 'Gris',      icon: '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#6B7280;"></span>' }
   };
 
   function gruposBase() {
@@ -139,44 +139,44 @@
     modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
 
     modal.innerHTML = `
-      <div style="background:#1a1a2e;border-radius:12px;padding:32px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;border:1px solid #2a2a4a;">
+      <div style="background:#111E17;border-radius:12px;padding:32px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;border:1px solid rgba(18,53,36,0.25);">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
-          <h3 style="margin:0;color:#fff;font-size:18px;">Nuevo Grupo</h3>
-          <button type="button" onclick="cerrarModalGrupo()" style="background:none;border:none;color:#aaa;font-size:24px;cursor:pointer;">&#x2715;</button>
+          <h3 style="margin:0;color:#F0F0F5;font-size:18px;">Nuevo Grupo</h3>
+          <button type="button" onclick="cerrarModalGrupo()" style="background:none;border:none;color:#9CA3AF;font-size:24px;cursor:pointer;">&#x2715;</button>
         </div>
 
         <form id="formGrupo" onsubmit="return guardarGrupo(event)">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
             <div>
-              <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">CÓDIGO *</label>
-              <input id="grp-codigo" type="text" placeholder="Ej: DESARROLLO" maxlength="30" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+              <label style="color:#9CA3AF;font-size:12px;display:block;margin-bottom:6px;">CÓDIGO *</label>
+              <input id="grp-codigo" type="text" placeholder="Ej: DESARROLLO" maxlength="30" style="width:100%;padding:10px;background:#0D1611;border:1px solid rgba(18,53,36,0.25);border-radius:8px;color:#F0F0F5;box-sizing:border-box;" />
             </div>
 
             <div>
-              <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">ORDEN</label>
-              <input id="grp-orden" type="number" min="1" step="1" value="99" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+              <label style="color:#9CA3AF;font-size:12px;display:block;margin-bottom:6px;">ORDEN</label>
+              <input id="grp-orden" type="number" min="1" step="1" value="99" style="width:100%;padding:10px;background:#0D1611;border:1px solid rgba(18,53,36,0.25);border-radius:8px;color:#F0F0F5;box-sizing:border-box;" />
             </div>
 
             <div style="grid-column:1/-1;">
-              <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">NOMBRE *</label>
-              <input id="grp-nombre" type="text" placeholder="Nombre del grupo" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;" />
+              <label style="color:#9CA3AF;font-size:12px;display:block;margin-bottom:6px;">NOMBRE *</label>
+              <input id="grp-nombre" type="text" placeholder="Nombre del grupo" style="width:100%;padding:10px;background:#0D1611;border:1px solid rgba(18,53,36,0.25);border-radius:8px;color:#F0F0F5;box-sizing:border-box;" />
             </div>
 
             <div style="grid-column:1/-1;">
-              <label style="color:#aaa;font-size:12px;display:block;margin-bottom:6px;">DESCRIPCIÓN</label>
-              <textarea id="grp-descripcion" rows="3" placeholder="Descripción breve del grupo" style="width:100%;padding:10px;background:#0f0f23;border:1px solid #333;border-radius:8px;color:#fff;box-sizing:border-box;resize:vertical;"></textarea>
+              <label style="color:#9CA3AF;font-size:12px;display:block;margin-bottom:6px;">DESCRIPCIÓN</label>
+              <textarea id="grp-descripcion" rows="3" placeholder="Descripción breve del grupo" style="width:100%;padding:10px;background:#0D1611;border:1px solid rgba(18,53,36,0.25);border-radius:8px;color:#F0F0F5;box-sizing:border-box;resize:vertical;"></textarea>
             </div>
 
             <div style="grid-column:1/-1;">
-              <label style="color:#aaa;font-size:12px;display:block;margin-bottom:10px;">COLOR</label>
+              <label style="color:#9CA3AF;font-size:12px;display:block;margin-bottom:10px;">COLOR</label>
               <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
                 ${Object.keys(COLORES_GRUPO).map(function(key, index) {
                   var c = COLORES_GRUPO[key];
                   return `
-                    <label style="display:flex;align-items:center;gap:8px;padding:10px;border:1px solid #333;border-radius:8px;background:#0f0f23;cursor:pointer;">
+                    <label style="display:flex;align-items:center;gap:8px;padding:10px;border:1px solid rgba(18,53,36,0.25);border-radius:8px;background:#0D1611;cursor:pointer;">
                       <input type="radio" name="grp-color" value="${key}" ${index === 0 ? 'checked' : ''} />
                       <span>${c.icon}</span>
-                      <span style="color:#fff;font-size:13px;">${c.label}</span>
+                      <span style="color:#F0F0F5;font-size:13px;">${c.label}</span>
                     </label>
                   `;
                 }).join('')}
@@ -187,8 +187,8 @@
           <div id="feedback-grupo" class="form-feedback" style="display:none;margin-top:16px;"></div>
 
           <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;">
-            <button type="button" onclick="cerrarModalGrupo()" style="padding:10px 20px;background:#333;border:none;border-radius:8px;color:#fff;cursor:pointer;">Cancelar</button>
-            <button type="submit" style="padding:10px 20px;background:#2563eb;border:none;border-radius:8px;color:#fff;cursor:pointer;">Guardar Grupo</button>
+            <button type="button" onclick="cerrarModalGrupo()" style="padding:10px 20px;background:rgba(18,53,36,0.25);border:none;border-radius:8px;color:#F0F0F5;cursor:pointer;">Cancelar</button>
+            <button type="submit" style="padding:10px 20px;background:#C5A253;border:none;border-radius:8px;color:#F0F0F5;cursor:pointer;">Guardar Grupo</button>
           </div>
         </form>
       </div>
@@ -213,14 +213,14 @@
     var color = colorNode ? colorNode.value : 'green';
 
     if (!codigo || !nombre) {
-      showFeedback(feedback, '❌ Completa código y nombre', 'error');
+      showFeedback(feedback, 'Completa código y nombre', 'error');
       return false;
     }
 
     var grupos = obtenerGrupos();
     for (var i = 0; i < grupos.length; i++) {
       if ((grupos[i].codigo || '').toUpperCase() === codigo) {
-        showFeedback(feedback, '❌ Ya existe un grupo con ese código', 'error');
+        showFeedback(feedback, 'Ya existe un grupo con ese código', 'error');
         return false;
       }
     }
@@ -241,7 +241,7 @@
 
     await window.setData(GRUPOS_KEY, grupos);
 
-    showFeedback(feedback, '✅ Grupo guardado correctamente', 'success');
+    showFeedback(feedback, 'Grupo guardado correctamente', 'success');
 
     setTimeout(async function() {
       cerrarModalGrupo();
@@ -349,9 +349,9 @@
         + '<div style="background:' + color.bg + ';border:1px solid ' + color.border + ';border-radius:12px;padding:16px;">'
         + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'
         + '<span>' + color.icon + '</span>'
-        + '<strong style="color:#fff;">' + escapeHtml(grupo.nombre || '-') + '</strong>'
+        + '<strong style="color:#F0F0F5;">' + escapeHtml(grupo.nombre || '-') + '</strong>'
         + '</div>'
-        + '<div style="color:#aaa;font-size:13px;">' + escapeHtml(grupo.descripcion || 'Sin descripción') + '</div>'
+        + '<div style="color:#9CA3AF;font-size:13px;">' + escapeHtml(grupo.descripcion || 'Sin descripción') + '</div>'
         + '</div>';
     }).join('');
   }
@@ -386,13 +386,13 @@
 
       return ''
         + '<div style="margin-bottom:20px;padding:16px;border:1px solid ' + color.border + ';border-radius:12px;background:' + color.bg + ';">'
-        + '<h4 style="color:#fff;margin-bottom:10px;display:flex;align-items:center;gap:8px;">'
+        + '<h4 style="color:#F0F0F5;margin-bottom:10px;display:flex;align-items:center;gap:8px;">'
         + '<span>' + color.icon + '</span>'
         + '<span>' + escapeHtml(grupo.nombre) + ' (' + items.length + ')</span>'
         + '</h4>'
         + (items.length
           ? '<div style="display:grid;gap:8px;">' + items.map(function(servicio) {
-              return '<div style="padding:10px;border:1px solid #333;border-radius:8px;background:#0f0f23;color:#fff;">'
+              return '<div style="padding:10px;border:1px solid rgba(18,53,36,0.25);border-radius:8px;background:#0D1611;color:#F0F0F5;">'
                 + escapeHtml(servicio.descripcion || servicio.nombre || servicio.codigo || 'Servicio')
                 + '</div>';
             }).join('') + '</div>'
@@ -427,7 +427,7 @@
     }
 
     container.innerHTML = sinGrupo.map(function(servicio) {
-      return '<div style="padding:10px;border:1px solid #333;border-radius:8px;background:#0f0f23;color:#fff;margin-bottom:8px;">'
+      return '<div style="padding:10px;border:1px solid rgba(18,53,36,0.25);border-radius:8px;background:#0D1611;color:#F0F0F5;margin-bottom:8px;">'
         + escapeHtml(servicio.descripcion || servicio.nombre || servicio.codigo || 'Servicio')
         + '</div>';
     }).join('');
