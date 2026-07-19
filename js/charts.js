@@ -66,16 +66,16 @@ function renderChartBalance() {
         {
           label: 'Ingresos',
           data: ingresosData,
-          backgroundColor: 'rgba(107,189,69,0.75)',
-          borderColor: '#6bbd45',
+          backgroundColor: 'rgba(45,139,94,0.75)',
+          borderColor: '#2D8B5E',
           borderWidth: 1,
           borderRadius: 6
         },
         {
           label: 'Gastos',
           data: gastosData,
-          backgroundColor: 'rgba(239,68,68,0.75)',
-          borderColor: '#ef4444',
+          backgroundColor: 'rgba(248,113,113,0.75)',
+          borderColor: '#F87171',
           borderWidth: 1,
           borderRadius: 6
         }
@@ -86,17 +86,17 @@ function renderChartBalance() {
       maintainAspectRatio: false,
       plugins: {
         legend: {
-          labels: { color: '#8a8a96' }
+          labels: { color: '#9CA3AF' }
         }
       },
       scales: {
         x: {
-          ticks: { color: '#8a8a96' },
-          grid: { color: 'rgba(255,255,255,0.03)' }
+          ticks: { color: '#9CA3AF' },
+          grid: { color: 'rgba(18,53,36,0.15)' }
         },
         y: {
-          ticks: { color: '#8a8a96' },
-          grid: { color: 'rgba(255,255,255,0.03)' }
+          ticks: { color: '#9CA3AF' },
+          grid: { color: 'rgba(18,53,36,0.15)' }
         }
       }
     }
@@ -117,7 +117,7 @@ function renderChartGastos() {
 
   var labels = [];
   var data = [];
-  var colors = ['#6bbd45', '#4f8cff', '#a855f7', '#f59e0b', '#ef4444', '#14b8a6', '#ec4899', '#06b6d4', '#f97316', '#8b5cf6'];
+  var colors = ['#2D8B5E', '#C5A253', '#C5A253', '#C5A253', '#F87171', '#2D8B5E', '#ec4899', '#06b6d4', '#f97316', '#8b5cf6'];
   var idx = 0;
 
   for (var categoria in categorias) {
@@ -151,7 +151,7 @@ function renderChartGastos() {
         legend: {
           position: 'right',
           labels: {
-            color: '#8a8a96',
+            color: '#9CA3AF',
             font: { size: 11 }
           }
         }
