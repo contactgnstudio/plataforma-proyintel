@@ -355,140 +355,19 @@ function finGetProyectoIdDesdeSelectPago() {
 }
 
 function inicializarFormularioGastoFinanzas() {
+  // Los gastos ahora se registran desde el detalle del proyecto
+  // Esta función se mantiene para compatibilidad pero no hace nada en Finanzas
   var form = document.getElementById('form-gasto-finanzas');
   if (!form) return;
-
-  var feedback = document.getElementById('feedback-gasto-finanzas');
-
-  function setFeedback(msg, type) {
-    if (!feedback) return;
-    feedback.className = 'form-feedback ' + (type || 'error');
-    feedback.textContent = msg || '';
-    feedback.style.display = msg ? 'block' : 'none';
-  }
-
-  // Fecha por defecto
-  var fecha = document.getElementById('gasto-fecha');
-  if (fecha && !fecha.value && typeof GNUtils !== 'undefined' && typeof GNUtils.getTodayISO === 'function') {
-    fecha.value = GNUtils.getTodayISO();
-  }
-
-  form.addEventListener('submit', async function(event) {
-    event.preventDefault();
-
-    var fechaVal = fecha ? fecha.value : '';
-    var referencia = document.getElementById('gasto-referencia') ? document.getElementById('gasto-referencia').value.trim() : '';
-    var descripcion = document.getElementById('gasto-descripcion') ? document.getElementById('gasto-descripcion').value.trim() : '';
-    var tipo = document.getElementById('gasto-tipo') ? document.getElementById('gasto-tipo').value.trim() : 'operativo';
-    var montoStr = document.getElementById('gasto-monto') ? document.getElementById('gasto-monto').value : '';
-    var metodoPago = document.getElementById('gasto-metodo') ? document.getElementById('gasto-metodo').value.trim() : 'efectivo';
-    var proyectoId = finGetProyectoIdDesdeSelectGasto();
-
-    var monto = parseFloat(montoStr || '0');
-
-    if (!fechaVal || !descripcion || !montoStr || monto <= 0) {
-      setFeedback('Completa fecha, descripción y monto del gasto.', 'error');
-      return;
-    }
-
-    var payload = {
-      fecha: fechaVal,
-      proyecto_id: proyectoId || null,
-      tipo: tipo,
-      descripcion: descripcion,
-      referencia: referencia || null,
-      monto: monto,
-      metodo_pago: metodoPago
-    };
-
-    var result = await finInsertRow('GASTOS', payload);
-
-    if (!result) {
-      setFeedback('No se pudo guardar el gasto.', 'error');
-      return;
-    }
-
-    setFeedback('Gasto registrado correctamente.', 'success');
-
-    if (fecha && typeof GNUtils !== 'undefined' && typeof GNUtils.getTodayISO === 'function') {
-      fecha.value = GNUtils.getTodayISO();
-    }
-    document.getElementById('gasto-descripcion').value = '';
-    document.getElementById('gasto-referencia').value = '';
-    document.getElementById('gasto-monto').value = '';
-    document.getElementById('gasto-tipo').value = 'operativo';
-    document.getElementById('gasto-metodo').value = 'efectivo';
-
-    await finRefreshAfterChange();
-  });
+  // No attach submit listener — el formulario fue removido del HTML
 }
 
 function inicializarFormularioPagoFinanzas() {
+  // Los pagos ahora se registran desde el detalle del proyecto
+  // Esta función se mantiene para compatibilidad pero no hace nada en Finanzas
   var form = document.getElementById('form-pago-finanzas');
   if (!form) return;
-
-  var feedback = document.getElementById('feedback-pago-finanzas');
-
-  function setFeedback(msg, type) {
-    if (!feedback) return;
-    feedback.className = 'form-feedback ' + (type || 'error');
-    feedback.textContent = msg || '';
-    feedback.style.display = msg ? 'block' : 'none';
-  }
-
-  var fecha = document.getElementById('pago-fecha');
-  if (fecha && !fecha.value && typeof GNUtils !== 'undefined' && typeof GNUtils.getTodayISO === 'function') {
-    fecha.value = GNUtils.getTodayISO();
-  }
-
-  form.addEventListener('submit', async function(event) {
-    event.preventDefault();
-
-    var fechaVal = fecha ? fecha.value : '';
-    var proyectoId = finGetProyectoIdDesdeSelectPago();
-    var concepto = document.getElementById('pago-concepto') ? document.getElementById('pago-concepto').value.trim() : '';
-    var referencia = document.getElementById('pago-referencia') ? document.getElementById('pago-referencia').value.trim() : '';
-    var montoStr = document.getElementById('pago-monto') ? document.getElementById('pago-monto').value : '';
-    var metodoPago = document.getElementById('pago-metodo') ? document.getElementById('pago-metodo').value.trim() : 'transferencia';
-    var estado = document.getElementById('pago-estado') ? document.getElementById('pago-estado').value : 'registrado';
-
-    var monto = parseFloat(montoStr || '0');
-
-    if (!fechaVal || !proyectoId || !concepto || !montoStr || monto <= 0) {
-      setFeedback('Completa fecha, proyecto, concepto y monto del pago.', 'error');
-      return;
-    }
-
-    var payload = {
-      fecha: fechaVal,
-      proyecto_id: proyectoId,
-      concepto: concepto,
-      referencia: referencia || null,
-      monto: monto,
-      metodo_pago: metodoPago,
-      estado: estado
-    };
-
-    var result = await finInsertRow('PAGOS', payload);
-
-    if (!result) {
-      setFeedback('No se pudo guardar el pago.', 'error');
-      return;
-    }
-
-    setFeedback('Pago registrado correctamente.', 'success');
-
-    if (fecha && typeof GNUtils !== 'undefined' && typeof GNUtils.getTodayISO === 'function') {
-      fecha.value = GNUtils.getTodayISO();
-    }
-    document.getElementById('pago-concepto').value = '';
-    document.getElementById('pago-referencia').value = '';
-    document.getElementById('pago-monto').value = '';
-    document.getElementById('pago-metodo').value = 'transferencia';
-    document.getElementById('pago-estado').value = 'registrado';
-
-    await finRefreshAfterChange();
-  });
+  // No attach submit listener — el formulario fue removido del HTML
 }
 
 // ============================================================
