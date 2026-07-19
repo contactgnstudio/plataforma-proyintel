@@ -632,9 +632,9 @@
         </div>
       </div>
 
-      <!-- VISTA DETALLE (se muestra al hacer click en un proyecto) -->
+     <!-- VISTA DETALLE (se muestra al hacer click en un proyecto) -->
       <div id="proyecto-detalle" style="display:none;">
-        
+
         <!-- Header del Proyecto -->
         <div class="proyecto-header">
           <button class="btn-secondary" onclick="volverAListaProyectos()">&larr; Volver</button>
@@ -659,6 +659,35 @@
 
         <!-- TAB: RESUMEN -->
         <div id="proyecto-tab-resumen" class="proyecto-tab-content active">
+
+          <!-- KPIs del Proyecto -->
+          <div class="proyecto-resumen-kpis">
+            <div class="proyecto-resumen-kpi">
+              <div class="proyecto-resumen-kpi-value" id="resumen-kpi-presupuesto">$0.00</div>
+              <div class="proyecto-resumen-kpi-label">Presupuesto</div>
+            </div>
+            <div class="proyecto-resumen-kpi">
+              <div class="proyecto-resumen-kpi-value" id="resumen-kpi-gastos" style="color:#F87171;">$0.00</div>
+              <div class="proyecto-resumen-kpi-label">Gastos</div>
+            </div>
+            <div class="proyecto-resumen-kpi">
+              <div class="proyecto-resumen-kpi-value" id="resumen-kpi-pagos" style="color:#2D8B5E;">$0.00</div>
+              <div class="proyecto-resumen-kpi-label">Pagos</div>
+            </div>
+            <div class="proyecto-resumen-kpi">
+              <div class="proyecto-resumen-kpi-value" id="resumen-kpi-utilidad" style="color:#C5A253;">$0.00</div>
+              <div class="proyecto-resumen-kpi-label">Utilidad</div>
+            </div>
+            <div class="proyecto-resumen-kpi">
+              <div class="proyecto-resumen-kpi-value" id="resumen-kpi-por-cobrar">$0.00</div>
+              <div class="proyecto-resumen-kpi-label">Por Cobrar</div>
+            </div>
+            <div class="proyecto-resumen-kpi">
+              <div class="proyecto-resumen-kpi-value" id="resumen-kpi-avance">0%</div>
+              <div class="proyecto-resumen-kpi-label">% Avance</div>
+            </div>
+          </div>
+
           <div class="dashboard-grid">
             <div class="dashboard-card">
               <div class="card-header"><h3><i class="ph ph-trend-up"></i> Progreso</h3></div>
@@ -672,7 +701,7 @@
                 <span class="progreso-text" id="proyecto-progreso-pct">0%</span>
               </div>
             </div>
-            
+
             <div class="dashboard-card">
               <div class="card-header"><h3><i class="ph ph-currency-dollar"></i> Resumen Financiero</h3></div>
               <div class="resumen-financiero">
@@ -752,7 +781,7 @@
                     <th>Concepto</th>
                     <th>Monto</th>
                     <th>Método</th>
-                    <th>Proyectos</th>
+                    <th>Estado</th>
                   </tr>
                 </thead>
                 <tbody id="tbodyPagosProyecto"></tbody>
@@ -761,6 +790,81 @@
           </div>
         </div>
 
+        <!-- TAB: TAREAS -->
+        <div id="proyecto-tab-tareas" class="proyecto-tab-content">
+          <div class="form-section">
+            <div class="form-header">
+              <h2 class="section-title"><i class="ph ph-plus"></i> Nueva Tarea</h2>
+            </div>
+            <form id="formTareaProyecto" onsubmit="return guardarTareaProyecto(event)">
+              <div class="form-grid">
+                <div class="form-group full-width">
+                  <label for="tarea-titulo">Título <span class="required">*</span></label>
+                  <input type="text" id="tarea-titulo" required>
+                </div>
+                <div class="form-group">
+                  <label for="tarea-asignado">Asignado a</label>
+                  <input type="text" id="tarea-asignado" placeholder="Ej: Diseñador UX">
+                </div>
+                <div class="form-group">
+                  <label for="tarea-fecha-limite">Fecha Límite</label>
+                  <input type="date" id="tarea-fecha-limite">
+                </div>
+                <div class="form-group">
+                  <label for="tarea-estado">Estado</label>
+                  <select id="tarea-estado">
+                    <option value="pendiente">Pendiente</option>
+                    <option value="en_progreso">En Progreso</option>
+                    <option value="revision">En Revisión</option>
+                    <option value="completada">Completada</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn-primary"><i class="ph ph-floppy-disk"></i> Guardar Tarea</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="section">
+            <div class="section-header">
+              <h2 class="section-title"><i class="ph ph-list-checks"></i> Tareas del Proyecto</h2>
+            </div>
+            <div class="tareas-kanban" id="tareas-kanban">
+              <!-- Kanban board de tareas -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: DOCUMENTOS -->
+        <div id="proyecto-tab-documentos" class="proyecto-tab-content">
+          <div class="section">
+            <div class="section-header">
+              <h2 class="section-title"><i class="ph ph-file-text"></i> Cotización del Proyecto</h2>
+              <div class="section-actions">
+                <button class="btn-secondary" onclick="imprimirCotizacionProyecto()"><i class="ph ph-printer"></i> Imprimir</button>
+                <button class="btn-secondary" onclick="descargarCotizacionPDF()"><i class="ph ph-download-simple"></i> Descargar PDF</button>
+              </div>
+            </div>
+            <div id="cotizacion-documento-container">
+              <div class="empty-state">Cargando cotización...</div>
+            </div>
+          </div>
+
+          <div class="form-section" style="margin-top:24px;">
+            <div class="form-header">
+              <h2 class="section-title"><i class="ph ph-pencil-simple"></i> Notas del Proyecto</h2>
+            </div>
+            <div class="form-group full-width">
+              <label for="proyecto-notas">Notas adicionales</label>
+              <textarea id="proyecto-notas" rows="6" placeholder="Reuniones, decisiones, feedback del cliente..."></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn-primary" onclick="guardarNotasProyecto()"><i class="ph ph-floppy-disk"></i> Guardar Notas</button>
+            </div>
+          </div>
+        </div>
+      </div>
         <!-- TAB: TAREAS -->
         <div id="proyecto-tab-tareas" class="proyecto-tab-content">
           <div class="form-section">
