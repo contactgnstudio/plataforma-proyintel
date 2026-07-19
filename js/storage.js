@@ -19,7 +19,6 @@
     SERVICIOS: 'servicios',
     CLIENTES: 'clientes',
     COTIZACIONES: 'cotizaciones',
-    COTIZACION_ITEMS: 'cotizacion_items',
     PROYECTOS: 'proyectos',
     GASTOS: 'proyecto_gastos',
     PAGOS: 'proyecto_pagos',
@@ -29,65 +28,31 @@
   };
 
   var LEGACY_KEYS = {
-    gn_grupos_servicios: {
-      type: 'array',
-      fallback: []
-    },
-    gn_grupo_servicio_map: {
-      type: 'object',
-      fallback: {}
-    }
+    gn_grupos_servicios: { type: 'array', fallback: [] },
+    gn_grupo_servicio_map: { type: 'object', fallback: {} }
   };
 
-  var TABLE_ALIASES = {
-    gn_tareas: 'tareas'
-  };
+  var TABLE_ALIASES = { gn_tareas: 'tareas' };
 
-  function getSupabase() {
-    return window.supabaseClient || null;
-  }
-
-  function hasOwn(obj, key) {
-    return Object.prototype.hasOwnProperty.call(obj, key);
-  }
-
-  function isLegacyKey(key) {
-    return hasOwn(LEGACY_KEYS, key);
-  }
-
-  function resolveKey(tableName) {
-    return TABLE_ALIASES[tableName] || tableName;
-  }
-
-  function clone(value) {
-    return JSON.parse(JSON.stringify(value));
-  }
-
-  function getLegacyFallback(key) {
-    return clone(LEGACY_KEYS[key].fallback);
-  }
+  function getSupabase() { return window.supabaseClient || null; }
+  function hasOwn(obj, key) { return Object.prototype.hasOwnProperty.call(obj, key); }
+  function isLegacyKey(key) { return hasOwn(LEGACY_KEYS, key); }
+  function resolveKey(tableName) { return TABLE_ALIASES[tableName] || tableName; }
+  function clone(value) { return JSON.parse(JSON.stringify(value)); }
+  function getLegacyFallback(key) { return clone(LEGACY_KEYS[key].fallback); }
 
   function readLegacy(key) {
     if (!isLegacyKey(key)) return null;
-
     try {
       var raw = localStorage.getItem(key);
       if (!raw) return getLegacyFallback(key);
-
       var parsed = JSON.parse(raw);
       var expectedType = LEGACY_KEYS[key].type;
-
-      if (expectedType === 'array') {
-        return Array.isArray(parsed) ? parsed : [];
-      }
-
+      if (expectedType === 'array') return Array.isArray(parsed) ? parsed : [];
       if (expectedType === 'object') {
-        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-          return {};
-        }
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
         return parsed;
       }
-
       return parsed;
     } catch (error) {
       log('error', 'Error leyendo localStorage legacy: ' + key, error);
@@ -97,74 +62,36 @@
 
   function writeLegacy(key, value) {
     if (!isLegacyKey(key)) return false;
-
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-      return true;
-    } catch (error) {
-      log('error', 'Error guardando localStorage legacy: ' + key, error);
-      return false;
-    }
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+    catch (error) { log('error', 'Error guardando localStorage legacy: ' + key, error); return false; }
   }
 
   async function getSessionUserId() {
     var sb = getSupabase();
     if (!sb) return null;
-
     try {
       var session = await sb.auth.getSession();
-      return session && session.data && session.data.session
-        ? session.data.session.user.id
-        : null;
-    } catch (error) {
-      log('error', 'No se pudo obtener la sesión de Supabase', error);
-      return null;
-    }
+      return session && session.data && session.data.session ? session.data.session.user.id : null;
+    } catch (error) { log('error', 'No se pudo obtener la sesión de Supabase', error); return null; }
   }
 
   async function getData(tableName, options) {
-    if (isLegacyKey(tableName)) {
-      return readLegacy(tableName);
-    }
-
+    if (isLegacyKey(tableName)) return readLegacy(tableName);
     var sb = getSupabase();
     var resolvedTable = resolveKey(tableName);
     var settings = options || {};
-
-    if (!sb) {
-      log('error', 'Supabase no disponible para getData: ' + resolvedTable);
-      return [];
-    }
-
+    if (!sb) { log('error', 'Supabase no disponible para getData: ' + resolvedTable); return []; }
     try {
       var query = sb.from(resolvedTable).select(settings.select || '*');
-
       if (settings.filters && typeof settings.filters === 'object') {
-        for (var key in settings.filters) {
-          query = query.eq(key, settings.filters[key]);
-        }
+        for (var key in settings.filters) { query = query.eq(key, settings.filters[key]); }
       }
-
-      if (settings.orderBy) {
-        query = query.order(settings.orderBy, {
-          ascending: !!settings.ascending
-        });
-      } else {
-        query = query.order('created_at', { ascending: false });
-      }
-
+      if (settings.orderBy) { query = query.order(settings.orderBy, { ascending: !!settings.ascending }); }
+      else { query = query.order('created_at', { ascending: false }); }
       var result = await query;
-
-      if (result.error) {
-        log('error', 'Error getData ' + resolvedTable + ': ' + result.error.message);
-        return [];
-      }
-
+      if (result.error) { log('error', 'Error getData ' + resolvedTable + ': ' + result.error.message); return []; }
       return Array.isArray(result.data) ? result.data : [];
-    } catch (error) {
-      log('error', 'Error getData ' + resolvedTable, error);
-      return [];
-    }
+    } catch (error) { log('error', 'Error getData ' + resolvedTable, error); return []; }
   }
 
   async function getDataFiltered(tableName, filters, options) {
@@ -178,220 +105,96 @@
 
   async function findItem(tableName, id) {
     if (!id) return null;
-
     if (isLegacyKey(tableName)) {
       var source = readLegacy(tableName);
-
-      if (Array.isArray(source)) {
-        for (var i = 0; i < source.length; i++) {
-          if (source[i] && source[i].id === id) return source[i];
-        }
-        return null;
-      }
-
-      if (source && typeof source === 'object') {
-        return hasOwn(source, id) ? source[id] : null;
-      }
-
+      if (Array.isArray(source)) { for (var i = 0; i < source.length; i++) { if (source[i] && source[i].id === id) return source[i]; } return null; }
+      if (source && typeof source === 'object') { return hasOwn(source, id) ? source[id] : null; }
       return null;
     }
-
     var sb = getSupabase();
     var resolvedTable = resolveKey(tableName);
-
-    if (!sb) {
-      log('error', 'Supabase no disponible para findItem: ' + resolvedTable);
-      return null;
-    }
-
+    if (!sb) { log('error', 'Supabase no disponible para findItem: ' + resolvedTable); return null; }
     try {
       var result = await sb.from(resolvedTable).select('*').eq('id', id).single();
-
-      if (result.error) {
-        log('warn', 'findItem sin resultado en ' + resolvedTable + ': ' + result.error.message);
-        return null;
-      }
-
+      if (result.error) { log('warn', 'findItem sin resultado en ' + resolvedTable + ': ' + result.error.message); return null; }
       return result.data || null;
-    } catch (error) {
-      log('error', 'Error findItem ' + resolvedTable, error);
-      return null;
-    }
+    } catch (error) { log('error', 'Error findItem ' + resolvedTable, error); return null; }
   }
 
   async function addItem(tableName, item) {
     if (isLegacyKey(tableName)) {
-      if (LEGACY_KEYS[tableName].type !== 'array') {
-        log('error', 'addItem no aplica a clave legacy tipo object: ' + tableName);
-        return null;
-      }
-
+      if (LEGACY_KEYS[tableName].type !== 'array') { log('error', 'addItem no aplica a clave legacy tipo object: ' + tableName); return null; }
       var current = readLegacy(tableName);
       var record = Object.assign({}, item || {});
-      if (!record.id) {
-        record.id = typeof window.generarId === 'function' ? window.generarId('legacy') : String(Date.now());
-      }
+      if (!record.id) { record.id = typeof window.generarId === 'function' ? window.generarId('legacy') : String(Date.now()); }
       current.push(record);
       writeLegacy(tableName, current);
       return record;
     }
-
     var sb = getSupabase();
     var resolvedTable = resolveKey(tableName);
-
-    if (!sb) {
-      log('error', 'Supabase no disponible para addItem: ' + resolvedTable);
-      return null;
-    }
-
+    if (!sb) { log('error', 'Supabase no disponible para addItem: ' + resolvedTable); return null; }
     try {
       var userId = await getSessionUserId();
-      if (!userId) {
-        log('error', 'No hay sesión activa para insertar en ' + resolvedTable);
-        return null;
-      }
-
+      if (!userId) { log('error', 'No hay sesión activa para insertar en ' + resolvedTable); return null; }
       var record = Object.assign({}, item || {});
       delete record.id;
-
-      if (!record.user_id) {
-        record.user_id = userId;
-      }
-
+      if (!record.user_id) { record.user_id = userId; }
       var result = await sb.from(resolvedTable).insert(record).select().single();
-
-      if (result.error) {
-        log('error', 'Error addItem ' + resolvedTable + ': ' + result.error.message);
-        return null;
-      }
-
+      if (result.error) { log('error', 'Error addItem ' + resolvedTable + ': ' + result.error.message); return null; }
       return result.data || null;
-    } catch (error) {
-      log('error', 'Error addItem ' + resolvedTable, error);
-      return null;
-    }
+    } catch (error) { log('error', 'Error addItem ' + resolvedTable, error); return null; }
   }
 
   async function updateItem(tableName, id, changes) {
     if (!id) return false;
-
     if (isLegacyKey(tableName)) {
       var expectedType = LEGACY_KEYS[tableName].type;
-
       if (expectedType === 'array') {
         var list = readLegacy(tableName);
         var updated = false;
-
-        for (var i = 0; i < list.length; i++) {
-          if (list[i] && list[i].id === id) {
-            list[i] = Object.assign({}, list[i], changes || {});
-            updated = true;
-            break;
-          }
-        }
-
+        for (var i = 0; i < list.length; i++) { if (list[i] && list[i].id === id) { list[i] = Object.assign({}, list[i], changes || {}); updated = true; break; } }
         if (updated) writeLegacy(tableName, list);
         return updated;
       }
-
-      if (expectedType === 'object') {
-        var map = readLegacy(tableName);
-        map[id] = Object.assign({}, map[id] || {}, changes || {});
-        writeLegacy(tableName, map);
-        return true;
-      }
-
+      if (expectedType === 'object') { var map = readLegacy(tableName); map[id] = Object.assign({}, map[id] || {}, changes || {}); writeLegacy(tableName, map); return true; }
       return false;
     }
-
     var sb = getSupabase();
     var resolvedTable = resolveKey(tableName);
-
-    if (!sb) {
-      log('error', 'Supabase no disponible para updateItem: ' + resolvedTable);
-      return false;
-    }
-
+    if (!sb) { log('error', 'Supabase no disponible para updateItem: ' + resolvedTable); return false; }
     try {
       var payload = Object.assign({}, changes || {});
       payload.updated_at = new Date().toISOString();
-
       var result = await sb.from(resolvedTable).update(payload).eq('id', id);
-
-      if (result.error) {
-        log('error', 'Error updateItem ' + resolvedTable + ': ' + result.error.message);
-        return false;
-      }
-
+      if (result.error) { log('error', 'Error updateItem ' + resolvedTable + ': ' + result.error.message); return false; }
       return true;
-    } catch (error) {
-      log('error', 'Error updateItem ' + resolvedTable, error);
-      return false;
-    }
+    } catch (error) { log('error', 'Error updateItem ' + resolvedTable, error); return false; }
   }
 
   async function deleteItem(tableName, id) {
     if (!id) return false;
-
     if (isLegacyKey(tableName)) {
       var expectedType = LEGACY_KEYS[tableName].type;
-
-      if (expectedType === 'array') {
-        var list = readLegacy(tableName);
-        var next = list.filter(function(item) {
-          return !item || item.id !== id;
-        });
-        writeLegacy(tableName, next);
-        return true;
-      }
-
-      if (expectedType === 'object') {
-        var map = readLegacy(tableName);
-        if (hasOwn(map, id)) {
-          delete map[id];
-          writeLegacy(tableName, map);
-        }
-        return true;
-      }
-
+      if (expectedType === 'array') { var list = readLegacy(tableName); var next = list.filter(function(item) { return !item || item.id !== id; }); writeLegacy(tableName, next); return true; }
+      if (expectedType === 'object') { var map = readLegacy(tableName); if (hasOwn(map, id)) { delete map[id]; writeLegacy(tableName, map); } return true; }
       return false;
     }
-
     var sb = getSupabase();
     var resolvedTable = resolveKey(tableName);
-
-    if (!sb) {
-      log('error', 'Supabase no disponible para deleteItem: ' + resolvedTable);
-      return false;
-    }
-
+    if (!sb) { log('error', 'Supabase no disponible para deleteItem: ' + resolvedTable); return false; }
     try {
       var result = await sb.from(resolvedTable).delete().eq('id', id);
-
-      if (result.error) {
-        log('error', 'Error deleteItem ' + resolvedTable + ': ' + result.error.message);
-        return false;
-      }
-
+      if (result.error) { log('error', 'Error deleteItem ' + resolvedTable + ': ' + result.error.message); return false; }
       return true;
-    } catch (error) {
-      log('error', 'Error deleteItem ' + resolvedTable, error);
-      return false;
-    }
+    } catch (error) { log('error', 'Error deleteItem ' + resolvedTable, error); return false; }
   }
 
   function setData(tableName, data) {
     if (isLegacyKey(tableName)) {
-      if (LEGACY_KEYS[tableName].type === 'array') {
-        return writeLegacy(tableName, Array.isArray(data) ? data : []);
-      }
-
-      if (LEGACY_KEYS[tableName].type === 'object') {
-        var safeObject = data && typeof data === 'object' && !Array.isArray(data) ? data : {};
-        return writeLegacy(tableName, safeObject);
-      }
+      if (LEGACY_KEYS[tableName].type === 'array') return writeLegacy(tableName, Array.isArray(data) ? data : []);
+      if (LEGACY_KEYS[tableName].type === 'object') { var safeObject = data && typeof data === 'object' && !Array.isArray(data) ? data : {}; return writeLegacy(tableName, safeObject); }
     }
-
     log('warn', 'setData deshabilitado para tablas Supabase: ' + tableName + '. Usa addItem/updateItem/deleteItem.');
     return false;
   }
@@ -416,11 +219,16 @@
     return rows && rows.length ? rows[0] : null;
   }
 
-  // --- Items de Cotización ---
+  // --- Items de Cotización (desde JSONB items) ---
   async function obtenerItemsCotizacion(cotizacionId) {
-    log('info', 'obtenerItemsCotizacion: ' + cotizacionId);
+    log('info', 'obtenerItemsCotizacion (desde JSONB): ' + cotizacionId);
     if (!cotizacionId) return [];
-    return await getDataFiltered(STORAGE_KEYS.COTIZACION_ITEMS, { cotizacion_id: cotizacionId }, { orderBy: 'orden', ascending: true });
+    var cot = await findItem(STORAGE_KEYS.COTIZACIONES, cotizacionId);
+    if (!cot || !cot.items) return [];
+    try {
+      var items = typeof cot.items === 'string' ? JSON.parse(cot.items) : cot.items;
+      return Array.isArray(items) ? items : [];
+    } catch (e) { return []; }
   }
 
   window.STORAGE_KEYS = STORAGE_KEYS;
@@ -436,24 +244,14 @@
   window.obtenerCotizacionProyecto = obtenerCotizacionProyecto;
   window.obtenerItemsCotizacion = obtenerItemsCotizacion;
 
-  if (!window.GNStudio) {
-    window.GNStudio = {};
-  }
-
+  if (!window.GNStudio) { window.GNStudio = {}; }
   window.GNStudio.storage = {
     STORAGE_KEYS: STORAGE_KEYS,
-    getData: getData,
-    getDataFiltered: getDataFiltered,
-    findItem: findItem,
-    addItem: addItem,
-    updateItem: updateItem,
-    deleteItem: deleteItem,
-    setData: setData,
-    obtenerGastosProyecto: obtenerGastosProyecto,
-    obtenerPagosProyecto: obtenerPagosProyecto,
-    obtenerCotizacionProyecto: obtenerCotizacionProyecto,
-    obtenerItemsCotizacion: obtenerItemsCotizacion
+    getData: getData, getDataFiltered: getDataFiltered, findItem: findItem,
+    addItem: addItem, updateItem: updateItem, deleteItem: deleteItem, setData: setData,
+    obtenerGastosProyecto: obtenerGastosProyecto, obtenerPagosProyecto: obtenerPagosProyecto,
+    obtenerCotizacionProyecto: obtenerCotizacionProyecto, obtenerItemsCotizacion: obtenerItemsCotizacion
   };
 
-  log('info', 'storage.js cargado correctamente');
+  log('info', 'storage.js cargado correctamente (v2.3)');
 })(window);
