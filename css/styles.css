@@ -2941,3 +2941,492 @@ tbody tr {
     font-size: 16px; /* Previene zoom en iOS */
   }
 }
+
+/* ============================================================
+   COTIZACIÓN EN DOCUMENTOS — Vista profesional (GN Studio OS)
+   ============================================================ */
+
+.cot-doc-container {
+  background: #FFFFFF;
+  color: #1a1a1a;
+  border-radius: 12px;
+  overflow: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  max-width: 900px;
+  margin: 0 auto;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+}
+
+/* Header con membrete */
+.cot-doc-header {
+  background: linear-gradient(135deg, #0A0F0C 0%, #123524 50%, #0A0F0C 100%);
+  padding: 32px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 20px;
+  border-bottom: 3px solid #C5A253;
+}
+
+.cot-doc-logo-area {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cot-doc-logo {
+  font-size: 28px;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: -1px;
+}
+
+.cot-doc-logo::before {
+  content: 'GN';
+  display: inline-block;
+  background: linear-gradient(135deg, #123524, #C5A253);
+  padding: 4px 10px;
+  border-radius: 8px;
+  margin-right: 8px;
+  font-size: 20px;
+}
+
+.cot-doc-tagline {
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.cot-doc-info {
+  text-align: right;
+}
+
+.cot-doc-label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+
+.cot-doc-codigo {
+  font-size: 22px;
+  font-weight: 700;
+  color: #C5A253;
+  letter-spacing: -0.5px;
+}
+
+.cot-doc-fecha {
+  font-size: 13px;
+  color: rgba(255,255,255,0.8);
+  margin-top: 4px;
+}
+
+/* Cliente */
+.cot-doc-cliente {
+  padding: 24px 40px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.cot-doc-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #123524;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 8px;
+}
+
+.cot-doc-cliente-nombre {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.cot-doc-proyecto-nombre {
+  font-size: 15px;
+  color: #495057;
+  margin-top: 4px;
+}
+
+/* Alcance */
+.cot-doc-alcance {
+  padding: 24px 40px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.cot-doc-alcance-content {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #343a40;
+}
+
+.cot-doc-alcance-content ul,
+.cot-doc-alcance-content ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.cot-doc-alcance-content li {
+  margin-bottom: 6px;
+}
+
+/* Items */
+.cot-doc-items {
+  padding: 24px 40px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.cot-doc-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+.cot-doc-items-table thead {
+  background: #123524;
+}
+
+.cot-doc-items-table thead th {
+  padding: 12px 16px;
+  color: #FFFFFF;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: left;
+  border: none;
+}
+
+.cot-doc-items-table tbody td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e9ecef;
+  color: #343a40;
+}
+
+.cot-doc-items-table tbody tr:last-child td {
+  border-bottom: 2px solid #123524;
+}
+
+.cot-doc-items-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+/* Totales */
+.cot-doc-totales {
+  padding: 24px 40px;
+  background: #f8f9fa;
+}
+
+.cot-doc-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 14px;
+  color: #495057;
+}
+
+.cot-doc-total-row span:last-child {
+  font-weight: 600;
+  color: #1a1a1a;
+  font-family: 'SF Mono', monospace;
+}
+
+.cot-doc-grand-total {
+  border-top: 2px solid #C5A253;
+  margin-top: 8px;
+  padding-top: 12px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #123524;
+}
+
+.cot-doc-grand-total span:last-child {
+  font-size: 22px;
+  color: #C5A253;
+}
+
+/* Footer */
+.cot-doc-footer {
+  background: linear-gradient(135deg, #123524 0%, #0A0F0C 100%);
+  padding: 24px 40px;
+  text-align: center;
+}
+
+.cot-doc-footer-info {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.cot-doc-footer-info span {
+  font-size: 13px;
+  color: rgba(255,255,255,0.85);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cot-doc-footer-info i {
+  color: #C5A253;
+  font-size: 14px;
+}
+
+.cot-doc-footer-banco {
+  font-size: 12px;
+  color: rgba(255,255,255,0.6);
+  margin: 12px 0;
+  padding: 8px 16px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.cot-doc-footer-gracias {
+  font-size: 16px;
+  font-weight: 600;
+  color: #C5A253;
+  margin-top: 12px;
+  letter-spacing: 0.5px;
+}
+
+/* Botón de acción para cotización */
+.cot-doc-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  padding: 16px 40px;
+  background: #FFFFFF;
+  border-top: 1px solid #e9ecef;
+}
+
+.cot-doc-btn {
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.cot-doc-btn-primary {
+  background: linear-gradient(135deg, #123524, #C5A253);
+  color: #FFFFFF;
+}
+
+.cot-doc-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(18,53,36,0.3);
+}
+
+.cot-doc-btn-secondary {
+  background: #f8f9fa;
+  color: #495057;
+  border: 1px solid #dee2e6;
+}
+
+.cot-doc-btn-secondary:hover {
+  background: #e9ecef;
+}
+
+/* Responsive cotización */
+@media (max-width: 768px) {
+  .cot-doc-header,
+  .cot-doc-cliente,
+  .cot-doc-alcance,
+  .cot-doc-items,
+  .cot-doc-totales,
+  .cot-doc-footer {
+    padding: 20px 24px;
+  }
+
+  .cot-doc-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .cot-doc-info {
+    text-align: center;
+  }
+
+  .cot-doc-items-table {
+    font-size: 12px;
+  }
+
+  .cot-doc-items-table thead th,
+  .cot-doc-items-table tbody td {
+    padding: 8px 10px;
+  }
+
+  .cot-doc-footer-info {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .cot-doc-grand-total {
+    font-size: 16px;
+  }
+
+  .cot-doc-grand-total span:last-child {
+    font-size: 18px;
+  }
+}
+
+/* ============================================================
+   KANBAN DE TAREAS — Mejoras visuales
+   ============================================================ */
+
+.tareas-kanban {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 1100px) {
+  .tareas-kanban { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .tareas-kanban {
+    display: flex;
+    gap: 12px;
+  }
+  .kanban-column { min-width: 280px; flex-shrink: 0; }
+}
+
+/* ============================================================
+   RESUMEN FINANCIERO — Mejoras
+   ============================================================ */
+
+.resumen-financiero {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fin-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--gn-border);
+  font-size: 13px;
+}
+
+.fin-row span { color: var(--gn-text-muted); }
+.fin-row strong {
+  color: var(--gn-text);
+  font-weight: 600;
+}
+
+.fin-total {
+  border-bottom: none;
+  padding-top: 12px;
+  margin-top: 4px;
+  border-top: 2px solid #C5A253;
+}
+
+.fin-total span,
+.fin-total strong {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.fin-total strong { color: #C5A253; }
+
+/* KPIs de resumen del proyecto */
+.proyecto-resumen-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.proyecto-resumen-kpi {
+  background: var(--gn-card);
+  border: 1px solid var(--gn-border);
+  border-radius: var(--gn-radius);
+  padding: 20px;
+  text-align: center;
+}
+
+.proyecto-resumen-kpi-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #C5A253;
+  margin-bottom: 4px;
+}
+
+.proyecto-resumen-kpi-label {
+  font-size: 12px;
+  color: var(--gn-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Timeline mejorado */
+.timeline {
+  position: relative;
+  padding-left: 24px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--gn-border);
+}
+
+.timeline-item {
+  position: relative;
+  padding-bottom: 24px;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--gn-green);
+  border: 2px solid var(--gn-card);
+}
+
+.timeline-item.gasto::before { background: #F87171; }
+.timeline-item.pago::before { background: #C5A253; }
+.timeline-item.tarea::before { background: #C5A253; }
+
+.timeline-date {
+  font-size: 11px;
+  color: var(--gn-text-muted);
+  margin-bottom: 4px;
+}
+
+.timeline-content {
+  font-size: 13px;
+  color: var(--gn-text);
+}
+
+.timeline-monto {
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 4px;
+}
