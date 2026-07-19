@@ -1,6 +1,6 @@
 // ============================================================
 // js/cotizaciones.js — Módulo de Cotizaciones (GN Studio OS v2.3)
-// Integrado con Supabase: tabla cotizaciones + cotizacion_items
+// Integrado con Supabase: usa columnas existentes (numero, fecha_emision, items JSONB)
 // ============================================================
 
 (function(window, document) {
@@ -8,86 +8,48 @@
 
   var byId = function(id) { return document.getElementById(id); };
 
-  var STORAGE_KEYS = window.STORAGE_KEYS || {
-    COTIZACIONES: 'cotizaciones',
-    COTIZACION_ITEMS: 'cotizacion_items'
-  };
+  var STORAGE_KEYS = window.STORAGE_KEYS || { COTIZACIONES: 'cotizaciones' };
 
   function log(level, msg, meta) {
     if (window.GNUtils && typeof window.GNUtils.log === 'function') {
-      window.GNUtils.log(level, msg, meta);
-      return;
+      window.GNUtils.log(level, msg, meta); return;
     }
-    if (meta !== undefined) {
-      console[level] ? console[level](msg, meta) : console.log(msg, meta);
-      return;
-    }
+    if (meta !== undefined) { console[level] ? console[level](msg, meta) : console.log(msg, meta); return; }
     console[level] ? console[level](msg) : console.log(msg);
   }
 
   // ============================================================
-  // Helpers de datos
+  // Helpers
   // ============================================================
-  async function getCotizaciones() {
-    if (typeof window.getData === 'function') {
-      return (await window.getData(STORAGE_KEYS.COTIZACIONES)) || [];
-    }
-    return [];
-  }
-
-  async function getCotizacionItems(cotizacionId) {
-    if (!cotizacionId) return [];
-    if (typeof window.obtenerItemsCotizacion === 'function') {
-      return await window.obtenerItemsCotizacion(cotizacionId);
-    }
-    if (typeof window.getDataFiltered === 'function') {
-      return await window.getDataFiltered(STORAGE_KEYS.COTIZACION_ITEMS, { cotizacion_id: cotizacionId }, { orderBy: 'orden', ascending: true });
-    }
-    return [];
-  }
-
-  async function getCotizacionPorProyecto(proyectoId) {
-    if (!proyectoId) return null;
-    if (typeof window.obtenerCotizacionProyecto === 'function') {
-      return await window.obtenerCotizacionProyecto(proyectoId);
-    }
-    var rows = await getDataFiltered(STORAGE_KEYS.COTIZACIONES, { proyecto_id: proyectoId }, { orderBy: 'created_at', ascending: false });
-    return rows && rows.length ? rows[0] : null;
-  }
-
   async function getDataFiltered(tableName, filters, options) {
-    if (typeof window.getDataFiltered === 'function') {
-      return await window.getDataFiltered(tableName, filters, options);
-    }
+    if (typeof window.getDataFiltered === 'function') return await window.getDataFiltered(tableName, filters, options);
     return [];
   }
 
   async function addItem(tableName, item) {
-    if (typeof window.addItem === 'function') {
-      return await window.addItem(tableName, item);
-    }
+    if (typeof window.addItem === 'function') return await window.addItem(tableName, item);
     return null;
   }
 
   async function updateItem(tableName, id, changes) {
-    if (typeof window.updateItem === 'function') {
-      return await window.updateItem(tableName, id, changes);
-    }
+    if (typeof window.updateItem === 'function') return await window.updateItem(tableName, id, changes);
     return false;
   }
 
-  function generarCodigoCotizacion() {
-    var now = new Date();
-    var y = String(now.getFullYear()).slice(-2);
-    var m = String(now.getMonth() + 1).padStart(2, '0');
-    var d = String(now.getDate()).padStart(2, '0');
-    var rand = Math.floor(100 + Math.random() * 900);
-    return 'COT-' + d + m + y + '-' + rand;
+  async function findItem(tableName, id) {
+    if (typeof window.findItem === 'function') return await window.findItem(tableName, id);
+    return null;
   }
 
-  function parseMonto(value) {
-    return parseFloat(value || 0) || 0;
+  async function getSessionUserId() {
+    if (typeof window.getSessionUserId === 'function') return await window.getSessionUserId();
+    var sb = window.supabaseClient || null;
+    if (!sb) return null;
+    try { var session = await sb.auth.getSession(); return session && session.data && session.data.session ? session.data.session.user.id : null; }
+    catch (e) { return null; }
   }
+
+  function parseMonto(value) { return parseFloat(value || 0) || 0; }
 
   function money(value) {
     var n = parseMonto(value);
@@ -95,76 +57,66 @@
     return 'USD ' + n.toFixed(2);
   }
 
+  function generarNumeroCotizacion() {
+    var now = new Date();
+    var y = String(now.getFullYear()).slice(-2);
+    var m = String(now.getMonth() + 1).padStart(2, '0');
+    var d = String(now.getDate()).padStart(2, '0');
+    var rand = Math.floor(1000 + Math.random() * 9000);
+    return 'COT-' + d + m + y + '-' + rand;
+  }
+
+  function esc(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
   // ============================================================
   // Crear cotización en Supabase vinculada a proyecto
+  // Usa columnas: numero, fecha_emision, items (JSONB), proyecto_id
   // ============================================================
   async function crearCotizacionDesdeProforma(datosProforma) {
     try {
-      // 1. Crear cotización principal en Supabase
-      var codigo = generarCodigoCotizacion();
+      var numero = generarNumeroCotizacion();
       var now = new Date().toISOString();
+      var userId = await getSessionUserId();
 
-      var payloadCotizacion = {
-        user_id: datosProforma.userId || null,
+      var payload = {
+        user_id: userId,
         proyecto_id: datosProforma.proyectoId || null,
-        codigo: codigo,
+        numero: numero,
         cliente_id: datosProforma.clienteId || null,
         cliente_nombre: datosProforma.clienteNombre || 'Cliente',
-        fecha: datosProforma.fecha || now.slice(0, 10),
+        fecha_emision: datosProforma.fecha || now.slice(0, 10),
+        fecha_vencimiento: null,
+        titulo: datosProforma.nombreProyecto || 'Cotización',
         nombre_proyecto: datosProforma.nombreProyecto || '',
+        descripcion: datosProforma.alcanceHtml || '',
         alcance: datosProforma.alcanceHtml || '',
+        atencion: datosProforma.clienteNombre || '',
+        items: JSON.stringify(datosProforma.items || []),
         subtotal: parseMonto(datosProforma.subtotal || 0),
         itbms: parseMonto(datosProforma.itbms || 0),
         total: parseMonto(datosProforma.total || 0),
+        descuento: 0,
         estado: 'cotizado',
-        items: JSON.stringify(datosProforma.items || []),
-        created_at: now,
-        updated_at: now
+        notas: '',
+        notas_internas: ''
       };
 
-      var cotizacion = await addItem(STORAGE_KEYS.COTIZACIONES, payloadCotizacion);
+      var cotizacion = await addItem(STORAGE_KEYS.COTIZACIONES, payload);
 
       if (!cotizacion) {
         log('error', 'No se pudo crear la cotización en Supabase');
         return null;
       }
 
-      // 2. Crear items de cotización en tabla cotizacion_items
-      var items = datosProforma.items || [];
-      for (var i = 0; i < items.length; i++) {
-        var item = items[i];
-        var payloadItem = {
-          cotizacion_id: cotizacion.id,
-          servicio_id: item.servicioId || null,
-          descripcion: item.descripcion || 'Servicio',
-          cantidad: parseMonto(item.cantidad || 0),
-          precio_unitario: parseMonto(item.precio || 0),
-          aplica_itbms: !!item.itbms,
-          subtotal: parseMonto(item.total || 0),
-          orden: i + 1,
-          unidad: item.unidad || 'und',
-          total: parseMonto(item.total || 0),
-          user_id: datosProforma.userId || null
-        };
-        await addItem(STORAGE_KEYS.COTIZACION_ITEMS, payloadItem);
-      }
-
-      // 3. Actualizar proyecto con cotizacion_id
-      if (datosProforma.proyectoId && typeof window.updateItem === 'function') {
-        await updateItem('proyectos', datosProforma.proyectoId, {
-          cotizacion_id: cotizacion.id
-        });
-      }
-
-      if (typeof window.actualizarKPIs === 'function') {
-        window.actualizarKPIs();
-      }
-
       if (window.showToast) {
         window.showToast({
           type: 'success',
           title: 'Cotización creada',
-          message: 'La cotización ' + codigo + ' se guardó en Supabase vinculada al proyecto.'
+          message: 'La cotización ' + numero + ' se guardó en Supabase vinculada al proyecto.'
         });
       }
 
@@ -172,53 +124,45 @@
     } catch (error) {
       log('error', 'Error creando cotización desde proforma', error);
       if (window.showToast) {
-        window.showToast({
-          type: 'error',
-          title: 'Error al crear cotización',
-          message: 'No se pudo guardar la cotización. Revisa la conexión.'
-        });
+        window.showToast({ type: 'error', title: 'Error al crear cotización', message: 'No se pudo guardar la cotización. Revisa la conexión.' });
       }
       return null;
     }
   }
 
   // ============================================================
-  // Obtener cotización completa con items para mostrar
+  // Obtener cotización completa con items
   // ============================================================
   async function obtenerCotizacionCompleta(cotizacionId) {
     if (!cotizacionId) return null;
-
     try {
-      var cotizacion = await findItem(STORAGE_KEYS.COTIZACIONES, cotizacionId);
-      if (!cotizacion) return null;
+      var cot = await findItem(STORAGE_KEYS.COTIZACIONES, cotizacionId);
+      if (!cot) return null;
 
-      var items = await getCotizacionItems(cotizacionId);
+      // Extraer items desde JSONB
+      var items = [];
+      try {
+        if (cot.items) { items = typeof cot.items === 'string' ? JSON.parse(cot.items) : cot.items; }
+      } catch (e) { items = []; }
 
       return {
-        id: cotizacion.id,
-        codigo: cotizacion.codigo || '',
-        clienteNombre: cotizacion.cliente_nombre || 'Cliente',
-        fecha: cotizacion.fecha || '',
-        nombreProyecto: cotizacion.nombre_proyecto || '',
-        alcance: cotizacion.alcance || '',
-        subtotal: parseMonto(cotizacion.subtotal),
-        itbms: parseMonto(cotizacion.itbms),
-        total: parseMonto(cotizacion.total),
-        estado: cotizacion.estado || 'cotizado',
-        items: items || [],
-        raw: cotizacion
+        id: cot.id,
+        numero: cot.numero || '',
+        clienteNombre: cot.cliente_nombre || cot.atencion || 'Cliente',
+        fecha: cot.fecha_emision || cot.fecha || '',
+        nombreProyecto: cot.nombre_proyecto || cot.titulo || '',
+        alcance: cot.alcance || cot.descripcion || '',
+        subtotal: parseMonto(cot.subtotal),
+        itbms: parseMonto(cot.itbms),
+        total: parseMonto(cot.total),
+        estado: cot.estado || 'cotizado',
+        items: Array.isArray(items) ? items : [],
+        raw: cot
       };
     } catch (error) {
       log('error', 'Error obteniendo cotización completa', error);
       return null;
     }
-  }
-
-  async function findItem(tableName, id) {
-    if (typeof window.findItem === 'function') {
-      return await window.findItem(tableName, id);
-    }
-    return null;
   }
 
   // ============================================================
@@ -243,9 +187,7 @@
     var fechaStr = cot.fecha || '';
     if (fechaStr) {
       var parts = fechaStr.split('-');
-      if (parts.length === 3) {
-        fechaStr = parts[2] + '/' + parts[1] + '/' + parts[0];
-      }
+      if (parts.length === 3) { fechaStr = parts[2] + '/' + parts[1] + '/' + parts[0]; }
     }
 
     // Items HTML
@@ -267,9 +209,7 @@
         var desc = item.descripcion || 'Servicio';
 
         subtotalItems += totalItem;
-        if (item.aplica_itbms) {
-          itbmsItems += totalItem * 0.07;
-        }
+        if (item.itbms || item.aplica_itbms) { itbmsItems += totalItem * 0.07; }
 
         itemsHtml += '<tr>';
         itemsHtml += '<td>' + esc(desc) + '</td>';
@@ -281,44 +221,6 @@
       }
 
       itemsHtml += '</tbody></table>';
-    } else {
-      // Si no hay items en tabla, usar los del JSONB
-      var jsonItems = [];
-      try {
-        if (cot.raw && cot.raw.items) {
-          jsonItems = typeof cot.raw.items === 'string' ? JSON.parse(cot.raw.items) : cot.raw.items;
-        }
-      } catch (e) { jsonItems = []; }
-
-      if (jsonItems && jsonItems.length) {
-        itemsHtml += '<table class="cot-doc-items-table">';
-        itemsHtml += '<thead><tr><th>Descripción</th><th>Unidad</th><th>Cant.</th><th>Precio Unit.</th><th>Total</th></tr></thead>';
-        itemsHtml += '<tbody>';
-
-        for (var j = 0; j < jsonItems.length; j++) {
-          var ji = jsonItems[j];
-          var jCant = parseMonto(ji.cantidad || 0);
-          var jPrecio = parseMonto(ji.precio || 0);
-          var jTotal = parseMonto(ji.total || 0);
-          var jUnidad = ji.unidad || 'und';
-          var jDesc = ji.descripcion || 'Servicio';
-
-          subtotalItems += jTotal;
-          if (ji.itbms) {
-            itbmsItems += jTotal * 0.07;
-          }
-
-          itemsHtml += '<tr>';
-          itemsHtml += '<td>' + esc(jDesc) + '</td>';
-          itemsHtml += '<td style="text-align:center;">' + esc(jUnidad) + '</td>';
-          itemsHtml += '<td style="text-align:center;">' + jCant + '</td>';
-          itemsHtml += '<td style="text-align:right;">' + money(jPrecio) + '</td>';
-          itemsHtml += '<td style="text-align:right;font-weight:600;">' + money(jTotal) + '</td>';
-          itemsHtml += '</tr>';
-        }
-
-        itemsHtml += '</tbody></table>';
-      }
     }
 
     // Totales
@@ -337,7 +239,7 @@
     html += '</div>';
     html += '<div class="cot-doc-info">';
     html += '<div class="cot-doc-label">COTIZACIÓN</div>';
-    html += '<div class="cot-doc-codigo">' + esc(cot.codigo) + '</div>';
+    html += '<div class="cot-doc-codigo">' + esc(cot.numero) + '</div>';
     html += '<div class="cot-doc-fecha">Fecha: ' + esc(fechaStr) + '</div>';
     html += '</div>';
     html += '</div>';
@@ -392,21 +294,12 @@
     container.innerHTML = html;
   }
 
-  function esc(value) {
-    return String(value == null ? '' : value)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
-
   // ============================================================
   // Exponer funciones
   // ============================================================
   window.crearCotizacionDesdeProforma = crearCotizacionDesdeProforma;
   window.obtenerCotizacionCompleta = obtenerCotizacionCompleta;
   window.renderCotizacionDocumento = renderCotizacionDocumento;
-  window.generarCodigoCotizacion = generarCodigoCotizacion;
+  window.generarNumeroCotizacion = generarNumeroCotizacion;
 
 })(window, document);
