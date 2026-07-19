@@ -209,7 +209,7 @@ body {
   padding: 6px 10px;
   border-radius: 9999px;
   border: 1px solid var(--gn-border);
-  background: rgba(255,255,255,0.03);
+  background: rgba(18,53,36,0.15);
   cursor: pointer;
   position: relative;
   min-height: 40px;
@@ -554,7 +554,7 @@ body {
   padding: 11px 14px;
   border-radius: 10px;
   border: 1px solid var(--gn-border);
-  background: rgba(255,255,255,0.03);
+  background: rgba(18,53,36,0.15);
   color: var(--gn-text);
   font-size: 14px;
   font-family: inherit;
@@ -744,7 +744,7 @@ body {
 }
 
 .search-input {
-  background: rgba(255,255,255,0.03);
+  background: rgba(18,53,36,0.15);
   border: 1px solid var(--gn-border);
   border-radius: 10px;
   padding: 9px 14px;
@@ -761,7 +761,7 @@ body {
   background: rgba(18,53,36,0.08);
 }
 .search-input {
-  background: rgba(255,255,255,0.03);
+  background: rgba(18,53,36,0.15);
   border: 1px solid var(--gn-border);
   border-radius: 10px;
   padding: 9px 14px;
@@ -832,7 +832,7 @@ table {
   min-width: 600px;
 }
 
-thead { background: rgba(255,255,255,0.03); }
+thead { background: rgba(18,53,36,0.15); }
 
 th {
   padding: 12px 16px;
@@ -907,9 +907,9 @@ tbody tr:last-child td { border-bottom: none; }
 }
 
 .cat-diseno-web { background: var(--gn-green-dim); color: #C5A253; }
-cat-desarrollo { background: var(--gn-blue-dim); color: var(--gn-blue); }
-cat-branding { background: var(--gn-purple-dim); color: var(--gn-purple); }
-cat-marketing { background: var(--gn-orange-dim); color: var(--gn-orange); }
+cat-desarrollo { background: rgba(18,53,36,0.12); color: #2D8B5E; }
+cat-branding { background: rgba(197,162,83,0.12); color: #C5A253; }
+cat-marketing { background: rgba(197,162,83,0.12); color: #C5A253; }
 cat-social-media { background: rgba(236,72,153,0.12); color: #EC4899; }
 cat-seo { background: rgba(6,182,212,0.12); color: #22D3EE; }
 cat-fotografia { background: rgba(249,115,22,0.12); color: #FB923C; }
@@ -950,7 +950,7 @@ cat-otros { background: rgba(127,140,141,0.12); color: #9CA3AF; }
 }
 
 .json-preview::-webkit-scrollbar { width: 8px; }
-.json-preview::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); border-radius: 4px; }
+.json-preview::-webkit-scrollbar-track { background: rgba(18,53,36,0.15); border-radius: 4px; }
 .json-preview::-webkit-scrollbar-thumb { background: var(--gn-green-dim); border-radius: 4px; }
 
 /* ── FORM FEEDBACK ── */
@@ -2641,7 +2641,7 @@ body.gn-auth-locked .top-navbar {
 
 /* Tabla de servicios en Propuesta Económica */
 #tbodyProformaServicios tr:hover {
-  background: rgba(255,255,255,0.03);
+  background: rgba(18,53,36,0.15);
 }
 
 #pf-total-propuesta {
@@ -2891,7 +2891,7 @@ tbody tr {
   100% { background-position: 200% 0; }
 }
 .skeleton {
-  background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%);
+  background: linear-gradient(90deg, rgba(18,53,36,0.15) 25%, rgba(255,255,255,0.06) 50%, rgba(18,53,36,0.15) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 6px;
