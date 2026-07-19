@@ -65,7 +65,7 @@
       '<tr>' +
         '<td colspan="6">' +
           '<div class="tabla-vacia">' +
-            '<div class="tabla-vacia-icon">📄</div>' +
+            '<div class="tabla-vacia-icon"><i class="ph ph-file-text"></i></div>' +
             '<div>No tienes cotizaciones registradas aún.</div>' +
             '<div style="margin-top:6px;font-size:13px;">' +
               'Crea una nueva cotización usando el formulario de la derecha.' +
