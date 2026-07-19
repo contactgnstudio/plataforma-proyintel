@@ -1,6 +1,7 @@
 // ============================================================
 // js/proyectos.js — ProjectOS v2.3 con Cotizaciones Supabase
 // Tabs: Resumen (KPIs reales), Financiero, Tareas (auto), Documentos (cotización)
+// Usa columnas Supabase: numero, fecha_emision, items (JSONB), proyecto_id
 // ============================================================
 
 (function(window, document) {
@@ -11,235 +12,68 @@
   var CHART_PROYECTO = null;
 
   function byId(id) { return document.getElementById(id); }
-
-  function qsa(selector) {
-    return Array.prototype.slice.call(document.querySelectorAll(selector));
-  }
+  function qsa(selector) { return Array.prototype.slice.call(document.querySelectorAll(selector)); }
 
   function esc(value) {
     return String(value == null ? '' : value)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
-
-  function text(value, fallback) {
-    if (value === null || value === undefined || value === '') return fallback || '—';
-    return String(value);
-  }
-
-  function num(value) {
-    var n = parseFloat(value);
-    return isNaN(n) ? 0 : n;
-  }
-
-  function intVal(value) {
-    var n = parseInt(value, 10);
-    return isNaN(n) ? 0 : n;
-  }
-
-  function money(value) {
-    var n = num(value);
-    if (typeof window.formatMoney === 'function') return window.formatMoney(n);
-    return '$' + n.toFixed(2);
-  }
-
-  function formatDateSafe(value) {
-    if (!value) return '—';
-    if (typeof window.formatDate === 'function') return window.formatDate(value);
-    return value;
-  }
-
-  function todayISO() {
-    var d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-  }
+  function text(value, fallback) { if (value === null || value === undefined || value === '') return fallback || '—'; return String(value); }
+  function num(value) { var n = parseFloat(value); return isNaN(n) ? 0 : n; }
+  function intVal(value) { var n = parseInt(value, 10); return isNaN(n) ? 0 : n; }
+  function money(value) { var n = num(value); if (typeof window.formatMoney === 'function') return window.formatMoney(n); return '$' + n.toFixed(2); }
+  function formatDateSafe(value) { if (!value) return '—'; if (typeof window.formatDate === 'function') return window.formatDate(value); return value; }
+  function todayISO() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 
   function estadoLabel(estado) {
-    var map = {
-      pendiente: 'Pendiente',
-      en_progreso: 'En Progreso',
-      pausado: 'Pausado',
-      completado: 'Completado',
-      cancelado: 'Cancelado',
-      registrado: 'Registrado',
-      confirmado: 'Confirmado',
-      reversado: 'Reversado'
-    };
+    var map = { pendiente: 'Pendiente', en_progreso: 'En Progreso', pausado: 'Pausado', completado: 'Completado', cancelado: 'Cancelado', registrado: 'Registrado', confirmado: 'Confirmado', reversado: 'Reversado' };
     return map[estado] || estado || 'Pendiente';
   }
-
   function estadoColor(estado) {
-    var map = {
-      pendiente: '#C5A253',
-      en_progreso: '#C5A253',
-      pausado: '#6B7280',
-      completado: '#2D8B5E',
-      cancelado: '#F87171',
-      registrado: '#C5A253',
-      confirmado: '#2D8B5E',
-      reversado: '#F87171'
-    };
+    var map = { pendiente: '#C5A253', en_progreso: '#C5A253', pausado: '#6B7280', completado: '#2D8B5E', cancelado: '#F87171', registrado: '#C5A253', confirmado: '#2D8B5E', reversado: '#F87171' };
     return map[estado] || '#2D8B5E';
   }
 
-  function getStorageKey(name, fallback) {
-    if (window.STORAGE_KEYS && window.STORAGE_KEYS[name]) return window.STORAGE_KEYS[name];
-    return fallback;
-  }
+  function getStorageKey(name, fallback) { if (window.STORAGE_KEYS && window.STORAGE_KEYS[name]) return window.STORAGE_KEYS[name]; return fallback; }
 
-  async function getAll(tableName, options) {
-    if (typeof window.getData !== 'function') return [];
-    var rows = await window.getData(tableName, options || {});
-    return Array.isArray(rows) ? rows : [];
-  }
-
-  async function getFiltered(tableName, filters, options) {
-    if (typeof window.getDataFiltered !== 'function') return [];
-    var rows = await window.getDataFiltered(tableName, filters || {}, options || {});
-    return Array.isArray(rows) ? rows : [];
-  }
-
-  async function insertRow(tableName, payload) {
-    if (typeof window.addItem !== 'function') return null;
-    return await window.addItem(tableName, payload);
-  }
-
-  async function updateRow(tableName, id, payload) {
-    if (typeof window.updateItem !== 'function') return false;
-    return await window.updateItem(tableName, id, payload);
-  }
-
-  async function getSessionUserId() {
-    if (typeof window.getSessionUserId === 'function') return await window.getSessionUserId();
-    var sb = window.supabaseClient || null;
-    if (!sb) return null;
-    try {
-      var session = await sb.auth.getSession();
-      return session && session.data && session.data.session ? session.data.session.user.id : null;
-    } catch (e) { return null; }
-  }
+  async function getAll(tableName, options) { if (typeof window.getData !== 'function') return []; var rows = await window.getData(tableName, options || {}); return Array.isArray(rows) ? rows : []; }
+  async function getFiltered(tableName, filters, options) { if (typeof window.getDataFiltered !== 'function') return []; var rows = await window.getDataFiltered(tableName, filters || {}, options || {}); return Array.isArray(rows) ? rows : []; }
+  async function insertRow(tableName, payload) { if (typeof window.addItem !== 'function') return null; return await window.addItem(tableName, payload); }
+  async function updateRow(tableName, id, payload) { if (typeof window.updateItem !== 'function') return false; return await window.updateItem(tableName, id, payload); }
+  async function findItem(tableName, id) { if (typeof window.findItem !== 'function') return null; return await window.findItem(tableName, id); }
+  async function getSessionUserId() { if (typeof window.getSessionUserId === 'function') return await window.getSessionUserId(); var sb = window.supabaseClient || null; if (!sb) return null; try { var session = await sb.auth.getSession(); return session && session.data && session.data.session ? session.data.session.user.id : null; } catch (e) { return null; } }
 
   function deriveAvance(row) {
     var estado = row.estado || 'pendiente';
     var presupuesto = num(row.presupuesto);
     var cobrado = num(row.total_cobrado);
-
     if (estado === 'completado') return 100;
     if (estado === 'cancelado') return 0;
-    if (presupuesto > 0 && cobrado > 0) {
-      return Math.max(0, Math.min(99, Math.round((cobrado / presupuesto) * 100)));
-    }
+    if (presupuesto > 0 && cobrado > 0) return Math.max(0, Math.min(99, Math.round((cobrado / presupuesto) * 100)));
     if (estado === 'en_progreso') return 25;
     if (estado === 'pausado') return 50;
     return 0;
   }
 
   function normalizeCliente(row) {
-    return {
-      id: row && row.id ? row.id : '',
-      nombre: row && (row.nombre || row.nombre_comercial || row.empresa || row.razon_social)
-        ? (row.nombre || row.nombre_comercial || row.empresa || row.razon_social)
-        : 'Cliente'
-    };
+    return { id: row && row.id ? row.id : '', nombre: row && (row.nombre || row.nombre_comercial || row.empresa || row.razon_social) ? (row.nombre || row.nombre_comercial || row.empresa || row.razon_social) : 'Cliente' };
   }
-
   function normalizeProyecto(row) {
-    return {
-      id: row.id,
-      userId: row.user_id || '',
-      cotizacionId: row.cotizacion_id || '',
-      clienteId: row.cliente_id || '',
-      nombre: row.nombre || 'Proyecto',
-      descripcion: row.descripcion || '',
-      fechaInicio: row.fecha_inicio || '',
-      fechaFin: row.fecha_fin || '',
-      fechaFinReal: row.fecha_fin_real || '',
-      estado: row.estado || 'en_progreso',
-      presupuesto: num(row.presupuesto),
-      totalCobrado: num(row.total_cobrado),
-      totalGastado: num(row.total_gastado),
-      notas: row.notas || '',
-      createdAt: row.created_at || '',
-      updatedAt: row.updated_at || '',
-      avance: deriveAvance(row),
-      raw: row
-    };
+    return { id: row.id, userId: row.user_id || '', cotizacionId: row.cotizacion_id || '', clienteId: row.cliente_id || '', nombre: row.nombre || 'Proyecto', descripcion: row.descripcion || '', fechaInicio: row.fecha_inicio || '', fechaFin: row.fecha_fin || '', fechaFinReal: row.fecha_fin_real || '', estado: row.estado || 'en_progreso', presupuesto: num(row.presupuesto), totalCobrado: num(row.total_cobrado), totalGastado: num(row.total_gastado), notas: row.notas || '', createdAt: row.created_at || '', updatedAt: row.updated_at || '', avance: deriveAvance(row), raw: row };
   }
+  function normalizeGasto(row) { return { id: row.id, proyectoId: row.proyecto_id || '', fecha: row.fecha || row.created_at || '', categoria: row.tipo || 'General', descripcion: row.descripcion || row.referencia || 'Gasto registrado', monto: num(row.monto), metodo: row.metodo_pago || row.metodo || '—', referencia: row.referencia || '', createdAt: row.created_at || '' }; }
+  function normalizePago(row) { return { id: row.id, proyectoId: row.proyecto_id || '', fecha: row.fecha || row.created_at || '', concepto: row.concepto || row.descripcion || row.referencia || 'Pago recibido', monto: num(row.monto), metodo: row.metodo_pago || row.metodo || row.forma_pago || '—', estado: row.estado || 'registrado', referencia: row.referencia || '', createdAt: row.created_at || '' }; }
+  function normalizeTarea(row) { return { id: row.id, proyectoId: row.proyecto_id || '', titulo: row.titulo || row.nombre || 'Tarea', asignado: row.asignado || row.responsable || '', fechaLimite: row.fecha_limite || '', estado: row.estado || 'pendiente', descripcion: row.descripcion || '', createdAt: row.created_at || '' }; }
 
-  function normalizeGasto(row) {
-    return {
-      id: row.id,
-      proyectoId: row.proyecto_id || '',
-      fecha: row.fecha || row.created_at || '',
-      categoria: row.tipo || 'General',
-      descripcion: row.descripcion || row.referencia || 'Gasto registrado',
-      monto: num(row.monto),
-      metodo: row.metodo_pago || row.metodo || '—',
-      referencia: row.referencia || '',
-      clienteId: row.cliente_id || '',
-      cotizacionId: row.cotizacion_id || '',
-      createdAt: row.created_at || ''
-    };
-  }
-
-  function normalizePago(row) {
-    return {
-      id: row.id,
-      proyectoId: row.proyecto_id || '',
-      fecha: row.fecha || row.created_at || '',
-      concepto: row.concepto || row.descripcion || row.referencia || 'Pago recibido',
-      monto: num(row.monto),
-      metodo: row.metodo_pago || row.metodo || row.forma_pago || '—',
-      estado: row.estado || 'registrado',
-      referencia: row.referencia || '',
-      clienteId: row.cliente_id || '',
-      cotizacionId: row.cotizacion_id || '',
-      createdAt: row.created_at || ''
-    };
-  }
-
-  function normalizeTarea(row) {
-    return {
-      id: row.id,
-      proyectoId: row.proyecto_id || '',
-      titulo: row.titulo || row.nombre || 'Tarea',
-      asignado: row.asignado || row.responsable || '',
-      fechaLimite: row.fecha_limite || '',
-      estado: row.estado || 'pendiente',
-      descripcion: row.descripcion || '',
-      createdAt: row.created_at || ''
-    };
-  }
-
-  async function obtenerClientes() {
-    var rows = await getAll(getStorageKey('CLIENTES', 'clientes'), { orderBy: 'created_at', ascending: false });
-    CLIENTES_CACHE = rows.map(normalizeCliente);
-    return CLIENTES_CACHE;
-  }
-
-  async function ensureClientesCache() {
-    if (!CLIENTES_CACHE.length) await obtenerClientes();
-    return CLIENTES_CACHE;
-  }
-
-  async function getClienteNombre(clienteId) {
-    if (!clienteId) return 'Sin cliente';
-    await ensureClientesCache();
-    for (var i = 0; i < CLIENTES_CACHE.length; i++) {
-      if (String(CLIENTES_CACHE[i].id) === String(clienteId)) return CLIENTES_CACHE[i].nombre;
-    }
-    return 'Sin cliente';
-  }
+  async function obtenerClientes() { var rows = await getAll(getStorageKey('CLIENTES', 'clientes'), { orderBy: 'created_at', ascending: false }); CLIENTES_CACHE = rows.map(normalizeCliente); return CLIENTES_CACHE; }
+  async function ensureClientesCache() { if (!CLIENTES_CACHE.length) await obtenerClientes(); return CLIENTES_CACHE; }
+  async function getClienteNombre(clienteId) { if (!clienteId) return 'Sin cliente'; await ensureClientesCache(); for (var i = 0; i < CLIENTES_CACHE.length; i++) { if (String(CLIENTES_CACHE[i].id) === String(clienteId)) return CLIENTES_CACHE[i].nombre; } return 'Sin cliente'; }
 
   async function obtenerProyectos() {
     var rows = await getAll(getStorageKey('PROYECTOS', 'proyectos'), { orderBy: 'created_at', ascending: false });
     var proyectos = rows.map(normalizeProyecto);
-    for (var i = 0; i < proyectos.length; i++) {
-      proyectos[i].clienteNombre = await getClienteNombre(proyectos[i].clienteId);
-    }
+    for (var i = 0; i < proyectos.length; i++) { proyectos[i].clienteNombre = await getClienteNombre(proyectos[i].clienteId); }
     return proyectos;
   }
 
@@ -247,45 +81,21 @@
     if (!id) return null;
     if (typeof window.findItem === 'function') {
       var row = await window.findItem(getStorageKey('PROYECTOS', 'proyectos'), id);
-      if (row) {
-        var proyecto = normalizeProyecto(row);
-        proyecto.clienteNombre = await getClienteNombre(proyecto.clienteId);
-        return proyecto;
-      }
+      if (row) { var proyecto = normalizeProyecto(row); proyecto.clienteNombre = await getClienteNombre(proyecto.clienteId); return proyecto; }
     }
     var proyectos = await obtenerProyectos();
-    for (var i = 0; i < proyectos.length; i++) {
-      if (String(proyectos[i].id) === String(id)) return proyectos[i];
-    }
+    for (var i = 0; i < proyectos.length; i++) { if (String(proyectos[i].id) === String(id)) return proyectos[i]; }
     return null;
   }
 
-  async function obtenerFilasProyectoCompat(tableKey, proyectoId) {
-    var tableName = getStorageKey(tableKey, tableKey.toLowerCase());
-    var rows = await getFiltered(tableName, { proyecto_id: proyectoId }, { orderBy: 'created_at', ascending: false });
-    return rows.length ? rows : [];
-  }
-
-  async function obtenerGastosProyecto(proyectoId) {
-    var rows = await obtenerFilasProyectoCompat('GASTOS', proyectoId);
-    return rows.map(normalizeGasto);
-  }
-
-  async function obtenerPagosProyecto(proyectoId) {
-    var rows = await obtenerFilasProyectoCompat('PAGOS', proyectoId);
-    return rows.map(normalizePago);
-  }
-
-  async function obtenerTareasProyecto(proyectoId) {
-    var rows = await obtenerFilasProyectoCompat('TAREAS', proyectoId);
-    return rows.map(normalizeTarea);
-  }
+  async function obtenerFilasProyectoCompat(tableKey, proyectoId) { var tableName = getStorageKey(tableKey, tableKey.toLowerCase()); var rows = await getFiltered(tableName, { proyecto_id: proyectoId }, { orderBy: 'created_at', ascending: false }); return rows.length ? rows : []; }
+  async function obtenerGastosProyecto(proyectoId) { var rows = await obtenerFilasProyectoCompat('GASTOS', proyectoId); return rows.map(normalizeGasto); }
+  async function obtenerPagosProyecto(proyectoId) { var rows = await obtenerFilasProyectoCompat('PAGOS', proyectoId); return rows.map(normalizePago); }
+  async function obtenerTareasProyecto(proyectoId) { var rows = await obtenerFilasProyectoCompat('TAREAS', proyectoId); return rows.map(normalizeTarea); }
 
   async function obtenerCotizacionProyecto(proyectoId) {
     if (!proyectoId) return null;
-    if (typeof window.obtenerCotizacionProyecto === 'function') {
-      return await window.obtenerCotizacionProyecto(proyectoId);
-    }
+    if (typeof window.obtenerCotizacionProyecto === 'function') return await window.obtenerCotizacionProyecto(proyectoId);
     var rows = await getFiltered('cotizaciones', { proyecto_id: proyectoId }, { orderBy: 'created_at', ascending: false });
     return rows && rows.length ? rows[0] : null;
   }
@@ -296,14 +106,11 @@
     var clientes = await obtenerClientes();
     var currentValue = select.value;
     var html = '<option value="">Selecciona un cliente</option>';
-    for (var i = 0; i < clientes.length; i++) {
-      html += '<option value="' + esc(clientes[i].id) + '">' + esc(clientes[i].nombre) + '</option>';
-    }
+    for (var i = 0; i < clientes.length; i++) { html += '<option value="' + esc(clientes[i].id) + '">' + esc(clientes[i].nombre) + '</option>'; }
     select.innerHTML = html;
     if (currentValue) select.value = currentValue;
   }
 
-  // ID legible de proyecto
   function generarIdProyectoLegible(proyecto) {
     var fecha = proyecto.fechaInicio || proyecto.createdAt || todayISO();
     var d = new Date(fecha);
@@ -318,13 +125,8 @@
     var tbody = byId('tbodyProyectos');
     if (!tbody) return false;
     var proyectos = await obtenerProyectos();
-    if (filtro && filtro !== 'todos') {
-      proyectos = proyectos.filter(function(p) { return p.estado === filtro; });
-    }
-    if (!proyectos.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No hay proyectos registrados</td></tr>';
-      return false;
-    }
+    if (filtro && filtro !== 'todos') { proyectos = proyectos.filter(function(p) { return p.estado === filtro; }); }
+    if (!proyectos.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No hay proyectos registrados</td></tr>'; return false; }
     var html = '';
     proyectos.forEach(function(p) {
       var fecha = formatDateSafe(p.fechaInicio || p.createdAt || '');
@@ -347,18 +149,10 @@
     var input = byId('buscar-proyecto');
     var term = input ? input.value.trim().toLowerCase() : '';
     var proyectos = await obtenerProyectos();
-    proyectos = proyectos.filter(function(p) {
-      if (!term) return true;
-      return (p.nombre || '').toLowerCase().indexOf(term) !== -1
-        || (p.clienteNombre || '').toLowerCase().indexOf(term) !== -1
-        || (p.descripcion || '').toLowerCase().indexOf(term) !== -1;
-    });
+    proyectos = proyectos.filter(function(p) { if (!term) return true; return (p.nombre || '').toLowerCase().indexOf(term) !== -1 || (p.clienteNombre || '').toLowerCase().indexOf(term) !== -1 || (p.descripcion || '').toLowerCase().indexOf(term) !== -1; });
     var tbody = byId('tbodyProyectos');
     if (!tbody) return false;
-    if (!proyectos.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No se encontraron proyectos</td></tr>';
-      return false;
-    }
+    if (!proyectos.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No se encontraron proyectos</td></tr>'; return false; }
     var html = '';
     proyectos.forEach(function(p) {
       var fecha = formatDateSafe(p.fechaInicio || p.createdAt || '');
@@ -382,9 +176,7 @@
     qsa('[onclick*="filtrarProyectos("]').forEach(function(btn) {
       btn.classList.remove('active');
       var onclick = btn.getAttribute('onclick') || '';
-      if (onclick.indexOf("'" + (estado || 'todos') + "'") !== -1 || onclick.indexOf('"' + (estado || 'todos') + '"') !== -1) {
-        btn.classList.add('active');
-      }
+      if (onclick.indexOf("'" + (estado || 'todos') + "'") !== -1 || onclick.indexOf('"' + (estado || 'todos') + '"') !== -1) btn.classList.add('active');
     });
     return false;
   }
@@ -400,13 +192,8 @@
     var wrap = byId('proyecto-progreso-visual');
     if (wrap) {
       var circles = wrap.querySelectorAll('circle');
-      if (circles.length > 1) {
-        var circumference = 283;
-        var offset = circumference - (pct / 100) * circumference;
-        circles[1].setAttribute('stroke-dashoffset', String(offset));
-      }
+      if (circles.length > 1) { var circumference = 283; var offset = circumference - (pct / 100) * circumference; circles[1].setAttribute('stroke-dashoffset', String(offset)); }
     }
-    // Actualizar KPI de avance
     var kpiAvance = byId('resumen-kpi-avance');
     if (kpiAvance) kpiAvance.textContent = pct + '%';
   }
@@ -415,30 +202,15 @@
     var container = byId('proyecto-timeline');
     if (!container) return;
     var eventos = [];
-    if (proyecto.fechaInicio) {
-      eventos.push({ fecha: proyecto.fechaInicio, tipo: 'inicio', titulo: 'Inicio del proyecto', descripcion: proyecto.nombre });
-    }
-    if (proyecto.fechaFin) {
-      eventos.push({ fecha: proyecto.fechaFin, tipo: 'meta', titulo: 'Fecha fin estimada', descripcion: 'Fecha objetivo del proyecto' });
-    }
-    if (proyecto.fechaFinReal) {
-      eventos.push({ fecha: proyecto.fechaFinReal, tipo: 'cierre', titulo: 'Fecha fin real', descripcion: 'Cierre real del proyecto' });
-    }
-    tareas.forEach(function(t) {
-      eventos.push({ fecha: t.fechaLimite || t.createdAt || '', tipo: 'tarea', titulo: t.titulo, descripcion: 'Tarea ' + (t.estado || 'pendiente') + (t.asignado ? ' · ' + t.asignado : '') });
-    });
-    gastos.forEach(function(g) {
-      eventos.push({ fecha: g.fecha || g.createdAt || '', tipo: 'gasto', titulo: g.descripcion, descripcion: 'Gasto ' + money(g.monto) });
-    });
-    pagos.forEach(function(p) {
-      eventos.push({ fecha: p.fecha || p.createdAt || '', tipo: 'pago', titulo: p.concepto, descripcion: 'Pago recibido ' + money(p.monto) });
-    });
+    if (proyecto.fechaInicio) { eventos.push({ fecha: proyecto.fechaInicio, tipo: 'inicio', titulo: 'Inicio del proyecto', descripcion: proyecto.nombre }); }
+    if (proyecto.fechaFin) { eventos.push({ fecha: proyecto.fechaFin, tipo: 'meta', titulo: 'Fecha fin estimada', descripcion: 'Fecha objetivo del proyecto' }); }
+    if (proyecto.fechaFinReal) { eventos.push({ fecha: proyecto.fechaFinReal, tipo: 'cierre', titulo: 'Fecha fin real', descripcion: 'Cierre real del proyecto' }); }
+    tareas.forEach(function(t) { eventos.push({ fecha: t.fechaLimite || t.createdAt || '', tipo: 'tarea', titulo: t.titulo, descripcion: 'Tarea ' + (t.estado || 'pendiente') + (t.asignado ? ' · ' + t.asignado : '') }); });
+    gastos.forEach(function(g) { eventos.push({ fecha: g.fecha || g.createdAt || '', tipo: 'gasto', titulo: g.descripcion, descripcion: 'Gasto ' + money(g.monto) }); });
+    pagos.forEach(function(p) { eventos.push({ fecha: p.fecha || p.createdAt || '', tipo: 'pago', titulo: p.concepto, descripcion: 'Pago recibido ' + money(p.monto) }); });
     eventos = eventos.filter(function(e) { return e.fecha; });
     eventos.sort(function(a, b) { return new Date(b.fecha) - new Date(a.fecha); });
-    if (!eventos.length) {
-      container.innerHTML = '<div class="empty-state">No hay actividad registrada en la línea de tiempo</div>';
-      return;
-    }
+    if (!eventos.length) { container.innerHTML = '<div class="empty-state">No hay actividad registrada en la línea de tiempo</div>'; return; }
     var iconos = { inicio: 'ph-rocket', meta: 'ph-calendar', cierre: 'ph-check-circle', tarea: 'ph-puzzle-piece', gasto: 'ph-currency-dollar', pago: 'ph-coins' };
     var colores = { inicio: '#2D8B5E', meta: '#C5A253', cierre: '#2D8B5E', tarea: '#C5A253', gasto: '#F87171', pago: '#2D8B5E' };
     var html = '';
@@ -460,9 +232,7 @@
     if (!tbody) return;
     if (!gastos.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No hay gastos registrados</td></tr>'; return; }
     var html = '';
-    for (var i = 0; i < gastos.length; i++) {
-      html += '<tr><td>' + esc(formatDateSafe(gastos[i].fecha)) + '</td><td>' + esc(gastos[i].categoria) + '</td><td>' + esc(gastos[i].descripcion) + '</td><td>' + money(gastos[i].monto) + '</td><td>' + esc(gastos[i].metodo) + '</td></tr>';
-    }
+    for (var i = 0; i < gastos.length; i++) { html += '<tr><td>' + esc(formatDateSafe(gastos[i].fecha)) + '</td><td>' + esc(gastos[i].categoria) + '</td><td>' + esc(gastos[i].descripcion) + '</td><td>' + money(gastos[i].monto) + '</td><td>' + esc(gastos[i].metodo) + '</td></tr>'; }
     tbody.innerHTML = html;
   }
 
@@ -471,10 +241,7 @@
     if (!tbody) return;
     if (!pagos.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No hay pagos registrados</td></tr>'; return; }
     var html = '';
-    for (var i = 0; i < pagos.length; i++) {
-      var color = estadoColor(pagos[i].estado);
-      html += '<tr><td>' + esc(formatDateSafe(pagos[i].fecha)) + '</td><td>' + esc(pagos[i].concepto) + '</td><td>' + money(pagos[i].monto) + '</td><td>' + esc(pagos[i].metodo) + '</td><td><span class="estado-badge" style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + '55;">' + esc(estadoLabel(pagos[i].estado)) + '</span></td></tr>';
-    }
+    for (var i = 0; i < pagos.length; i++) { var color = estadoColor(pagos[i].estado); html += '<tr><td>' + esc(formatDateSafe(pagos[i].fecha)) + '</td><td>' + esc(pagos[i].concepto) + '</td><td>' + money(pagos[i].monto) + '</td><td>' + esc(pagos[i].metodo) + '</td><td><span class="estado-badge" style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + '55;">' + esc(estadoLabel(pagos[i].estado)) + '</span></td></tr>'; }
     tbody.innerHTML = html;
   }
 
@@ -484,7 +251,6 @@
     var estados = ['pendiente', 'en_progreso', 'revision', 'completada'];
     var titulos = { pendiente: 'Pendiente', en_progreso: 'En Progreso', revision: 'En Revisión', completada: 'Completada' };
     var coloresHeader = { pendiente: '#6B7280', en_progreso: '#C5A253', revision: '#C5A253', completada: '#123524' };
-
     var html = '';
     for (var e = 0; e < estados.length; e++) {
       var estado = estados[e];
@@ -495,9 +261,8 @@
       html += '<span style="background:rgba(255,255,255,0.06);padding:2px 10px;border-radius:12px;font-size:12px;">' + tareasEstado.length + '</span>';
       html += '</div>';
       html += '<div class="kanban-col-body">';
-      if (!tareasEstado.length) {
-        html += '<div style="text-align:center;padding:20px;color:var(--gn-text-muted);font-size:12px;">Sin tareas</div>';
-      } else {
+      if (!tareasEstado.length) { html += '<div style="text-align:center;padding:20px;color:var(--gn-text-muted);font-size:12px;">Sin tareas</div>'; }
+      else {
         for (var i = 0; i < tareasEstado.length; i++) {
           var t = tareasEstado[i];
           html += '<div class="kanban-card" onclick="editarTareaProyecto('' + esc(t.id) + '')">';
@@ -514,12 +279,7 @@
     container.innerHTML = html;
   }
 
-  function destroyProyectoChart() {
-    if (CHART_PROYECTO && typeof CHART_PROYECTO.destroy === 'function') {
-      CHART_PROYECTO.destroy();
-      CHART_PROYECTO = null;
-    }
-  }
+  function destroyProyectoChart() { if (CHART_PROYECTO && typeof CHART_PROYECTO.destroy === 'function') { CHART_PROYECTO.destroy(); CHART_PROYECTO = null; } }
 
   function renderProyectoChart(totalPagos, totalGastos, porCobrar) {
     var canvas = byId('chartProyectoBalance');
@@ -528,10 +288,7 @@
     var ctx = canvas.getContext('2d');
     CHART_PROYECTO = new window.Chart(ctx, {
       type: 'doughnut',
-      data: {
-        labels: ['Pagos', 'Gastos', 'Por Cobrar'],
-        datasets: [{ data: [totalPagos, totalGastos, porCobrar], backgroundColor: ['#2D8B5E', '#F87171', '#C5A253'], borderWidth: 0 }]
-      },
+      data: { labels: ['Pagos', 'Gastos', 'Por Cobrar'], datasets: [{ data: [totalPagos, totalGastos, porCobrar], backgroundColor: ['#2D8B5E', '#F87171', '#C5A253'], borderWidth: 0 }] },
       options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#F0F0F5' } } } }
     });
   }
@@ -566,7 +323,7 @@
     setText('resumen-kpi-utilidad', money(utilidad));
     setText('resumen-kpi-por-cobrar', money(porCobrar));
 
-    // Resumen financiero (legacy)
+    // Resumen financiero
     setText('resumen-presupuesto', money(presupuesto));
     setText('resumen-gastos', money(totalGastos));
     setText('resumen-pagos', money(totalPagos));
@@ -587,11 +344,8 @@
     } else {
       var docContainer = byId('cotizacion-documento-container');
       if (docContainer) {
-        if (cotizacion) {
-          docContainer.innerHTML = '<div class="empty-state">Cotización: ' + esc(cotizacion.codigo || '') + ' — Función de renderizado no disponible</div>';
-        } else {
-          docContainer.innerHTML = '<div class="empty-state">No hay cotización asociada a este proyecto.</div>';
-        }
+        if (cotizacion) { docContainer.innerHTML = '<div class="empty-state">Cotización: ' + esc(cotizacion.numero || '') + ' — Función de renderizado no disponible</div>'; }
+        else { docContainer.innerHTML = '<div class="empty-state">No hay cotización asociada a este proyecto.</div>'; }
       }
     }
 
@@ -609,20 +363,12 @@
     return false;
   }
 
-  function volverAListaProyectos() {
-    setDisplay('proyecto-detalle', false);
-    PROYECTO_ACTUAL = null;
-    destroyProyectoChart();
-    return false;
-  }
+  function volverAListaProyectos() { setDisplay('proyecto-detalle', false); PROYECTO_ACTUAL = null; destroyProyectoChart(); return false; }
 
   function switchProyectoTab(tabId) {
     ['resumen', 'financiero', 'tareas', 'documentos'].forEach(function(key) {
       var pane = byId('proyecto-tab-' + key);
-      if (pane) {
-        pane.style.display = key === tabId ? 'block' : 'none';
-        pane.classList.toggle('active', key === tabId);
-      }
+      if (pane) { pane.style.display = key === tabId ? 'block' : 'none'; pane.classList.toggle('active', key === tabId); }
     });
     qsa('.proyecto-tab').forEach(function(btn) {
       var onclick = btn.getAttribute('onclick') || '';
@@ -639,9 +385,7 @@
     var ok = await updateRow(getStorageKey('PROYECTOS', 'proyectos'), PROYECTO_ACTUAL.id, { notas: notas });
     if (!ok) { alert('No se pudieron guardar las notas del proyecto.'); return false; }
     PROYECTO_ACTUAL.notas = notas;
-    if (window.showToast) {
-      window.showToast({ type: 'success', title: 'Notas guardadas', message: 'Las notas del proyecto se actualizaron correctamente.' });
-    }
+    if (window.showToast) { window.showToast({ type: 'success', title: 'Notas guardadas', message: 'Las notas del proyecto se actualizaron correctamente.' }); }
     return false;
   }
 
@@ -665,21 +409,15 @@
 
   function editarTareaProyecto(tareaId) {
     if (!tareaId || !PROYECTO_ACTUAL) return false;
-    // Placeholder para edición futura
-    if (window.showToast) {
-      window.showToast({ type: 'info', title: 'Editar tarea', message: 'Función de edición de tareas en desarrollo.' });
-    }
+    if (window.showToast) { window.showToast({ type: 'info', title: 'Editar tarea', message: 'Función de edición de tareas en desarrollo.' }); }
     return false;
   }
 
   function seleccionarProyectoEnFinanzas(proyecto) {
     if (!proyecto) return;
-    var selectGasto = byId('gasto-proyecto');
-    if (selectGasto) selectGasto.value = proyecto.id;
-    var selectPago = byId('pago-proyecto');
-    if (selectPago) selectPago.value = proyecto.id;
-    var selectEstadoCuenta = byId('ec-proyecto');
-    if (selectEstadoCuenta) selectEstadoCuenta.value = proyecto.id;
+    var selectGasto = byId('gasto-proyecto'); if (selectGasto) selectGasto.value = proyecto.id;
+    var selectPago = byId('pago-proyecto'); if (selectPago) selectPago.value = proyecto.id;
+    var selectEstadoCuenta = byId('ec-proyecto'); if (selectEstadoCuenta) selectEstadoCuenta.value = proyecto.id;
   }
 
   function navegarAFinanzasConProyecto(tipo) {
@@ -701,37 +439,23 @@
   function abrirModalPagoProyecto() { return navegarAFinanzasConProyecto('pago'); }
 
   // ============================================================
-  // Generar tareas automáticas desde items de cotización
+  // Generar tareas automáticas desde items de cotización (JSONB)
   // ============================================================
   async function generarTareasDesdeCotizacion(proyectoId, cotizacionId) {
     if (!proyectoId || !cotizacionId) return;
     try {
+      var cot = await findItem('cotizaciones', cotizacionId);
+      if (!cot || !cot.items) return;
       var items = [];
-      if (typeof window.obtenerItemsCotizacion === 'function') {
-        items = await window.obtenerItemsCotizacion(cotizacionId);
-      } else {
-        items = await getFiltered('cotizacion_items', { cotizacion_id: cotizacionId }, { orderBy: 'orden', ascending: true });
-      }
+      try { items = typeof cot.items === 'string' ? JSON.parse(cot.items) : cot.items; } catch (e) { items = []; }
       if (!items || !items.length) return;
-
       for (var i = 0; i < items.length; i++) {
         var item = items[i];
-        var payload = {
-          proyecto_id: proyectoId,
-          titulo: (item.descripcion || 'Servicio').substring(0, 100),
-          asignado: '',
-          fecha_limite: null,
-          estado: 'pendiente',
-          descripcion: 'Tarea generada automáticamente desde cotización: ' + (item.descripcion || '')
-        };
+        var payload = { proyecto_id: proyectoId, titulo: (item.descripcion || 'Servicio').substring(0, 100), asignado: '', fecha_limite: null, estado: 'pendiente', descripcion: 'Tarea generada automáticamente desde cotización: ' + (item.descripcion || '') };
         await insertRow(getStorageKey('TAREAS', 'tareas'), payload);
       }
-      if (window.showToast) {
-        window.showToast({ type: 'success', title: 'Tareas generadas', message: 'Se crearon ' + items.length + ' tareas desde la cotización.' });
-      }
-    } catch (error) {
-      console.error('Error generando tareas desde cotización', error);
-    }
+      if (window.showToast) { window.showToast({ type: 'success', title: 'Tareas generadas', message: 'Se crearon ' + items.length + ' tareas desde la cotización.' }); }
+    } catch (error) { console.error('Error generando tareas desde cotización', error); }
   }
 
   // ============================================================
@@ -796,19 +520,8 @@
         return false;
       }
 
-      // 1. Crear proyecto primero
-      var payloadProyecto = {
-        cliente_id: clienteId,
-        nombre: nombreProyecto,
-        descripcion: alcanceHtml,
-        fecha_inicio: fecha || todayISO(),
-        estado: 'en_progreso',
-        presupuesto: totalPropuesta,
-        total_cobrado: 0,
-        total_gastado: 0,
-        notas: ''
-      };
-
+      // 1. Crear proyecto
+      var payloadProyecto = { cliente_id: clienteId, nombre: nombreProyecto, descripcion: alcanceHtml, fecha_inicio: fecha || todayISO(), estado: 'en_progreso', presupuesto: totalPropuesta, total_cobrado: 0, total_gastado: 0, notas: '' };
       var proyecto = await insertRow(getStorageKey('PROYECTOS', 'proyectos'), payloadProyecto);
       if (!proyecto) {
         if (feedback) { feedback.className = 'form-feedback error'; feedback.textContent = 'No se pudo guardar el proyecto.'; feedback.style.display = 'block'; }
@@ -820,30 +533,16 @@
       var cotizacion = null;
       if (typeof window.crearCotizacionDesdeProforma === 'function') {
         cotizacion = await window.crearCotizacionDesdeProforma({
-          userId: userId,
-          proyectoId: proyecto.id,
-          clienteId: clienteId,
-          clienteNombre: clienteNombre,
-          fecha: fecha,
-          nombreProyecto: nombreProyecto,
-          alcanceHtml: alcanceHtml,
-          items: items,
-          subtotal: subtotal,
-          itbms: itbmsTotal,
-          total: totalPropuesta
+          userId: userId, proyectoId: proyecto.id, clienteId: clienteId, clienteNombre: clienteNombre,
+          fecha: fecha, nombreProyecto: nombreProyecto, alcanceHtml: alcanceHtml,
+          items: items, subtotal: subtotal, itbms: itbmsTotal, total: totalPropuesta
         });
       }
 
       // 3. Generar tareas automáticas desde cotización
-      if (cotizacion && cotizacion.id) {
-        await generarTareasDesdeCotizacion(proyecto.id, cotizacion.id);
-      }
+      if (cotizacion && cotizacion.id) { await generarTareasDesdeCotizacion(proyecto.id, cotizacion.id); }
 
-      if (feedback) {
-        feedback.className = 'form-feedback success';
-        feedback.textContent = 'Proyecto, cotización y tareas creados correctamente.';
-        feedback.style.display = 'block';
-      }
+      if (feedback) { feedback.className = 'form-feedback success'; feedback.textContent = 'Proyecto, cotización y tareas creados correctamente.'; feedback.style.display = 'block'; }
 
       form.reset();
       if (byId('pf-fecha')) byId('pf-fecha').value = todayISO();
@@ -886,9 +585,7 @@
 
   function descargarCotizacionPDF() {
     if (!PROYECTO_ACTUAL) return false;
-    if (window.showToast) {
-      window.showToast({ type: 'info', title: 'Descargar PDF', message: 'Función de descarga PDF en desarrollo. Usa Imprimir > Guardar como PDF.' });
-    }
+    if (window.showToast) { window.showToast({ type: 'info', title: 'Descargar PDF', message: 'Función de descarga PDF en desarrollo. Usa Imprimir > Guardar como PDF.' }); }
     return false;
   }
 
@@ -900,11 +597,7 @@
     if (!panel) return;
     var isHidden = panel.style.display === 'none';
     panel.style.display = isHidden ? 'block' : 'none';
-    if (isHidden) {
-      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      cargarSelectClientesProforma();
-      cargarSelectServiciosCatalogo();
-    }
+    if (isHidden) { panel.scrollIntoView({ behavior: 'smooth', block: 'start' }); cargarSelectClientesProforma(); cargarSelectServiciosCatalogo(); }
   }
 
   async function cargarSelectClientesProforma() {
@@ -938,10 +631,7 @@
 
   function agregarServicioCatalogoAProforma() {
     var select = byId('pf-select-servicio-catalogo');
-    if (!select || !select.value) {
-      if (window.showToast) window.showToast({ type: 'warning', title: 'Selecciona un servicio', message: 'Elige un servicio del catalogo para agregarlo a la propuesta.' });
-      return;
-    }
+    if (!select || !select.value) { if (window.showToast) window.showToast({ type: 'warning', title: 'Selecciona un servicio', message: 'Elige un servicio del catalogo para agregarlo a la propuesta.' }); return; }
     var option = select.options[select.selectedIndex];
     var nombre = option.getAttribute('data-nombre') || 'Servicio';
     var precio = parseFloat(option.getAttribute('data-precio') || 0) || 0;
@@ -954,22 +644,15 @@
   function agregarFilaProformaVacia() { agregarFilaProforma('', '', '', '', 0); }
 
   var UNIDADES_OPCIONES = [
-    { value: 'und', label: 'und', step: '1' },
-    { value: 'hr', label: 'hr', step: '1' },
-    { value: 'dia', label: 'día', step: '0.01' },
-    { value: 'mes', label: 'mes', step: '0.01' },
-    { value: 'pagina', label: 'pág', step: '1' },
-    { value: 'proyecto', label: 'proy', step: '1' },
+    { value: 'und', label: 'und', step: '1' }, { value: 'hr', label: 'hr', step: '1' },
+    { value: 'dia', label: 'día', step: '0.01' }, { value: 'mes', label: 'mes', step: '0.01' },
+    { value: 'pagina', label: 'pág', step: '1' }, { value: 'proyecto', label: 'proy', step: '1' },
     { value: 'paquete', label: 'paq', step: '1' }
   ];
 
   function buildUnidadSelect(selectedValue) {
     var html = '<select class="pf-select-unidad" style="width:100px;padding:6px 8px;background:transparent;border:1px solid rgba(18,53,36,0.25);border-radius:6px;color:#F0F0F5;font-size:13px;">';
-    for (var i = 0; i < UNIDADES_OPCIONES.length; i++) {
-      var opt = UNIDADES_OPCIONES[i];
-      var sel = opt.value === selectedValue ? ' selected' : '';
-      html += '<option value="' + opt.value + '"' + sel + '>' + opt.label + '</option>';
-    }
+    for (var i = 0; i < UNIDADES_OPCIONES.length; i++) { var opt = UNIDADES_OPCIONES[i]; var sel = opt.value === selectedValue ? ' selected' : ''; html += '<option value="' + opt.value + '"' + sel + '>' + opt.label + '</option>'; }
     html += '</select>';
     return html;
   }
@@ -979,9 +662,7 @@
     if (!tbody) return;
     var tr = document.createElement('tr');
     var stepInicial = '0.01';
-    for (var u = 0; u < UNIDADES_OPCIONES.length; u++) {
-      if (UNIDADES_OPCIONES[u].value === unidad) { stepInicial = UNIDADES_OPCIONES[u].step; break; }
-    }
+    for (var u = 0; u < UNIDADES_OPCIONES.length; u++) { if (UNIDADES_OPCIONES[u].value === unidad) { stepInicial = UNIDADES_OPCIONES[u].step; break; } }
     var html = '';
     html += '<td><input type="text" class="pf-input-nombre" value="' + esc(nombre) + '" placeholder="Descripcion del servicio" style="width:100%;padding:6px 8px;background:transparent;border:1px solid rgba(18,53,36,0.25);border-radius:6px;color:#F0F0F5;font-size:13px;"></td>';
     html += '<td>' + buildUnidadSelect(unidad) + '</td>';
@@ -999,19 +680,13 @@
     var inputCantidad = tr.querySelector('.pf-input-cantidad');
     if (selectUnidad && inputCantidad) {
       selectUnidad.addEventListener('change', function() {
-        for (var u = 0; u < UNIDADES_OPCIONES.length; u++) {
-          if (UNIDADES_OPCIONES[u].value === selectUnidad.value) { inputCantidad.setAttribute('step', UNIDADES_OPCIONES[u].step); break; }
-        }
+        for (var u = 0; u < UNIDADES_OPCIONES.length; u++) { if (UNIDADES_OPCIONES[u].value === selectUnidad.value) { inputCantidad.setAttribute('step', UNIDADES_OPCIONES[u].step); break; } }
         actualizarTotalesProforma();
       });
     }
 
     var inputs = tr.querySelectorAll('input, select');
-    for (var k = 0; k < inputs.length; k++) {
-      if (inputs[k] === selectUnidad) continue;
-      inputs[k].addEventListener('input', function() { actualizarTotalesProforma(); });
-      inputs[k].addEventListener('change', function() { actualizarTotalesProforma(); });
-    }
+    for (var k = 0; k < inputs.length; k++) { if (inputs[k] === selectUnidad) continue; inputs[k].addEventListener('input', function() { actualizarTotalesProforma(); }); inputs[k].addEventListener('change', function() { actualizarTotalesProforma(); }); }
     tbody.appendChild(tr);
     actualizarTotalesProforma();
   }
