@@ -148,10 +148,10 @@
 
   function getToastEmoji(type) {
     switch (type) {
-      case 'success': return '✔';
-      case 'error':   return '⚠';
-      case 'warning': return '⚠';
-      default:        return 'ℹ';
+      case 'success': return '<i class="ph ph-check"></i>';
+      case 'error':   return '<i class="ph ph-warning"></i>';
+      case 'warning': return '<i class="ph ph-warning"></i>';
+      default:        return '<i class="ph ph-info"></i>';
     }
   }
 
@@ -364,7 +364,7 @@
       '<tr>' +
         '<td colspan="5">' +
           '<div class="tabla-vacia">' +
-            '<div class="tabla-vacia-icon">📑</div>' +
+            '<div class="tabla-vacia-icon"><i class="ph ph-file-text"></i></div>' +
             '<div>La actividad reciente se actualizará al conectar todos los módulos.</div>' +
             '<div style="margin-top:6px;font-size:13px;">' +
               'Por ahora verás aquí facturas, pagos y proyectos cuando se registren.' +
