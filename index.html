@@ -25,11 +25,9 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    /* Fondo solo visible como fallback (cuando no carga la imagen) */
     background: linear-gradient(135deg, #123524 0%, #C5A253 100%);
     box-shadow: 0 4px 16px rgba(18,53,36,0.30);
   }
-  /* Cuando la imagen carga OK, el wrapper queda transparente */
   .logo-img-wrap.logo-loaded {
     background: transparent;
     box-shadow: none;
@@ -40,7 +38,6 @@
     object-fit: cover;
     display: block;
   }
-  /* fallback: mostrar cuadrado GN si imagen falla */
   .logo-img-wrap .logo-fallback {
     display: none;
     gap: 1px;
@@ -131,7 +128,6 @@
        ============================================================ -->
   <nav class="top-navbar">
     <div class="nav-brand">
-      <!-- LOGO: imagen desde assets/logo.png -->
       <div class="logo-img-wrap" id="logo-wrap">
         <img
           src="assets/logo.png"
@@ -184,8 +180,36 @@
         </div>
       </div>
     </div>
-    <button class="nav-mobile-toggle" onclick="toggleMobileNav()"><i class="ph ph-list"></i></button>
+    <button class="nav-mobile-toggle" id="nav-mobile-toggle-btn" onclick="toggleMobileNav()" aria-label="Abrir menú" aria-expanded="false"><i class="ph ph-list"></i></button>
   </nav>
+
+  <!-- ============================================================
+       MOBILE NAV OVERLAY
+       (id="mobileNav" — requerido por toggleMobileNav() en app.js)
+       ============================================================ -->
+  <div id="mobileNav" class="mobile-nav-overlay" role="navigation" aria-label="Menú móvil">
+    <a class="nav-link mobile-nav-link active" data-section="dashboard" onclick="switchSection('dashboard')" target="_self">
+      <span class="nav-icon"><i class="ph ph-squares-four"></i></span>
+      <span>Dashboard</span>
+    </a>
+    <a class="nav-link mobile-nav-link" data-section="negocio" onclick="switchSection('negocio')" target="_self">
+      <span class="nav-icon"><i class="ph ph-briefcase"></i></span>
+      <span>Negocio</span>
+    </a>
+    <a class="nav-link mobile-nav-link" data-section="proyectos" onclick="switchSection('proyectos')" target="_self">
+      <span class="nav-icon"><i class="ph ph-buildings"></i></span>
+      <span>Proyectos</span>
+    </a>
+    <a class="nav-link mobile-nav-link" data-section="finanzas" onclick="switchSection('finanzas')" target="_self">
+      <span class="nav-icon"><i class="ph ph-currency-dollar"></i></span>
+      <span>Finanzas</span>
+    </a>
+    <div style="border-top:1px solid rgba(18,53,36,0.25);margin-top:8px;padding-top:12px;">
+      <button type="button" class="nav-user-item" style="width:100%;padding:14px 16px;font-size:14px;text-align:left;border-radius:10px;" onclick="gnCerrarSesion()">
+        <i class="ph ph-sign-out" style="margin-right:8px;"></i>Cerrar sesión
+      </button>
+    </div>
+  </div>
 
   <!-- MAIN CONTENT -->
   <main class="main-content">
@@ -536,13 +560,11 @@
 
       <div id="proyecto-detalle" style="display:none;">
 
-        <!-- HERO HEADER (ClickUp/Monday style) -->
         <div style="margin-bottom:8px;">
           <button class="btn-secondary" onclick="volverAListaProyectos()" style="margin-bottom:16px;"><i class="ph ph-arrow-left"></i> Volver a Proyectos</button>
         </div>
         <div id="proyecto-hero"></div>
 
-        <!-- ACCIONES RÁPIDAS -->
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
           <button class="btn-secondary" onclick="abrirModalPagoProyecto()"><i class="ph ph-coins"></i> Registrar Pago</button>
           <button class="btn-secondary" onclick="abrirModalGastoProyecto()"><i class="ph ph-receipt"></i> Registrar Gasto</button>
@@ -558,7 +580,6 @@
           <button class="proyecto-tab" onclick="switchProyectoTab('documentos')"><i class="ph ph-paperclip"></i> Documentos</button>
         </div>
 
-        <!-- TAB: RESUMEN -->
         <div id="proyecto-tab-resumen" class="proyecto-tab-content active">
           <div class="proyecto-resumen-kpis">
             <div class="proyecto-resumen-kpi"><div class="proyecto-resumen-kpi-value" id="resumen-kpi-presupuesto">$0.00</div><div class="proyecto-resumen-kpi-label">Presupuesto</div></div>
@@ -600,12 +621,8 @@
           </div>
         </div>
 
-        <!-- TAB: TAREAS -->
         <div id="proyecto-tab-tareas" class="proyecto-tab-content">
-
-          <!-- KPIs de Time Tracking del Proyecto -->
           <div id="tt-panel-proyecto"></div>
-
           <div class="form-section">
             <div class="form-header"><h2 class="section-title"><i class="ph ph-plus-circle"></i> Nueva Tarea</h2></div>
             <form id="formTareaProyecto" onsubmit="return guardarTareaProyecto(event)">
@@ -654,7 +671,6 @@
               </div>
             </form>
           </div>
-
           <div class="section">
             <div class="section-header">
               <h2 class="section-title"><i class="ph ph-kanban"></i> Tablero de Tareas</h2>
@@ -666,7 +682,6 @@
           </div>
         </div>
 
-        <!-- TAB: FINANCIERO -->
         <div id="proyecto-tab-financiero" class="proyecto-tab-content">
           <div class="section">
             <div class="section-header">
@@ -694,7 +709,6 @@
           </div>
         </div>
 
-        <!-- TAB: DOCUMENTOS -->
         <div id="proyecto-tab-documentos" class="proyecto-tab-content">
           <div class="section">
             <div class="section-header">
@@ -843,6 +857,18 @@
   <script src="js/app.js"></script>
 
   <script>
+    /* ── Cerrar menú móvil al tocar fuera del overlay ── */
+    document.addEventListener('click', function(e) {
+      var overlay = document.getElementById('mobileNav');
+      var toggleBtn = document.getElementById('nav-mobile-toggle-btn');
+      if (!overlay || !overlay.classList.contains('open')) return;
+      if (!overlay.contains(e.target) && !toggleBtn.contains(e.target)) {
+        overlay.classList.remove('open');
+        document.body.classList.remove('mobile-nav-open');
+        if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+
     document.addEventListener('DOMContentLoaded', function() {
       var _origRender = window.renderDetalleProyecto;
       if (typeof _origRender === 'function') {
