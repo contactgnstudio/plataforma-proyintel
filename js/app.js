@@ -354,24 +354,207 @@
   }
 
   // ============================================================
+  // Dashboard: alertas reales de vencimientos, cobros y proyectos
+  // ============================================================
+  async function renderAlertas() {
+    var container = byId('alertas-container');
+    if (!container) return;
+
+    try {
+      var proyectos = typeof window.getData === 'function' ? await window.getData(window.STORAGE_KEYS.PROYECTOS) : [];
+      var pagos = typeof window.getData === 'function' ? await window.getData(window.STORAGE_KEYS.PAGOS) : [];
+      var cotizaciones = typeof window.getData === 'function' ? await window.getData(window.STORAGE_KEYS.COTIZACIONES) : [];
+
+      var esc = window.escapeHtml || function(v) { return v; };
+      var fmtMoney = window.formatMoney || function(v) { return '$' + (v || 0).toFixed(2); };
+      var hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      var alertas = [];
+
+      // 1) Cotizaciones por vencer o ya vencidas (aún en estado "cotizado")
+      (cotizaciones || []).forEach(function(c) {
+        if ((c.estado || 'cotizado') !== 'cotizado') return;
+        if (!c.fecha_vencimiento) return;
+        var vence = new Date(c.fecha_vencimiento + 'T00:00:00');
+        if (isNaN(vence.getTime())) return;
+        var diasRestantes = Math.round((vence - hoy) / 86400000);
+        if (diasRestantes > 7) return; // fuera de la ventana de aviso
+
+        var color = diasRestantes < 0 ? '#F87171' : '#C5A253';
+        var texto = diasRestantes < 0
+          ? 'Cotización ' + (c.numero || '') + ' venció hace ' + Math.abs(diasRestantes) + ' día(s)'
+          : diasRestantes === 0
+            ? 'Cotización ' + (c.numero || '') + ' vence hoy'
+            : 'Cotización ' + (c.numero || '') + ' vence en ' + diasRestantes + ' día(s)';
+
+        alertas.push({ orden: diasRestantes, color: color, texto: texto });
+      });
+
+      // 2) Proyectos con saldo por cobrar
+      (proyectos || []).forEach(function(p) {
+        if (p.estado === 'cancelado') return;
+        var totalPagado = (pagos || [])
+          .filter(function(pg) { return pg.proyecto_id === p.id; })
+          .reduce(function(acc, pg) { return acc + (parseFloat(pg.monto) || 0); }, 0);
+        var presupuesto = parseFloat(p.presupuesto) || 0;
+        var porCobrar = presupuesto - totalPagado;
+
+        if (porCobrar > 0.01) {
+          alertas.push({
+            orden: 100,
+            color: '#F87171',
+            texto: 'Pago pendiente: Proyecto "' + (p.nombre || 'Proyecto') + '" (' + fmtMoney(porCobrar) + ')'
+          });
+        }
+      });
+
+      // 3) Proyectos completados recientemente (últimos 7 días)
+      (proyectos || []).forEach(function(p) {
+        if (p.estado !== 'completado') return;
+        var fechaRef = p.updated_at || p.fecha_fin_real || p.created_at;
+        if (!fechaRef) return;
+        var dias = Math.round((hoy - new Date(fechaRef)) / 86400000);
+        if (dias >= 0 && dias <= 7) {
+          alertas.push({
+            orden: 200,
+            color: '#2D8B5E',
+            texto: 'Proyecto "' + (p.nombre || 'Proyecto') + '" completado al 100%'
+          });
+        }
+      });
+
+      alertas.sort(function(a, b) { return a.orden - b.orden; });
+      alertas = alertas.slice(0, 8);
+
+      if (alertas.length === 0) {
+        container.innerHTML =
+          '<div class="tabla-vacia">' +
+            '<div class="tabla-vacia-icon"><i class="ph ph-bell-slash"></i></div>' +
+            '<div>No tienes alertas pendientes por ahora.</div>' +
+          '</div>';
+        return;
+      }
+
+      container.innerHTML = alertas.map(function(a) {
+        return '<div class="alerta-item">' +
+          '<span class="alerta-dot" style="background:' + a.color + ';"></span>' +
+          '<span class="alerta-text">' + esc(a.texto) + '</span>' +
+          '</div>';
+      }).join('');
+    } catch (error) {
+      log('error', 'No se pudieron renderizar las alertas', error);
+    }
+  }
+
+  // ============================================================
   // Dashboard: actividad y KPIs
   // ============================================================
-  function renderActividadReciente() {
+  async function renderActividadReciente() {
     var tbody = byId('tbodyActividadReciente');
     if (!tbody) return;
 
-    tbody.innerHTML =
-      '<tr>' +
-        '<td colspan="5">' +
-          '<div class="tabla-vacia">' +
-            '<div class="tabla-vacia-icon"><i class="ph ph-file-text"></i></div>' +
-            '<div>La actividad reciente se actualizará al conectar todos los módulos.</div>' +
-            '<div style="margin-top:6px;font-size:13px;">' +
-              'Por ahora verás aquí facturas, pagos y proyectos cuando se registren.' +
-            '</div>' +
-          '</div>' +
-        '</td>' +
-      '</tr>';
+    try {
+      var proyectos = typeof window.getData === 'function' ? await window.getData(window.STORAGE_KEYS.PROYECTOS) : [];
+      var pagos = typeof window.getData === 'function' ? await window.getData(window.STORAGE_KEYS.PAGOS) : [];
+      var gastos = typeof window.getData === 'function' ? await window.getData(window.STORAGE_KEYS.GASTOS) : [];
+      var cotizaciones = typeof window.getData === 'function' ? await window.getData(window.STORAGE_KEYS.COTIZACIONES) : [];
+
+      var proyectosMap = {};
+      (proyectos || []).forEach(function(p) { proyectosMap[p.id] = p.nombre || 'Proyecto'; });
+
+      var nombreProyecto = function(id) {
+        return id && proyectosMap[id] ? proyectosMap[id] : 'General';
+      };
+
+      var eventos = [];
+
+      (pagos || []).forEach(function(p) {
+        eventos.push({
+          fecha: p.fecha || p.created_at || '',
+          tipo: 'Ingreso',
+          descripcion: p.concepto || p.referencia || 'Pago recibido',
+          monto: parseFloat(p.monto) || 0,
+          proyecto: nombreProyecto(p.proyecto_id)
+        });
+      });
+
+      (gastos || []).forEach(function(g) {
+        eventos.push({
+          fecha: g.fecha || g.created_at || '',
+          tipo: 'Gasto',
+          descripcion: g.descripcion || g.referencia || 'Gasto registrado',
+          monto: -(parseFloat(g.monto) || 0),
+          proyecto: nombreProyecto(g.proyecto_id)
+        });
+      });
+
+      (proyectos || []).forEach(function(p) {
+        eventos.push({
+          fecha: p.created_at || p.fecha_inicio || '',
+          tipo: 'Proyecto',
+          descripcion: 'Proyecto "' + (p.nombre || 'Proyecto') + '" creado',
+          monto: null,
+          proyecto: p.nombre || 'Proyecto'
+        });
+        if (p.estado === 'completado') {
+          eventos.push({
+            fecha: p.updated_at || p.fecha_fin_real || p.created_at || '',
+            tipo: 'Proyecto',
+            descripcion: 'Proyecto "' + (p.nombre || 'Proyecto') + '" completado',
+            monto: null,
+            proyecto: p.nombre || 'Proyecto'
+          });
+        }
+      });
+
+      (cotizaciones || []).forEach(function(c) {
+        eventos.push({
+          fecha: c.fecha_emision || c.created_at || '',
+          tipo: 'Cotización',
+          descripcion: 'Cotización ' + (c.numero || '') + ' creada',
+          monto: parseFloat(c.total) || 0,
+          proyecto: nombreProyecto(c.proyecto_id) !== 'General' ? nombreProyecto(c.proyecto_id) : (c.cliente_nombre || 'General')
+        });
+      });
+
+      eventos = eventos.filter(function(e) { return e.fecha; });
+      eventos.sort(function(a, b) { return new Date(b.fecha) - new Date(a.fecha); });
+      eventos = eventos.slice(0, 10);
+
+      if (eventos.length === 0) {
+        tbody.innerHTML =
+          '<tr>' +
+            '<td colspan="5">' +
+              '<div class="tabla-vacia">' +
+                '<div class="tabla-vacia-icon"><i class="ph ph-file-text"></i></div>' +
+                '<div>Aún no hay actividad registrada.</div>' +
+                '<div style="margin-top:6px;font-size:13px;">' +
+                  'Verás aquí pagos, gastos, proyectos y cotizaciones en cuanto los registres.' +
+                '</div>' +
+              '</div>' +
+            '</td>' +
+          '</tr>';
+        return;
+      }
+
+      var esc = window.escapeHtml || function(v) { return v; };
+      var fmtDate = window.formatDate || function(v) { return v; };
+      var fmtMoney = window.formatMoney || function(v) { return '$' + (v || 0).toFixed(2); };
+
+      tbody.innerHTML = eventos.map(function(e) {
+        var montoTexto = e.monto === null ? '—' : fmtMoney(e.monto);
+        var montoColor = e.monto === null ? '' : (e.monto >= 0 ? 'color:#2D8B5E;font-weight:600;' : 'color:#F87171;font-weight:600;');
+        return '<tr>' +
+          '<td>' + esc(fmtDate(e.fecha)) + '</td>' +
+          '<td>' + esc(e.tipo) + '</td>' +
+          '<td>' + esc(e.descripcion) + '</td>' +
+          '<td style="' + montoColor + '">' + montoTexto + '</td>' +
+          '<td>' + esc(e.proyecto) + '</td>' +
+          '</tr>';
+      }).join('');
+    } catch (error) {
+      log('error', 'No se pudo renderizar la actividad reciente', error);
+    }
   }
 
 // Helpers de conteo para pipeline
@@ -665,7 +848,8 @@
     safeCall('inicializarCharts');
 
     await actualizarKPIs();
-    renderActividadReciente();
+    await renderActividadReciente();
+    await renderAlertas();
     await actualizarVistaJSON();
 
     switchSection('dashboard');
@@ -699,6 +883,7 @@
   window.sugerirGrupoIA = sugerirGrupoIA;
   window.inicializarAppGNStudio = inicializarAppGNStudio;
   window.renderActividadReciente = renderActividadReciente;
+  window.renderAlertas = renderAlertas;
   window.renderPipelineMini = renderPipelineMini;
   window.inicializarFinanzas = inicializarFinanzas;
   window.showToast = showToast;
