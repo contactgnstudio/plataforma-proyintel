@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/timetracking.css">
   <link rel="stylesheet" href="css/calendario.css">
+  <link rel="stylesheet" href="css/proyectos-hero.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
@@ -474,7 +475,7 @@
           </div>
           <div class="table-wrap">
             <table id="tablaProyectos" class="data-table">
-              <thead><tr><th>Fecha</th><th>ID Proyecto</th><th>Nombre</th><th>Cliente</th><th>Presupuesto</th><th>Cobrado</th><th>Gastado</th></tr></thead>
+              <thead><tr><th>Fecha</th><th>ID</th><th>Nombre</th><th>Cliente</th><th>Estado</th><th>Presupuesto</th><th>Cobrado</th></tr></thead>
               <tbody id="tbodyProyectos"></tbody>
             </table>
           </div>
@@ -482,23 +483,26 @@
       </div>
 
       <div id="proyecto-detalle" style="display:none;">
-        <div class="proyecto-header">
-          <button class="btn-secondary" onclick="volverAListaProyectos()">&larr; Volver</button>
-          <div class="proyecto-title-area">
-            <h2 id="detalle-proyecto-nombre">Nombre del Proyecto</h2>
-            <span class="estado-badge" id="detalle-proyecto-estado">En Progreso</span>
-          </div>
-          <div class="proyecto-meta">
-            <span><i class="ph ph-user"></i> <span id="detalle-proyecto-cliente">Cliente</span></span>
-            <span><i class="ph ph-calendar"></i> Inicio: <span id="detalle-proyecto-fecha">01/01/2026</span></span>
-            <span><i class="ph ph-currency-dollar"></i> Presupuesto: <span id="detalle-proyecto-presupuesto">$0.00</span></span>
-          </div>
+
+        <!-- HERO HEADER (ClickUp/Monday style) -->
+        <div style="margin-bottom:8px;">
+          <button class="btn-secondary" onclick="volverAListaProyectos()" style="margin-bottom:16px;"><i class="ph ph-arrow-left"></i> Volver a Proyectos</button>
+        </div>
+        <div id="proyecto-hero"></div>
+
+        <!-- ACCIONES RÁPIDAS -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+          <button class="btn-secondary" onclick="abrirModalPagoProyecto()"><i class="ph ph-coins"></i> Registrar Pago</button>
+          <button class="btn-secondary" onclick="abrirModalGastoProyecto()"><i class="ph ph-receipt"></i> Registrar Gasto</button>
+          <button class="btn-secondary" onclick="switchProyectoTab('tareas')"><i class="ph ph-plus-circle"></i> Nueva Tarea</button>
+          <button class="btn-secondary" onclick="switchProyectoTab('documentos')"><i class="ph ph-file-text"></i> Ver Cotización</button>
+          <button class="btn-secondary" onclick="imprimirCotizacionProyecto()"><i class="ph ph-printer"></i> Imprimir</button>
         </div>
 
         <div class="proyecto-tabs">
           <button class="proyecto-tab active" onclick="switchProyectoTab('resumen')"><i class="ph ph-squares-four"></i> Resumen</button>
+          <button class="proyecto-tab" onclick="switchProyectoTab('tareas')"><i class="ph ph-check-square"></i> Tareas</button>
           <button class="proyecto-tab" onclick="switchProyectoTab('financiero')"><i class="ph ph-currency-dollar"></i> Financiero</button>
-          <button class="proyecto-tab" onclick="switchProyectoTab('tareas')"><i class="ph ph-check-circle"></i> Tareas</button>
           <button class="proyecto-tab" onclick="switchProyectoTab('documentos')"><i class="ph ph-paperclip"></i> Documentos</button>
         </div>
 
@@ -544,6 +548,72 @@
           </div>
         </div>
 
+        <!-- TAB: TAREAS -->
+        <div id="proyecto-tab-tareas" class="proyecto-tab-content">
+
+          <!-- KPIs de Time Tracking del Proyecto -->
+          <div id="tt-panel-proyecto"></div>
+
+          <div class="form-section">
+            <div class="form-header"><h2 class="section-title"><i class="ph ph-plus-circle"></i> Nueva Tarea</h2></div>
+            <form id="formTareaProyecto" onsubmit="return guardarTareaProyecto(event)">
+              <div class="form-grid">
+                <div class="form-group full-width">
+                  <label for="tarea-titulo">Título <span class="required">*</span></label>
+                  <input type="text" id="tarea-titulo" placeholder="¿Qué hay que hacer?" required>
+                </div>
+                <div class="form-group full-width">
+                  <label for="tarea-descripcion">Descripción</label>
+                  <textarea id="tarea-descripcion" rows="2" placeholder="Detalles adicionales de la tarea..."></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="tarea-asignado">Asignado a</label>
+                  <input type="text" id="tarea-asignado" placeholder="Ej: Diseñador UX">
+                </div>
+                <div class="form-group">
+                  <label for="tarea-fecha-limite">Fecha Límite</label>
+                  <input type="date" id="tarea-fecha-limite">
+                </div>
+                <div class="form-group">
+                  <label for="tarea-prioridad">Prioridad</label>
+                  <select id="tarea-prioridad">
+                    <option value="urgente">🔴 Urgente</option>
+                    <option value="alta">🟠 Alta</option>
+                    <option value="media" selected>🟡 Media</option>
+                    <option value="baja">⚪ Baja</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="tarea-estado">Estado</label>
+                  <select id="tarea-estado">
+                    <option value="pendiente">Pendiente</option>
+                    <option value="en_progreso">En Progreso</option>
+                    <option value="revision">En Revisión</option>
+                    <option value="completada">Completada</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="tarea-estimado-hrs">Horas Estimadas</label>
+                  <input type="number" id="tarea-estimado-hrs" placeholder="0" min="0" step="0.5">
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn-primary"><i class="ph ph-floppy-disk"></i> Guardar Tarea</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="section">
+            <div class="section-header">
+              <h2 class="section-title"><i class="ph ph-kanban"></i> Tablero de Tareas</h2>
+              <div class="section-actions">
+                <button class="btn-secondary" onclick="ttExportarReporte(window._proyectoActualId)"><i class="ph ph-download-simple"></i> Exportar Tiempo CSV</button>
+              </div>
+            </div>
+            <div id="tareas-kanban"></div>
+          </div>
+        </div>
+
         <!-- TAB: FINANCIERO -->
         <div id="proyecto-tab-financiero" class="proyecto-tab-content">
           <div class="section">
@@ -569,59 +639,6 @@
                 <tbody id="tbodyPagosProyecto"></tbody>
               </table>
             </div>
-          </div>
-        </div>
-
-        <!-- TAB: TAREAS + TIME TRACKING -->
-        <div id="proyecto-tab-tareas" class="proyecto-tab-content">
-
-          <!-- KPIs de Time Tracking del Proyecto -->
-          <div id="tt-panel-proyecto"></div>
-
-          <div class="form-section">
-            <div class="form-header"><h2 class="section-title"><i class="ph ph-plus"></i> Nueva Tarea</h2></div>
-            <form id="formTareaProyecto" onsubmit="return guardarTareaProyecto(event)">
-              <div class="form-grid">
-                <div class="form-group full-width">
-                  <label for="tarea-titulo">Título <span class="required">*</span></label>
-                  <input type="text" id="tarea-titulo" required>
-                </div>
-                <div class="form-group">
-                  <label for="tarea-asignado">Asignado a</label>
-                  <input type="text" id="tarea-asignado" placeholder="Ej: Diseñador UX">
-                </div>
-                <div class="form-group">
-                  <label for="tarea-fecha-limite">Fecha Límite</label>
-                  <input type="date" id="tarea-fecha-limite">
-                </div>
-                <div class="form-group">
-                  <label for="tarea-estimado-hrs">Horas Estimadas</label>
-                  <input type="number" id="tarea-estimado-hrs" placeholder="0" min="0" step="0.5">
-                </div>
-                <div class="form-group">
-                  <label for="tarea-estado">Estado</label>
-                  <select id="tarea-estado">
-                    <option value="pendiente">Pendiente</option>
-                    <option value="en_progreso">En Progreso</option>
-                    <option value="revision">En Revisión</option>
-                    <option value="completada">Completada</option>
-                  </select>
-                </div>
-              </div>
-              <div class="form-actions">
-                <button type="submit" class="btn-primary"><i class="ph ph-floppy-disk"></i> Guardar Tarea</button>
-              </div>
-            </form>
-          </div>
-
-          <div class="section">
-            <div class="section-header">
-              <h2 class="section-title"><i class="ph ph-list-checks"></i> Tareas del Proyecto</h2>
-              <div class="section-actions">
-                <button class="btn-secondary" onclick="ttExportarReporte(window._proyectoActualId)"><i class="ph ph-download-simple"></i> Exportar Tiempo CSV</button>
-              </div>
-            </div>
-            <div class="tareas-kanban" id="tareas-kanban"></div>
           </div>
         </div>
 
@@ -774,23 +791,19 @@
   <script src="js/app.js"></script>
 
   <script>
-    // Patch: inyectar time tracking en kanban cards cuando se renderizan
     document.addEventListener('DOMContentLoaded', function() {
       var _origRender = window.renderDetalleProyecto;
       if (typeof _origRender === 'function') {
         window.renderDetalleProyecto = async function(proyecto) {
           window._proyectoActualId = proyecto.id;
           await _origRender(proyecto);
-          // Inicializar panel de KPIs de TT
           if (typeof ttRenderPanelEnTareas === 'function') {
             ttRenderPanelEnTareas(proyecto.id, []);
           }
-          // Inyectar controles TT en cada kanban card
           ttInjectarEnKanban(proyecto.id);
         };
       }
 
-      // Inicializar calendario cuando se carga la sección de proyectos
       var _origSwitch = window.switchSection;
       if (typeof _origSwitch === 'function') {
         window.switchSection = function(seccion) {
@@ -800,7 +813,6 @@
           }
         };
       }
-      // También inicializar si ya está en proyectos al cargar
       setTimeout(function() {
         if (typeof window.initCalendario === 'function') {
           window.initCalendario();
@@ -813,12 +825,10 @@
       if (!kanban) return;
       var cards = kanban.querySelectorAll('.kanban-card');
       cards.forEach(function(card) {
-        // Leer el tareaId del onclick
         var onclick = card.getAttribute('onclick') || '';
         var match = onclick.match(/editarTareaProyecto\('([^']+)'\)/);
         if (!match) return;
         var tareaId = match[1];
-        // Guardar nombre de la tarea para la barra global
         var tituloEl = card.querySelector('.kanban-card-title');
         if (tituloEl) {
           var span = document.createElement('span');
@@ -827,7 +837,6 @@
           span.textContent = tituloEl.textContent;
           card.appendChild(span);
         }
-        // Inyectar controles si no existen ya
         if (!card.querySelector('.tt-controls')) {
           var div = document.createElement('div');
           div.innerHTML = ttControlsHTML(tareaId, proyectoId);
