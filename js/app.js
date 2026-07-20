@@ -108,7 +108,6 @@
 
     container.appendChild(toast);
 
-    // Animación de entrada (si quieres usarla en CSS)
     requestAnimationFrame(function() {
       toast.classList.add('toast-visible');
     });
@@ -131,7 +130,6 @@
     var container = document.getElementById('toast-container');
     if (!toast || !toast.parentNode) return;
 
-    // Opcional: clases para animación de salida
     toast.classList.remove('toast-visible');
     toast.classList.add('toast-leaving');
 
@@ -139,7 +137,6 @@
       if (toast.parentNode) {
         toast.parentNode.removeChild(toast);
       }
-      // Si ya no quedan toasts, ocultamos el contenedor
       if (container && !container.hasChildNodes()) {
         container.style.display = 'none';
       }
@@ -155,20 +152,9 @@
     }
   }
 
-  function mostrarToastOSListo() {
-    showToast({
-      type: 'success',
-      title: 'GN Studio OS listo',
-      message: 'La plataforma se inicializó correctamente.',
-      duration: 5000
-    });
-  }
-
-  // Cierre manual desde otros sitios (por ejemplo, si añades un botón "Cerrar todo")
   function cerrarToast() {
     var container = document.getElementById('toast-container');
     if (!container) return;
-
     Array.prototype.slice.call(container.children).forEach(function (toast) {
       hideToast(toast);
     });
@@ -256,7 +242,6 @@
 
     closeMobileNav();
 
-    // Inicializar/refrescar calendario al entrar a Proyectos
     if (sectionId === 'proyectos') {
       setTimeout(function() {
         if (typeof window.initCalendario === 'function') {
@@ -382,14 +367,13 @@
       hoy.setHours(0, 0, 0, 0);
       var alertas = [];
 
-      // 1) Cotizaciones por vencer o ya vencidas (aún en estado "cotizado")
       (cotizaciones || []).forEach(function(c) {
         if ((c.estado || 'cotizado') !== 'cotizado') return;
         if (!c.fecha_vencimiento) return;
         var vence = new Date(c.fecha_vencimiento + 'T00:00:00');
         if (isNaN(vence.getTime())) return;
         var diasRestantes = Math.round((vence - hoy) / 86400000);
-        if (diasRestantes > 7) return; // fuera de la ventana de aviso
+        if (diasRestantes > 7) return;
 
         var color = diasRestantes < 0 ? '#F87171' : '#C5A253';
         var texto = diasRestantes < 0
@@ -401,7 +385,6 @@
         alertas.push({ orden: diasRestantes, color: color, texto: texto });
       });
 
-      // 2) Proyectos con saldo por cobrar
       (proyectos || []).forEach(function(p) {
         if (p.estado === 'cancelado') return;
         var totalPagado = (pagos || [])
@@ -419,7 +402,6 @@
         }
       });
 
-      // 3) Proyectos completados recientemente (últimos 7 días)
       (proyectos || []).forEach(function(p) {
         if (p.estado !== 'completado') return;
         var fechaRef = p.updated_at || p.fecha_fin_real || p.created_at;
@@ -568,70 +550,67 @@
     }
   }
 
-// Helpers de conteo para pipeline
-    async function obtenerConteosCotizacionesPorEstado() {
-      var cotizaciones = await window.getData(window.STORAGE_KEYS.COTIZACIONES || 'cotizaciones');
-      var conteos = { cotizado: 0, aprobado: 0, rechazado: 0, vencido: 0 };
-      if (Array.isArray(cotizaciones)) {
-        cotizaciones.forEach(function(c) {
-          var estado = (c.estado || 'cotizado').toLowerCase();
-          if (conteos.hasOwnProperty(estado)) conteos[estado]++;
-        });
-      }
-      return conteos;
-    }
-
-    async function obtenerConteosProyectosPorEstado() {
-      var proyectos = await window.getData(window.STORAGE_KEYS.PROYECTOS || 'proyectos');
-      var conteos = { aprobado: 0, en_progreso: 0, completado: 0, cancelado: 0 };
-      if (Array.isArray(proyectos)) {
-        proyectos.forEach(function(p) {
-          var estado = (p.estado || '').toLowerCase().replace(/ /g, '_');
-          if (conteos.hasOwnProperty(estado)) conteos[estado]++;
-        });
-      }
-      return conteos;
-    }
-
-    async function renderDashboardPipeline() {
-      try {
-        var cot = await obtenerConteosCotizacionesPorEstado();
-        var proy = await obtenerConteosProyectosPorEstado();
-        var set = function(id, value) {
-          var el = byId(id);
-          if (el) el.textContent = String(value || 0);
-        };
-        set('pipeline-cotizado', cot.cotizado);
-        set('pipeline-aprobado', cot.aprobado);
-        set('pipeline-en-progreso', proy.en_progreso);
-        set('pipeline-completado', proy.completado);
-      } catch (e) {
-        console.error('Error al renderizar pipeline de ventas', e);
-      }
-    }
-
-    function renderPipelineMini() {
-      // Inicializar KPIs en 0 mientras cargan
-      var targets = {
-        cotizaciones: byId('kpi-cotizaciones'),
-        proyectos: byId('kpi-proyectos'),
-        clientes: byId('kpi-clientes'),
-        ingresos: byId('kpi-ingresos'),
-        gastos: byId('kpi-gastos'),
-        balance: byId('kpi-balance')
-      };
-      Object.keys(targets).forEach(function(key) {
-        if (!targets[key]) return;
-        if (key === 'ingresos' || key === 'gastos' || key === 'balance') {
-          targets[key].textContent = formatMoney(0);
-        } else {
-          targets[key].textContent = '0';
-        }
+  async function obtenerConteosCotizacionesPorEstado() {
+    var cotizaciones = await window.getData(window.STORAGE_KEYS.COTIZACIONES || 'cotizaciones');
+    var conteos = { cotizado: 0, aprobado: 0, rechazado: 0, vencido: 0 };
+    if (Array.isArray(cotizaciones)) {
+      cotizaciones.forEach(function(c) {
+        var estado = (c.estado || 'cotizado').toLowerCase();
+        if (conteos.hasOwnProperty(estado)) conteos[estado]++;
       });
-      resetTrends();
-      // Renderizar pipeline con datos reales
-      renderDashboardPipeline();
     }
+    return conteos;
+  }
+
+  async function obtenerConteosProyectosPorEstado() {
+    var proyectos = await window.getData(window.STORAGE_KEYS.PROYECTOS || 'proyectos');
+    var conteos = { aprobado: 0, en_progreso: 0, completado: 0, cancelado: 0 };
+    if (Array.isArray(proyectos)) {
+      proyectos.forEach(function(p) {
+        var estado = (p.estado || '').toLowerCase().replace(/ /g, '_');
+        if (conteos.hasOwnProperty(estado)) conteos[estado]++;
+      });
+    }
+    return conteos;
+  }
+
+  async function renderDashboardPipeline() {
+    try {
+      var cot = await obtenerConteosCotizacionesPorEstado();
+      var proy = await obtenerConteosProyectosPorEstado();
+      var set = function(id, value) {
+        var el = byId(id);
+        if (el) el.textContent = String(value || 0);
+      };
+      set('pipeline-cotizado', cot.cotizado);
+      set('pipeline-aprobado', cot.aprobado);
+      set('pipeline-en-progreso', proy.en_progreso);
+      set('pipeline-completado', proy.completado);
+    } catch (e) {
+      console.error('Error al renderizar pipeline de ventas', e);
+    }
+  }
+
+  function renderPipelineMini() {
+    var targets = {
+      cotizaciones: byId('kpi-cotizaciones'),
+      proyectos: byId('kpi-proyectos'),
+      clientes: byId('kpi-clientes'),
+      ingresos: byId('kpi-ingresos'),
+      gastos: byId('kpi-gastos'),
+      balance: byId('kpi-balance')
+    };
+    Object.keys(targets).forEach(function(key) {
+      if (!targets[key]) return;
+      if (key === 'ingresos' || key === 'gastos' || key === 'balance') {
+        targets[key].textContent = formatMoney(0);
+      } else {
+        targets[key].textContent = '0';
+      }
+    });
+    resetTrends();
+    renderDashboardPipeline();
+  }
 
   function resetTrends() {
     var trendIngresos = byId('trend-ingresos');
@@ -786,35 +765,19 @@
   }
 
   function exportarEstadoCuentaPDF() {
-    showToast({
-      type: 'info',
-      title: 'PDF pendiente',
-      message: 'La exportación a PDF del Estado de Cuenta está pendiente de migración.'
-    });
+    showToast({ type: 'info', title: 'PDF pendiente', message: 'La exportación a PDF del Estado de Cuenta está pendiente de migración.' });
   }
 
   function exportarEstadoCuentaExcel() {
-    showToast({
-      type: 'info',
-      title: 'Excel pendiente',
-      message: 'La exportación a Excel del Estado de Cuenta está pendiente de migración.'
-    });
+    showToast({ type: 'info', title: 'Excel pendiente', message: 'La exportación a Excel del Estado de Cuenta está pendiente de migración.' });
   }
 
   function exportarITBMSPDF() {
-    showToast({
-      type: 'info',
-      title: 'ITBMS pendiente',
-      message: 'La exportación de ITBMS para DGI está pendiente de migración.'
-    });
+    showToast({ type: 'info', title: 'ITBMS pendiente', message: 'La exportación de ITBMS para DGI está pendiente de migración.' });
   }
 
   function sugerirGrupoIA() {
-    showToast({
-      type: 'info',
-      title: 'IA pendiente',
-      message: 'La sugerencia automática de grupo con IA se activará en una fase posterior.'
-    });
+    showToast({ type: 'info', title: 'IA pendiente', message: 'La sugerencia automática de grupo con IA se activará en una fase posterior.' });
   }
 
   // ============================================================
@@ -853,7 +816,6 @@
     await safeCallAsync('inicializarClientes');
     await safeCallAsync('inicializarCatalogo');
     safeCall('inicializarGrupos');
-    // await safeCallAsync('inicializarCotizaciones'); // Eliminado — cotizaciones integradas en Proyectos
     await safeCallAsync('inicializarProyectos');
     await inicializarFinanzas();
     await safeCallAsync('inicializarCharts');
@@ -863,6 +825,12 @@
     await renderAlertas();
     await actualizarVistaJSON();
 
+    // ─── NUEVOS WIDGETS DEL DASHBOARD ───────────────────────────
+    if (typeof window.inicializarDashboardWidgets === 'function') {
+      await window.inicializarDashboardWidgets();
+    }
+    // ─────────────────────────────────────────────────────────────
+
     switchSection('dashboard');
     switchSubSection('negocio', 'crm');
     switchSubSection('finanzas', 'estado-cuenta');
@@ -871,8 +839,6 @@
       window.switchProyectoTab('resumen');
     }
 
-    // Inicializar calendario (la sección proyectos puede estar oculta,
-    // se llamará de nuevo al navegar, pero pre-cargamos el estado)
     if (typeof window.initCalendario === 'function') {
       window.initCalendario();
     }
@@ -910,7 +876,6 @@
       window.gnAuthInit(inicializarAppGNStudio);
       return;
     }
-
     inicializarAppGNStudio();
   });
 })(window, document);
