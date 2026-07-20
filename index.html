@@ -53,6 +53,283 @@
       height: 34px;
     }
   }
+
+  /* ══════════════════════════════════════════════════════════════
+     DASHBOARD WIDGETS — ESTILOS
+     ══════════════════════════════════════════════════════════════ */
+
+  /* 1. Saludo */
+  .gn-saludo-header {
+    background: linear-gradient(135deg, rgba(18,53,36,0.55) 0%, rgba(197,162,83,0.12) 100%);
+    border: 1px solid rgba(197,162,83,0.18);
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .gn-saludo-icon {
+    font-size: 32px;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .gn-saludo-titulo {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gn-text, #E8F0EC);
+    margin: 0 0 4px;
+    line-height: 1.3;
+  }
+  .gn-saludo-sub {
+    font-size: 13px;
+    color: var(--gn-text-muted, #8FAB9A);
+    margin: 0;
+  }
+  @media (max-width: 600px) {
+    .gn-saludo-header { padding: 14px 16px; gap: 12px; }
+    .gn-saludo-titulo { font-size: 15px; }
+    .gn-saludo-icon   { font-size: 26px; }
+  }
+
+  /* 2. Por Cobrar */
+  .kpi-card.kpi-por-cobrar {
+    border-color: rgba(197,162,83,0.35);
+    background: rgba(197,162,83,0.06);
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .kpi-card.kpi-por-cobrar:hover {
+    border-color: rgba(197,162,83,0.6);
+    background: rgba(197,162,83,0.12);
+  }
+
+  /* 3. Quick Actions */
+  .gn-quick-actions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .gn-quick-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(197,162,83,0.2);
+    background: rgba(18,53,36,0.25);
+    color: var(--gn-text, #E8F0EC);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.18s, border-color 0.18s, transform 0.12s;
+    text-align: center;
+    line-height: 1.3;
+  }
+  .gn-quick-btn i {
+    font-size: 22px;
+    color: #C5A253;
+  }
+  .gn-quick-btn:hover {
+    background: rgba(197,162,83,0.14);
+    border-color: rgba(197,162,83,0.45);
+    transform: translateY(-2px);
+  }
+  .gn-quick-btn:active { transform: translateY(0); }
+  @media (max-width: 600px) {
+    .gn-quick-actions { grid-template-columns: repeat(2, 1fr); }
+    .gn-quick-btn { padding: 16px 8px; font-size: 13px; }
+    .gn-quick-btn i { font-size: 24px; }
+  }
+
+  /* 4. Tareas urgentes + 5. Próximos eventos — row */
+  .gn-widgets-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 700px) {
+    .gn-widgets-row { grid-template-columns: 1fr; }
+  }
+  .gn-widget-card {
+    background: rgba(18,53,36,0.25);
+    border: 1px solid rgba(197,162,83,0.15);
+    border-radius: 14px;
+    padding: 16px 18px;
+  }
+  .gn-widget-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .gn-widget-card-header h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gn-text, #E8F0EC);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .gn-widget-card-header i {
+    color: #C5A253;
+    font-size: 16px;
+  }
+  .gn-widget-empty {
+    font-size: 13px;
+    color: var(--gn-text-muted, #8FAB9A);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+  }
+  /* Tareas */
+  .gn-tarea-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer;
+    transition: opacity 0.15s;
+    flex-wrap: wrap;
+  }
+  .gn-tarea-item:last-child { border-bottom: none; }
+  .gn-tarea-item:hover { opacity: 0.8; }
+  .gn-tarea-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 99px;
+    flex-shrink: 0;
+  }
+  .gn-badge-vencida { background: rgba(248,113,113,0.18); color: #F87171; }
+  .gn-badge-hoy     { background: rgba(197,162,83,0.2);   color: #C5A253; }
+  .gn-tarea-titulo {
+    font-size: 13px;
+    color: var(--gn-text, #E8F0EC);
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .gn-tarea-proyecto {
+    font-size: 11px;
+    color: var(--gn-text-muted, #8FAB9A);
+    flex-shrink: 0;
+    max-width: 100px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* Eventos */
+  .gn-evento-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .gn-evento-item:last-child { border-bottom: none; }
+  .gn-evento-fecha {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 34px;
+    background: rgba(197,162,83,0.12);
+    border-radius: 8px;
+    padding: 4px 6px;
+  }
+  .gn-evento-dia  { font-size: 15px; font-weight: 700; color: #C5A253; line-height: 1; }
+  .gn-evento-mes  { font-size: 10px; color: var(--gn-text-muted, #8FAB9A); text-transform: uppercase; }
+  .gn-evento-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+  .gn-evento-tipo { font-size: 10px; color: var(--gn-text-muted, #8FAB9A); text-transform: uppercase; font-weight: 600; }
+  .gn-evento-nombre { font-size: 13px; color: var(--gn-text, #E8F0EC); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gn-evento-cliente { font-size: 11px; color: var(--gn-text-muted, #8FAB9A); }
+
+  /* 6. Meta mensual */
+  .gn-meta-card {
+    background: rgba(18,53,36,0.25);
+    border: 1px solid rgba(197,162,83,0.15);
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+  }
+  .gn-meta-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .gn-meta-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gn-text, #E8F0EC);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .gn-meta-title i { color: #C5A253; }
+  .gn-meta-nums {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .gn-meta-actual { font-size: 18px; font-weight: 700; color: var(--gn-text, #E8F0EC); }
+  .gn-meta-sep    { font-size: 14px; color: var(--gn-text-muted, #8FAB9A); }
+  .gn-meta-obj    { font-size: 14px; color: var(--gn-text-muted, #8FAB9A); }
+  .gn-meta-pct    { font-size: 22px; font-weight: 800; }
+  .gn-meta-barra-wrap {
+    height: 10px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .gn-meta-barra {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.6s cubic-bezier(.4,0,.2,1), background 0.3s;
+    width: 0%;
+  }
+  .gn-meta-edit {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .gn-meta-edit label { font-size: 12px; color: var(--gn-text-muted, #8FAB9A); }
+  .gn-meta-edit input {
+    width: 110px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(197,162,83,0.25);
+    background: rgba(18,53,36,0.4);
+    color: var(--gn-text, #E8F0EC);
+    font-size: 13px;
+  }
+  .gn-meta-edit button {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(197,162,83,0.3);
+    background: rgba(197,162,83,0.1);
+    color: #C5A253;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .gn-meta-edit button:hover { background: rgba(197,162,83,0.22); }
 </style>
 </head>
 <body>
@@ -224,6 +501,37 @@
          SECCION: DASHBOARD
          ============================================================ -->
     <section id="dashboard" class="section-panel active">
+
+      <!-- ══ WIDGET 1: SALUDO CONTEXTUAL ══ -->
+      <div class="gn-saludo-header">
+        <div class="gn-saludo-icon">👋</div>
+        <div>
+          <p class="gn-saludo-titulo" id="widget-saludo-texto">Buenos días, GN Studio</p>
+          <p class="gn-saludo-sub"   id="widget-saludo-sub">Cargando resumen...</p>
+        </div>
+      </div>
+
+      <!-- ══ WIDGET 3: QUICK ACTIONS ══ -->
+      <div class="gn-quick-actions">
+        <button class="gn-quick-btn" onclick="switchSection('proyectos');setTimeout(()=>togglePanelProforma(),350);" target="_self">
+          <i class="ph ph-file-plus"></i>
+          Nueva Propuesta
+        </button>
+        <button class="gn-quick-btn" onclick="switchSection('proyectos');setTimeout(()=>abrirModalPagoProyecto && abrirModalPagoProyecto(),350);" target="_self">
+          <i class="ph ph-coins"></i>
+          Registrar Pago
+        </button>
+        <button class="gn-quick-btn" onclick="switchSection('proyectos');setTimeout(()=>abrirModalGastoProyecto && abrirModalGastoProyecto(),350);" target="_self">
+          <i class="ph ph-receipt"></i>
+          Registrar Gasto
+        </button>
+        <button class="gn-quick-btn" onclick="switchSection('negocio');setTimeout(()=>abrirModalCliente && abrirModalCliente(),350);" target="_self">
+          <i class="ph ph-user-plus"></i>
+          Nuevo Cliente
+        </button>
+      </div>
+
+      <!-- ══ KPI GRID (existente) ══ -->
       <div class="kpi-grid kpi-dashboard">
         <div class="kpi-card kpi-highlight">
           <div class="kpi-icon" style="background:rgba(18,53,36,0.25);color:#2D8B5E;"><i class="ph ph-currency-dollar"></i></div>
@@ -249,6 +557,17 @@
             <span class="kpi-trend" id="trend-balance"><i class="ph ph-arrow-right"></i> 0%</span>
           </div>
         </div>
+
+        <!-- ══ WIDGET 2: POR COBRAR (nuevo KPI card) ══ -->
+        <div class="kpi-card kpi-por-cobrar" onclick="switchSection('finanzas')" title="Ver estado de cuenta">
+          <div class="kpi-icon" style="background:rgba(197,162,83,0.15);color:#C5A253;"><i class="ph ph-hand-coins"></i></div>
+          <div class="kpi-info">
+            <span class="kpi-value" id="widget-por-cobrar-monto">USD 0.00</span>
+            <span class="kpi-label">Por Cobrar</span>
+            <span class="kpi-trend" style="color:#C5A253;"><i class="ph ph-arrow-right"></i> Ver pagos</span>
+          </div>
+        </div>
+
         <div class="kpi-card">
           <div class="kpi-icon" style="background:rgba(197,162,83,0.15);color:#C5A253;"><i class="ph ph-file-text"></i></div>
           <div class="kpi-info">
@@ -268,6 +587,49 @@
           <div class="kpi-info">
             <span class="kpi-value" id="kpi-clientes">0</span>
             <span class="kpi-label">Clientes Activos</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ WIDGET 6: META MENSUAL ══ -->
+      <div class="gn-meta-card">
+        <div class="gn-meta-header">
+          <span class="gn-meta-title"><i class="ph ph-trophy"></i> Meta mensual de ingresos</span>
+          <div class="gn-meta-nums">
+            <span class="gn-meta-actual" id="widget-meta-monto">USD 0.00</span>
+            <span class="gn-meta-sep">/</span>
+            <span class="gn-meta-obj"   id="widget-meta-objetivo">USD 0.00</span>
+            <span class="gn-meta-pct"   id="widget-meta-pct">0%</span>
+          </div>
+        </div>
+        <div class="gn-meta-barra-wrap">
+          <div class="gn-meta-barra" id="widget-meta-barra"></div>
+        </div>
+        <div class="gn-meta-edit">
+          <label for="widget-meta-input">Meta (USD):</label>
+          <input type="number" id="widget-meta-input" min="1" step="100" placeholder="3000">
+          <button onclick="gnGuardarMeta()"><i class="ph ph-floppy-disk"></i> Guardar</button>
+        </div>
+      </div>
+
+      <!-- ══ WIDGETS 4 & 5: TAREAS URGENTES + PRÓXIMOS EVENTOS ══ -->
+      <div class="gn-widgets-row">
+        <div class="gn-widget-card">
+          <div class="gn-widget-card-header">
+            <i class="ph ph-warning-circle"></i>
+            <h3>Tareas urgentes del día</h3>
+          </div>
+          <div id="widget-tareas-urgentes-lista">
+            <div class="gn-widget-empty"><i class="ph ph-spinner"></i> Cargando...</div>
+          </div>
+        </div>
+        <div class="gn-widget-card">
+          <div class="gn-widget-card-header">
+            <i class="ph ph-calendar-dots"></i>
+            <h3>Próximos eventos</h3>
+          </div>
+          <div id="widget-proximos-eventos-lista">
+            <div class="gn-widget-empty"><i class="ph ph-spinner"></i> Cargando...</div>
           </div>
         </div>
       </div>
@@ -855,6 +1217,7 @@
   <script src="js/charts.js"></script>
   <script src="js/calendario.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/dashboard-widgets.js"></script>
 
   <script>
     /* ── Cerrar menú móvil al tocar fuera del overlay ── */
@@ -888,6 +1251,9 @@
           _origSwitch(seccion);
           if (seccion === 'proyectos' && typeof window.initCalendario === 'function') {
             window.initCalendario();
+          }
+          if (seccion === 'dashboard' && typeof gnRenderWidgets === 'function') {
+            gnRenderWidgets();
           }
         };
       }
