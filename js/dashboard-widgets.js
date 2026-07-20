@@ -6,6 +6,8 @@
    4. Tareas urgentes del día
    5. Próximos eventos del mes
    6. Meta mensual de ingresos
+   7. Horas registradas del mes (Time Tracking)
+   8. Tasa de cierre (cotizaciones → proyectos)
    ================================================================ */
 
 // ── CONFIG ──────────────────────────────────────────────────────
@@ -28,7 +30,6 @@ function gnRenderSaludo() {
 
   el.textContent = `${turno}, GN Studio — ${fechaTxt}`;
 
-  // Sub-línea: urgentes + por cobrar
   const urgentes = gnContarTareasUrgentes();
   const porCobrar = gnCalcularPorCobrarTotal();
   const partes = [];
@@ -142,7 +143,6 @@ function gnRenderProximosEventos() {
     const eventos = [];
     proyectos.forEach(p => {
       if (!p || p.estado === 'completado' || p.estado === 'cancelado') return;
-      // Fecha de entrega del proyecto
       if (p.fecha_entrega || p.fecha_fin) {
         const fe = new Date((p.fecha_entrega || p.fecha_fin) + 'T00:00:00');
         if (fe >= hoy && fe <= fin) {
@@ -150,7 +150,6 @@ function gnRenderProximosEventos() {
           eventos.push({ fecha: fe, tipo: 'Entrega', nombre: p.nombre || '', cliente });
         }
       }
-      // Tareas con fecha límite próxima
       (p.tareas || []).forEach(t => {
         if (t.estado === 'completada' || !t.fecha_limite) return;
         const ft = new Date(t.fecha_limite + 'T00:00:00');
@@ -246,6 +245,72 @@ function gnIngresosDelMes() {
   } catch(e) { return 0; }
 }
 
+// ── 7. HORAS REGISTRADAS DEL MES ────────────────────────────────
+// Lee los registros de Time Tracking (gnData.proyectos[].tareas[].registros_tiempo)
+// y suma las horas del mes en curso.
+function gnCalcularHorasMes() {
+  try {
+    const ahora = new Date();
+    const mes  = ahora.getMonth();
+    const anio = ahora.getFullYear();
+    const proyectos = (typeof gnData !== 'undefined' && gnData.proyectos) ? gnData.proyectos : [];
+    let totalMs = 0;
+    proyectos.forEach(p => {
+      (p.tareas || []).forEach(t => {
+        (t.registros_tiempo || []).forEach(r => {
+          if (!r.inicio) return;
+          const fi = new Date(r.inicio);
+          if (fi.getMonth() !== mes || fi.getFullYear() !== anio) return;
+          // duracion_ms preferido; si no, calcula con fin
+          if (r.duracion_ms) {
+            totalMs += parseFloat(r.duracion_ms);
+          } else if (r.fin) {
+            totalMs += (new Date(r.fin) - fi);
+          }
+        });
+      });
+    });
+    const horas = totalMs / 3600000;
+    return horas;
+  } catch(e) { return 0; }
+}
+
+function gnRenderHorasMes() {
+  const el    = document.getElementById('kpi-horas-mes');
+  const subEl = document.getElementById('kpi-horas-mes-sub');
+  if (!el) return;
+  const horas = gnCalcularHorasMes();
+  const h = Math.floor(horas);
+  const m = Math.round((horas - h) * 60);
+  el.textContent = h + 'h ' + (m > 0 ? m + 'm' : '');
+  if (subEl) subEl.textContent = horas > 0 ? 'registradas este mes' : 'sin registros aún';
+}
+
+// ── 8. TASA DE CIERRE ────────────────────────────────────────────
+// Cotizaciones enviadas (estado cotizado/aprobado/en_progreso/completado)
+// vs. proyectos aprobados (aprobado/en_progreso/completado)
+function gnCalcularTasaCierre() {
+  try {
+    const proyectos = (typeof gnData !== 'undefined' && gnData.proyectos) ? gnData.proyectos : [];
+    const estadosCotizados  = ['cotizado','aprobado','en_progreso','completado'];
+    const estadosAprobados  = ['aprobado','en_progreso','completado'];
+    const total    = proyectos.filter(p => p && estadosCotizados.includes(p.estado)).length;
+    const cerrados = proyectos.filter(p => p && estadosAprobados.includes(p.estado)).length;
+    const pct = total > 0 ? Math.round((cerrados / total) * 100) : 0;
+    return { pct, cerrados, total };
+  } catch(e) { return { pct: 0, cerrados: 0, total: 0 }; }
+}
+
+function gnRenderTasaCierre() {
+  const el    = document.getElementById('kpi-tasa-cierre');
+  const subEl = document.getElementById('kpi-tasa-cierre-sub');
+  if (!el) return;
+  const { pct, cerrados, total } = gnCalcularTasaCierre();
+  el.textContent = pct + '%';
+  el.style.color = pct >= 70 ? '#2D8B5E' : pct >= 40 ? '#C5A253' : '#F87171';
+  if (subEl) subEl.textContent = total > 0 ? `${cerrados} de ${total} cotizaciones` : 'sin cotizaciones aún';
+}
+
 // ── HELPERS ──────────────────────────────────────────────────────
 function gnFmt(n) {
   return Number(n).toLocaleString('es-PA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -280,11 +345,12 @@ function gnRenderWidgets() {
   gnRenderTareasUrgentes();
   gnRenderProximosEventos();
   gnRenderMetaMensual();
+  gnRenderHorasMes();
+  gnRenderTasaCierre();
 }
 
 // ── INIT ─────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // Esperar a que gnData cargue (max 5 intentos cada 800ms)
   let intentos = 0;
   const intervalo = setInterval(() => {
     intentos++;
@@ -295,7 +361,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }, 800);
 
-  // Re-renderizar si gnData se actualiza globalmente
   const _orig = window.gnRenderDashboard;
   if (typeof _orig === 'function') {
     window.gnRenderDashboard = function(...args) {
