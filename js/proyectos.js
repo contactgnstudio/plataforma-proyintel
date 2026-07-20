@@ -64,7 +64,7 @@
   }
   function normalizeGasto(row) { return { id: row.id, proyectoId: row.proyecto_id || '', fecha: row.fecha || row.created_at || '', categoria: row.tipo || 'General', descripcion: row.descripcion || row.referencia || 'Gasto registrado', monto: num(row.monto), metodo: row.metodo_pago || row.metodo || '—', referencia: row.referencia || '', createdAt: row.created_at || '' }; }
   function normalizePago(row) { return { id: row.id, proyectoId: row.proyecto_id || '', fecha: row.fecha || row.created_at || '', concepto: row.concepto || row.descripcion || row.referencia || 'Pago recibido', monto: num(row.monto), metodo: row.metodo_pago || row.metodo || row.forma_pago || '—', estado: row.estado || 'registrado', referencia: row.referencia || '', createdAt: row.created_at || '' }; }
-  function normalizeTarea(row) { return { id: row.id, proyectoId: row.proyecto_id || '', titulo: row.titulo || row.nombre || 'Tarea', asignado: row.asignado || row.responsable || '', fechaLimite: row.fecha_limite || '', estado: row.estado || 'pendiente', descripcion: row.descripcion || '', createdAt: row.created_at || '' }; }
+  function normalizeTarea(row) { return { id: row.id, proyectoId: row.proyecto_id || '', titulo: row.titulo || row.nombre || 'Tarea', asignado: row.responsable || '', fechaLimite: row.fecha_limite || '', estado: row.estado || 'pendiente', descripcion: row.descripcion || '', createdAt: row.created_at || '' }; }
 
   async function obtenerClientes() { var rows = await getAll(getStorageKey('CLIENTES', 'clientes'), { orderBy: 'created_at', ascending: false }); CLIENTES_CACHE = rows.map(normalizeCliente); return CLIENTES_CACHE; }
   async function ensureClientesCache() { if (!CLIENTES_CACHE.length) await obtenerClientes(); return CLIENTES_CACHE; }
@@ -393,14 +393,21 @@
     if (event) event.preventDefault();
     if (!PROYECTO_ACTUAL) return false;
     var titulo = byId('tarea-titulo') ? byId('tarea-titulo').value.trim() : '';
-    var asignado = byId('tarea-asignado') ? byId('tarea-asignado').value.trim() : '';
+    var responsable = byId('tarea-asignado') ? byId('tarea-asignado').value.trim() : '';
     var fechaLimite = byId('tarea-fecha-limite') ? byId('tarea-fecha-limite').value : '';
     var estado = byId('tarea-estado') ? byId('tarea-estado').value : 'pendiente';
     var form = byId('formTareaProyecto');
     if (!titulo) { alert('Completa el título de la tarea.'); return false; }
-    var payload = { proyecto_id: PROYECTO_ACTUAL.id, titulo: titulo, asignado: asignado, fecha_limite: fechaLimite || null, estado: estado, descripcion: '' };
+
+    var payload = { proyecto_id: PROYECTO_ACTUAL.id, titulo: titulo, estado: estado };
+    if (responsable) payload.responsable = responsable;
+    if (fechaLimite) payload.fecha_limite = fechaLimite;
+
     var result = await insertRow(getStorageKey('TAREAS', 'tareas'), payload);
-    if (!result) { alert('No se pudo guardar la tarea.'); return false; }
+    if (!result) { 
+      alert('No se pudo guardar la tarea. Error de conexión con Supabase.'); 
+      return false; 
+    }
     if (form) form.reset();
     await verProyecto(PROYECTO_ACTUAL.id);
     if (typeof window.actualizarKPIs === 'function') await window.actualizarKPIs();
@@ -451,7 +458,7 @@
       if (!items || !items.length) return;
       for (var i = 0; i < items.length; i++) {
         var item = items[i];
-        var payload = { proyecto_id: proyectoId, titulo: (item.descripcion || 'Servicio').substring(0, 100), asignado: '', fecha_limite: null, estado: 'pendiente', descripcion: 'Tarea generada automáticamente desde cotización: ' + (item.descripcion || '') };
+        var payload = { proyecto_id: proyectoId, titulo: (item.descripcion || 'Servicio').substring(0, 100), estado: 'pendiente', descripcion: 'Generada desde cotización' };
         await insertRow(getStorageKey('TAREAS', 'tareas'), payload);
       }
       if (window.showToast) { window.showToast({ type: 'success', title: 'Tareas generadas', message: 'Se crearon ' + items.length + ' tareas desde la cotización.' }); }
