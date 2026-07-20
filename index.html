@@ -145,6 +145,17 @@
     .gn-quick-btn i { font-size: 24px; }
   }
 
+  /* KPI Grid — fuerza 4 columnas simétricas */
+  .kpi-dashboard {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+  @media (max-width: 900px) {
+    .kpi-dashboard { grid-template-columns: repeat(2, 1fr) !important; }
+  }
+  @media (max-width: 480px) {
+    .kpi-dashboard { grid-template-columns: 1fr !important; }
+  }
+
   /* 4. Tareas urgentes + 5. Próximos eventos — row */
   .gn-widgets-row {
     display: grid;
@@ -462,7 +473,6 @@
 
   <!-- ============================================================
        MOBILE NAV OVERLAY
-       (id="mobileNav" — requerido por toggleMobileNav() en app.js)
        ============================================================ -->
   <div id="mobileNav" class="mobile-nav-overlay" role="navigation" aria-label="Menú móvil">
     <a class="nav-link mobile-nav-link active" data-section="dashboard" onclick="switchSection('dashboard')" target="_self">
@@ -531,8 +541,14 @@
         </button>
       </div>
 
-      <!-- ══ KPI GRID (existente) ══ -->
+      <!-- ══ KPI GRID — 4×2 simétrico ══
+           Fila 1: Ingresos · Gastos · Por Cobrar · Cotizaciones
+           Fila 2: Proyectos Activos · Horas del Mes · Tasa de Cierre · [oculto en base]
+           (eliminadas: Balance Neto, Clientes Activos)
+      -->
       <div class="kpi-grid kpi-dashboard">
+
+        <!-- F1-1: Ingresos del Mes -->
         <div class="kpi-card kpi-highlight">
           <div class="kpi-icon" style="background:rgba(18,53,36,0.25);color:#2D8B5E;"><i class="ph ph-currency-dollar"></i></div>
           <div class="kpi-info">
@@ -541,6 +557,8 @@
             <span class="kpi-trend" id="trend-ingresos"><i class="ph ph-arrow-right"></i> 0%</span>
           </div>
         </div>
+
+        <!-- F1-2: Gastos del Mes -->
         <div class="kpi-card">
           <div class="kpi-icon" style="background:rgba(248,113,113,0.12);color:#F87171;"><i class="ph ph-money"></i></div>
           <div class="kpi-info">
@@ -549,16 +567,8 @@
             <span class="kpi-trend" id="trend-gastos"><i class="ph ph-arrow-right"></i> 0%</span>
           </div>
         </div>
-        <div class="kpi-card">
-          <div class="kpi-icon" style="background:rgba(197,162,83,0.15);color:#C5A253;"><i class="ph ph-trend-up"></i></div>
-          <div class="kpi-info">
-            <span class="kpi-value" id="kpi-balance">USD 0.00</span>
-            <span class="kpi-label">Balance Neto</span>
-            <span class="kpi-trend" id="trend-balance"><i class="ph ph-arrow-right"></i> 0%</span>
-          </div>
-        </div>
 
-        <!-- ══ WIDGET 2: POR COBRAR (nuevo KPI card) ══ -->
+        <!-- F1-3: Por Cobrar (widget 2) -->
         <div class="kpi-card kpi-por-cobrar" onclick="switchSection('finanzas')" title="Ver estado de cuenta">
           <div class="kpi-icon" style="background:rgba(197,162,83,0.15);color:#C5A253;"><i class="ph ph-hand-coins"></i></div>
           <div class="kpi-info">
@@ -568,6 +578,7 @@
           </div>
         </div>
 
+        <!-- F1-4: Cotizaciones Pendientes -->
         <div class="kpi-card">
           <div class="kpi-icon" style="background:rgba(197,162,83,0.15);color:#C5A253;"><i class="ph ph-file-text"></i></div>
           <div class="kpi-info">
@@ -575,6 +586,8 @@
             <span class="kpi-label">Cotizaciones Pendientes</span>
           </div>
         </div>
+
+        <!-- F2-1: Proyectos Activos -->
         <div class="kpi-card">
           <div class="kpi-icon" style="background:rgba(197,162,83,0.15);color:#C5A253;"><i class="ph ph-buildings"></i></div>
           <div class="kpi-info">
@@ -582,14 +595,39 @@
             <span class="kpi-label">Proyectos Activos</span>
           </div>
         </div>
+
+        <!-- F2-2: Horas Registradas del Mes (widget 7) -->
         <div class="kpi-card">
-          <div class="kpi-icon" style="background:rgba(45,139,94,0.15);color:#2D8B5E;"><i class="ph ph-users"></i></div>
+          <div class="kpi-icon" style="background:rgba(45,139,94,0.15);color:#2D8B5E;"><i class="ph ph-timer"></i></div>
           <div class="kpi-info">
-            <span class="kpi-value" id="kpi-clientes">0</span>
-            <span class="kpi-label">Clientes Activos</span>
+            <span class="kpi-value" id="kpi-horas-mes">0h</span>
+            <span class="kpi-label">Horas del Mes</span>
+            <span class="kpi-trend" id="kpi-horas-mes-sub" style="color:var(--gn-text-muted,#8FAB9A);">sin registros aún</span>
           </div>
         </div>
+
+        <!-- F2-3: Tasa de Cierre (widget 8) -->
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(197,162,83,0.15);color:#C5A253;"><i class="ph ph-percent"></i></div>
+          <div class="kpi-info">
+            <span class="kpi-value" id="kpi-tasa-cierre">0%</span>
+            <span class="kpi-label">Tasa de Cierre</span>
+            <span class="kpi-trend" id="kpi-tasa-cierre-sub" style="color:var(--gn-text-muted,#8FAB9A);">sin cotizaciones aún</span>
+          </div>
+        </div>
+
+        <!-- F2-4: Balance Neto (movido aquí como referencia, sin trend) -->
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:rgba(197,162,83,0.15);color:#C5A253;"><i class="ph ph-scales"></i></div>
+          <div class="kpi-info">
+            <span class="kpi-value" id="kpi-balance">USD 0.00</span>
+            <span class="kpi-label">Balance Neto</span>
+            <span class="kpi-trend" id="trend-balance"><i class="ph ph-arrow-right"></i> 0%</span>
+          </div>
+        </div>
+
       </div>
+      <!-- fin kpi-grid -->
 
       <!-- ══ WIDGET 6: META MENSUAL ══ -->
       <div class="gn-meta-card">
@@ -883,9 +921,7 @@
 
       <div id="proyectos-lista">
 
-        <!-- ============================================================
-             CALENDARIO DE PROYECTOS
-             ============================================================ -->
+        <!-- CALENDARIO -->
         <div class="cal-wrapper">
           <div class="cal-toolbar">
             <h3><i class="ph ph-calendar-dots"></i> Calendario de Proyectos</h3>
@@ -898,7 +934,6 @@
           </div>
           <div id="cal-grid"></div>
         </div>
-        <!-- FIN CALENDARIO -->
 
         <div class="section">
           <div class="section-header">
@@ -921,7 +956,6 @@
       </div>
 
       <div id="proyecto-detalle" style="display:none;">
-
         <div style="margin-bottom:8px;">
           <button class="btn-secondary" onclick="volverAListaProyectos()" style="margin-bottom:16px;"><i class="ph ph-arrow-left"></i> Volver a Proyectos</button>
         </div>
@@ -1220,7 +1254,6 @@
   <script src="js/dashboard-widgets.js"></script>
 
   <script>
-    /* ── Cerrar menú móvil al tocar fuera del overlay ── */
     document.addEventListener('click', function(e) {
       var overlay = document.getElementById('mobileNav');
       var toggleBtn = document.getElementById('nav-mobile-toggle-btn');
