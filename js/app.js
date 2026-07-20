@@ -164,7 +164,7 @@
     });
   }
 
-  // Cierre manual desde otros sitios (por ejemplo, si añades un botón “Cerrar todo”)
+  // Cierre manual desde otros sitios (por ejemplo, si añades un botón "Cerrar todo")
   function cerrarToast() {
     var container = document.getElementById('toast-container');
     if (!container) return;
@@ -255,6 +255,17 @@
     updateHeader(sectionId);
 
     closeMobileNav();
+
+    // Inicializar/refrescar calendario al entrar a Proyectos
+    if (sectionId === 'proyectos') {
+      setTimeout(function() {
+        if (typeof window.initCalendario === 'function') {
+          window.initCalendario();
+        } else if (typeof window.refreshCalendario === 'function') {
+          window.refreshCalendario();
+        }
+      }, 50);
+    }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -858,6 +869,12 @@
 
     if (typeof window.switchProyectoTab === 'function') {
       window.switchProyectoTab('resumen');
+    }
+
+    // Inicializar calendario (la sección proyectos puede estar oculta,
+    // se llamará de nuevo al navegar, pero pre-cargamos el estado)
+    if (typeof window.initCalendario === 'function') {
+      window.initCalendario();
     }
 
     showToast({
