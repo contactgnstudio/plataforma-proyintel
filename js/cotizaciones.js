@@ -82,14 +82,23 @@
       var now = new Date().toISOString();
       var userId = await getSessionUserId();
 
+      var fechaEmision = datosProforma.fecha || now.slice(0, 10);
+      var DIAS_VALIDEZ_DEFAULT = 15;
+      var fechaVencimiento = (function() {
+        var base = new Date(fechaEmision + 'T00:00:00');
+        if (isNaN(base.getTime())) return null;
+        base.setDate(base.getDate() + (datosProforma.diasValidez || DIAS_VALIDEZ_DEFAULT));
+        return base.toISOString().slice(0, 10);
+      })();
+
       var payload = {
         user_id: userId,
         proyecto_id: datosProforma.proyectoId || null,
         numero: numero,
         cliente_id: datosProforma.clienteId || null,
         cliente_nombre: datosProforma.clienteNombre || 'Cliente',
-        fecha_emision: datosProforma.fecha || now.slice(0, 10),
-        fecha_vencimiento: null,
+        fecha_emision: fechaEmision,
+        fecha_vencimiento: fechaVencimiento,
         titulo: datosProforma.nombreProyecto || 'Cotización',
         nombre_proyecto: datosProforma.nombreProyecto || '',
         descripcion: datosProforma.alcanceHtml || '',
