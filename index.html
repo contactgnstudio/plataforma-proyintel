@@ -570,9 +570,9 @@
           <i class="ph ph-receipt"></i>
           Registrar Gasto
         </button>
-        <button class="gn-quick-btn" onclick="switchSection('negocio');setTimeout(()=>typeof abrirModalDGI==='function'&&abrirModalDGI(),350);" target="_self">
-          <i class="ph ph-magnifying-glass"></i>
-          Buscar Cliente DGI
+        <button class="gn-quick-btn" onclick="switchSection('negocio');setTimeout(()=>typeof abrirModalCliente==='function'&&abrirModalCliente(),350);" target="_self">
+          <i class="ph ph-user-plus"></i>
+          Nuevo Cliente
         </button>
       </div>
 
@@ -792,8 +792,7 @@
             <h2 class="section-title"><i class="ph ph-users"></i> Base de Clientes</h2>
             <div class="section-actions">
               <input type="text" id="buscar-cliente" placeholder="Buscar cliente..." onkeyup="filtrarClientes()" class="search-input">
-              <button class="btn-secondary" onclick="abrirModalDGI()"><i class="ph ph-magnifying-glass"></i> Buscar en DGI</button>
-              <button class="btn-secondary" onclick="abrirModalCliente()"><i class="ph ph-user-plus"></i> Nuevo Manual</button>
+              <button class="btn-secondary" onclick="abrirModalCliente()"><i class="ph ph-user-plus"></i> Nuevo Cliente</button>
             </div>
           </div>
           <div class="table-wrap">
@@ -1422,7 +1421,6 @@
   <script src="js/calendario.js"></script>
   <script src="js/app.js"></script>
   <script src="js/dashboard-widgets.js"></script>
-  <script src="js/dgi-clientes.js"></script>
   <script src="js/negocio-cotizaciones.js"></script>
 
   <script>
