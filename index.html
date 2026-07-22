@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="css/calendario.css">
   <link rel="stylesheet" href="css/proyectos-hero.css">
   <link rel="stylesheet" href="css/negocio-cotizaciones.css">
+  <link rel="stylesheet" href="css/negocio-v2.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
@@ -18,364 +19,101 @@
 <style>
   /* ── LOGO IMAGEN ── */
   .logo-img-wrap {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+    width: 38px; height: 38px; border-radius: 10px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     background: linear-gradient(135deg, #123524 0%, #C5A253 100%);
     box-shadow: 0 4px 16px rgba(18,53,36,0.30);
   }
-  .logo-img-wrap.logo-loaded {
-    background: transparent;
-    box-shadow: none;
-  }
-  .logo-img-wrap img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-  .logo-img-wrap .logo-fallback {
-    display: none;
-    gap: 1px;
-    align-items: center;
-    justify-content: center;
-  }
-  .logo-img-wrap .logo-fallback.visible {
-    display: flex;
-  }
-  @media (max-width: 480px) {
-    .logo-img-wrap {
-      width: 34px;
-      height: 34px;
-    }
-  }
+  .logo-img-wrap.logo-loaded { background: transparent; box-shadow: none; }
+  .logo-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .logo-img-wrap .logo-fallback { display: none; gap: 1px; align-items: center; justify-content: center; }
+  .logo-img-wrap .logo-fallback.visible { display: flex; }
+  @media (max-width: 480px) { .logo-img-wrap { width: 34px; height: 34px; } }
 
-  /* ══════════════════════════════════════════════════════════════
-     DASHBOARD WIDGETS — ESTILOS
-     ══════════════════════════════════════════════════════════════ */
-
-  /* 1. Saludo */
+  /* ══ DASHBOARD WIDGETS ══ */
   .gn-saludo-header {
     background: linear-gradient(135deg, rgba(18,53,36,0.55) 0%, rgba(197,162,83,0.12) 100%);
-    border: 1px solid rgba(197,162,83,0.18);
-    border-radius: 16px;
-    padding: 20px 24px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
+    border: 1px solid rgba(197,162,83,0.18); border-radius: 16px;
+    padding: 20px 24px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px;
   }
-  .gn-saludo-icon {
-    font-size: 32px;
-    flex-shrink: 0;
-    line-height: 1;
-  }
-  .gn-saludo-titulo {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--gn-text, #E8F0EC);
-    margin: 0 0 4px;
-    line-height: 1.3;
-  }
-  .gn-saludo-sub {
-    font-size: 13px;
-    color: var(--gn-text-muted, #8FAB9A);
-    margin: 0;
-  }
+  .gn-saludo-icon { font-size: 32px; flex-shrink: 0; line-height: 1; }
+  .gn-saludo-titulo { font-size: 18px; font-weight: 700; color: var(--gn-text, #E8F0EC); margin: 0 0 4px; line-height: 1.3; }
+  .gn-saludo-sub { font-size: 13px; color: var(--gn-text-muted, #8FAB9A); margin: 0; }
   @media (max-width: 600px) {
     .gn-saludo-header { padding: 14px 16px; gap: 12px; }
     .gn-saludo-titulo { font-size: 15px; }
-    .gn-saludo-icon   { font-size: 26px; }
+    .gn-saludo-icon { font-size: 26px; }
   }
-
-  /* 2. Por Cobrar */
   .kpi-card.kpi-por-cobrar {
-    border-color: rgba(197,162,83,0.35);
-    background: rgba(197,162,83,0.06);
-    cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
+    border-color: rgba(197,162,83,0.35); background: rgba(197,162,83,0.06);
+    cursor: pointer; transition: border-color 0.2s, background 0.2s;
   }
-  .kpi-card.kpi-por-cobrar:hover {
-    border-color: rgba(197,162,83,0.6);
-    background: rgba(197,162,83,0.12);
-  }
-
-  /* 3. Quick Actions */
-  .gn-quick-actions {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    margin-bottom: 20px;
-  }
+  .kpi-card.kpi-por-cobrar:hover { border-color: rgba(197,162,83,0.6); background: rgba(197,162,83,0.12); }
+  .gn-quick-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
   .gn-quick-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 14px 10px;
-    border-radius: 14px;
-    border: 1px solid rgba(197,162,83,0.2);
-    background: rgba(18,53,36,0.25);
-    color: var(--gn-text, #E8F0EC);
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.18s, border-color 0.18s, transform 0.12s;
-    text-align: center;
-    line-height: 1.3;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px; padding: 14px 10px; border-radius: 14px;
+    border: 1px solid rgba(197,162,83,0.2); background: rgba(18,53,36,0.25);
+    color: var(--gn-text, #E8F0EC); font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: background 0.18s, border-color 0.18s, transform 0.12s;
+    text-align: center; line-height: 1.3;
   }
-  .gn-quick-btn i {
-    font-size: 22px;
-    color: #C5A253;
-  }
-  .gn-quick-btn:hover {
-    background: rgba(197,162,83,0.14);
-    border-color: rgba(197,162,83,0.45);
-    transform: translateY(-2px);
-  }
+  .gn-quick-btn i { font-size: 22px; color: #C5A253; }
+  .gn-quick-btn:hover { background: rgba(197,162,83,0.14); border-color: rgba(197,162,83,0.45); transform: translateY(-2px); }
   .gn-quick-btn:active { transform: translateY(0); }
   @media (max-width: 600px) {
     .gn-quick-actions { grid-template-columns: repeat(2, 1fr); }
     .gn-quick-btn { padding: 16px 8px; font-size: 13px; }
     .gn-quick-btn i { font-size: 24px; }
   }
-
-  /* KPI Grid — fuerza 4 columnas simétricas */
-  .kpi-dashboard {
-    grid-template-columns: repeat(4, 1fr) !important;
-  }
-  @media (max-width: 900px) {
-    .kpi-dashboard { grid-template-columns: repeat(2, 1fr) !important; }
-  }
-  @media (max-width: 480px) {
-    .kpi-dashboard { grid-template-columns: 1fr !important; }
-  }
-
-  /* 4. Tareas urgentes + 5. Próximos eventos — row */
-  .gn-widgets-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 20px;
-  }
-  @media (max-width: 700px) {
-    .gn-widgets-row { grid-template-columns: 1fr; }
-  }
-  .gn-widget-card {
-    background: rgba(18,53,36,0.25);
-    border: 1px solid rgba(197,162,83,0.15);
-    border-radius: 14px;
-    padding: 16px 18px;
-  }
-  .gn-widget-card-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-  .gn-widget-card-header h3 {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--gn-text, #E8F0EC);
-    margin: 0;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  .gn-widget-card-header i {
-    color: #C5A253;
-    font-size: 16px;
-  }
-  .gn-widget-empty {
-    font-size: 13px;
-    color: var(--gn-text-muted, #8FAB9A);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 0;
-  }
-  /* Tareas */
-  .gn-tarea-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    cursor: pointer;
-    transition: opacity 0.15s;
-    flex-wrap: wrap;
-  }
+  .kpi-dashboard { grid-template-columns: repeat(4, 1fr) !important; }
+  @media (max-width: 900px) { .kpi-dashboard { grid-template-columns: repeat(2, 1fr) !important; } }
+  @media (max-width: 480px) { .kpi-dashboard { grid-template-columns: 1fr !important; } }
+  .gn-widgets-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  @media (max-width: 700px) { .gn-widgets-row { grid-template-columns: 1fr; } }
+  .gn-widget-card { background: rgba(18,53,36,0.25); border: 1px solid rgba(197,162,83,0.15); border-radius: 14px; padding: 16px 18px; }
+  .gn-widget-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .gn-widget-card-header h3 { font-size: 13px; font-weight: 700; color: var(--gn-text, #E8F0EC); margin: 0; text-transform: uppercase; letter-spacing: 0.5px; }
+  .gn-widget-card-header i { color: #C5A253; font-size: 16px; }
+  .gn-widget-empty { font-size: 13px; color: var(--gn-text-muted, #8FAB9A); display: flex; align-items: center; gap: 8px; padding: 8px 0; }
+  .gn-tarea-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: opacity 0.15s; flex-wrap: wrap; }
   .gn-tarea-item:last-child { border-bottom: none; }
   .gn-tarea-item:hover { opacity: 0.8; }
-  .gn-tarea-badge {
-    font-size: 10px;
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 99px;
-    flex-shrink: 0;
-  }
+  .gn-tarea-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 99px; flex-shrink: 0; }
   .gn-badge-vencida { background: rgba(248,113,113,0.18); color: #F87171; }
-  .gn-badge-hoy     { background: rgba(197,162,83,0.2);   color: #C5A253; }
-  .gn-tarea-titulo {
-    font-size: 13px;
-    color: var(--gn-text, #E8F0EC);
-    flex: 1;
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .gn-tarea-proyecto {
-    font-size: 11px;
-    color: var(--gn-text-muted, #8FAB9A);
-    flex-shrink: 0;
-    max-width: 100px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  /* Eventos */
-  .gn-evento-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-  }
+  .gn-badge-hoy { background: rgba(197,162,83,0.2); color: #C5A253; }
+  .gn-tarea-titulo { font-size: 13px; color: var(--gn-text, #E8F0EC); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gn-tarea-proyecto { font-size: 11px; color: var(--gn-text-muted, #8FAB9A); flex-shrink: 0; max-width: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gn-evento-item { display: flex; align-items: flex-start; gap: 12px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
   .gn-evento-item:last-child { border-bottom: none; }
-  .gn-evento-fecha {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 34px;
-    background: rgba(197,162,83,0.12);
-    border-radius: 8px;
-    padding: 4px 6px;
-  }
-  .gn-evento-dia  { font-size: 15px; font-weight: 700; color: #C5A253; line-height: 1; }
-  .gn-evento-mes  { font-size: 10px; color: var(--gn-text-muted, #8FAB9A); text-transform: uppercase; }
+  .gn-evento-fecha { display: flex; flex-direction: column; align-items: center; min-width: 34px; background: rgba(197,162,83,0.12); border-radius: 8px; padding: 4px 6px; }
+  .gn-evento-dia { font-size: 15px; font-weight: 700; color: #C5A253; line-height: 1; }
+  .gn-evento-mes { font-size: 10px; color: var(--gn-text-muted, #8FAB9A); text-transform: uppercase; }
   .gn-evento-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
   .gn-evento-tipo { font-size: 10px; color: var(--gn-text-muted, #8FAB9A); text-transform: uppercase; font-weight: 600; }
   .gn-evento-nombre { font-size: 13px; color: var(--gn-text, #E8F0EC); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .gn-evento-cliente { font-size: 11px; color: var(--gn-text-muted, #8FAB9A); }
-
-  /* 6. Meta mensual */
-  .gn-meta-card {
-    background: rgba(18,53,36,0.25);
-    border: 1px solid rgba(197,162,83,0.15);
-    border-radius: 14px;
-    padding: 18px 20px;
-    margin-bottom: 20px;
-  }
-  .gn-meta-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .gn-meta-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--gn-text, #E8F0EC);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
+  .gn-meta-card { background: rgba(18,53,36,0.25); border: 1px solid rgba(197,162,83,0.15); border-radius: 14px; padding: 18px 20px; margin-bottom: 20px; }
+  .gn-meta-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+  .gn-meta-title { font-size: 13px; font-weight: 700; color: var(--gn-text, #E8F0EC); display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
   .gn-meta-title i { color: #C5A253; }
-  .gn-meta-nums {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
+  .gn-meta-nums { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
   .gn-meta-actual { font-size: 18px; font-weight: 700; color: var(--gn-text, #E8F0EC); }
-  .gn-meta-sep    { font-size: 14px; color: var(--gn-text-muted, #8FAB9A); }
-  .gn-meta-obj    { font-size: 14px; color: var(--gn-text-muted, #8FAB9A); }
-  .gn-meta-pct    { font-size: 22px; font-weight: 800; }
-  .gn-meta-barra-wrap {
-    height: 10px;
-    background: rgba(255,255,255,0.07);
-    border-radius: 99px;
-    overflow: hidden;
-    margin-bottom: 12px;
-  }
-  .gn-meta-barra {
-    height: 100%;
-    border-radius: 99px;
-    transition: width 0.6s cubic-bezier(.4,0,.2,1), background 0.3s;
-    width: 0%;
-  }
-  .gn-meta-edit {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
+  .gn-meta-sep { font-size: 14px; color: var(--gn-text-muted, #8FAB9A); }
+  .gn-meta-obj { font-size: 14px; color: var(--gn-text-muted, #8FAB9A); }
+  .gn-meta-pct { font-size: 22px; font-weight: 800; }
+  .gn-meta-barra-wrap { height: 10px; background: rgba(255,255,255,0.07); border-radius: 99px; overflow: hidden; margin-bottom: 12px; }
+  .gn-meta-barra { height: 100%; border-radius: 99px; transition: width 0.6s cubic-bezier(.4,0,.2,1), background 0.3s; width: 0%; }
+  .gn-meta-edit { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .gn-meta-edit label { font-size: 12px; color: var(--gn-text-muted, #8FAB9A); }
-  .gn-meta-edit input {
-    width: 110px;
-    padding: 6px 10px;
-    border-radius: 8px;
-    border: 1px solid rgba(197,162,83,0.25);
-    background: rgba(18,53,36,0.4);
-    color: var(--gn-text, #E8F0EC);
-    font-size: 13px;
-  }
-  .gn-meta-edit button {
-    padding: 6px 14px;
-    border-radius: 8px;
-    border: 1px solid rgba(197,162,83,0.3);
-    background: rgba(197,162,83,0.1);
-    color: #C5A253;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
+  .gn-meta-edit input { width: 110px; padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(197,162,83,0.25); background: rgba(18,53,36,0.4); color: var(--gn-text, #E8F0EC); font-size: 13px; }
+  .gn-meta-edit button { padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(197,162,83,0.3); background: rgba(197,162,83,0.1); color: #C5A253; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
   .gn-meta-edit button:hover { background: rgba(197,162,83,0.22); }
-
-  /* ══════════════════════════════════════════════════════════════
-     FIX PIPELINE DE VENTAS — stage-title no se descuadra
-     ══════════════════════════════════════════════════════════════ */
-  .sales-pipeline {
-    display: flex;
-    align-items: stretch;
-    gap: 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  .sales-pipeline .pipeline-stage {
-    flex: 1 1 0;
-    min-width: 100px;
-    max-width: 100%;
-    box-sizing: border-box;
-  }
-  .sales-pipeline .stage-header {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    overflow: hidden;
-    min-width: 0;
-  }
-  .sales-pipeline .stage-title {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    min-width: 0;
-    flex: 1;
-  }
-  .sales-pipeline .stage-icon {
-    flex-shrink: 0;
-  }
+  .sales-pipeline { display: flex; align-items: stretch; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .sales-pipeline .pipeline-stage { flex: 1 1 0; min-width: 100px; max-width: 100%; box-sizing: border-box; }
+  .sales-pipeline .stage-header { display: flex; align-items: center; gap: 6px; overflow: hidden; min-width: 0; }
+  .sales-pipeline .stage-title { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; min-width: 0; flex: 1; }
+  .sales-pipeline .stage-icon { flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -404,9 +142,7 @@
     </div>
   </div>
 
-  <!-- ============================================================
-       BARRA FLOTANTE GLOBAL DE TIME TRACKING
-       ============================================================ -->
+  <!-- BARRA FLOTANTE TIME TRACKING -->
   <div id="tt-barra-global">
     <span class="tt-global-indicator"></span>
     <span id="tt-global-nombre">Tarea activa</span>
@@ -415,30 +151,16 @@
     <button class="tt-global-stop" onclick="ttDetener(gnTimer && gnTimer.tareaId, gnTimer && gnTimer.proyectoId)" style="background:rgba(248,113,113,0.15);border-color:rgba(248,113,113,0.3);color:#F87171;"><i class="ph ph-stop"></i> Detener</button>
   </div>
 
-  <!-- ============================================================
-       MODAL: REGISTRAR TIEMPO MANUAL
-       ============================================================ -->
+  <!-- MODAL TIEMPO MANUAL -->
   <div id="tt-modal-manual">
     <div class="tt-modal-card">
       <h3><i class="ph ph-pencil-simple" style="color:#C5A253;"></i> Registrar Tiempo Manual</h3>
-      <div class="form-group">
-        <label>Fecha</label>
-        <input type="date" id="tt-manual-fecha" class="">
-      </div>
+      <div class="form-group"><label>Fecha</label><input type="date" id="tt-manual-fecha"></div>
       <div class="tt-modal-row">
-        <div class="form-group">
-          <label>Horas</label>
-          <input type="number" id="tt-manual-horas" min="0" max="23" placeholder="0">
-        </div>
-        <div class="form-group">
-          <label>Minutos</label>
-          <input type="number" id="tt-manual-min" min="0" max="59" placeholder="0">
-        </div>
+        <div class="form-group"><label>Horas</label><input type="number" id="tt-manual-horas" min="0" max="23" placeholder="0"></div>
+        <div class="form-group"><label>Minutos</label><input type="number" id="tt-manual-min" min="0" max="59" placeholder="0"></div>
       </div>
-      <div class="form-group">
-        <label>Descripción (opcional)</label>
-        <input type="text" id="tt-manual-desc" placeholder="Ej: Reunión de diseño, ajustes finales...">
-      </div>
+      <div class="form-group"><label>Descripción (opcional)</label><input type="text" id="tt-manual-desc" placeholder="Ej: Reunión de diseño, ajustes finales..."></div>
       <div class="tt-modal-actions">
         <button type="button" class="btn-secondary" onclick="ttCerrarModalManual()">Cancelar</button>
         <button type="button" class="btn-primary" onclick="ttGuardarManual()"><i class="ph ph-floppy-disk"></i> Guardar</button>
@@ -446,45 +168,22 @@
     </div>
   </div>
 
-  <!-- ============================================================
-       TOP NAVBAR
-       ============================================================ -->
+  <!-- TOP NAVBAR -->
   <nav class="top-navbar">
     <div class="nav-brand">
       <div class="logo-img-wrap" id="logo-wrap">
-        <img
-          src="assets/logo.png"
-          alt="GN Studio Logo"
-          id="gn-logo-img"
+        <img src="assets/logo.png" alt="GN Studio Logo" id="gn-logo-img"
           onload="document.getElementById('logo-wrap').classList.add('logo-loaded');"
-          onerror="this.style.display='none';document.getElementById('logo-fallback').classList.add('visible');"
-        >
-        <span class="logo-fallback" id="logo-fallback">
-          <span class="logo-g">G</span><span class="logo-n">N</span>
-        </span>
+          onerror="this.style.display='none';document.getElementById('logo-fallback').classList.add('visible');">
+        <span class="logo-fallback" id="logo-fallback"><span class="logo-g">G</span><span class="logo-n">N</span></span>
       </div>
-      <div class="logo-text">
-        <span class="logo-brand">GN Studio</span>
-        <span class="logo-tagline">OS</span>
-      </div>
+      <div class="logo-text"><span class="logo-brand">GN Studio</span><span class="logo-tagline">OS</span></div>
     </div>
     <div class="nav-links">
-      <a class="nav-link active" data-section="dashboard" onclick="switchSection('dashboard')">
-        <span class="nav-icon"><i class="ph ph-squares-four"></i></span>
-        <span>Dashboard</span>
-      </a>
-      <a class="nav-link" data-section="negocio" onclick="switchSection('negocio')">
-        <span class="nav-icon"><i class="ph ph-briefcase"></i></span>
-        <span>Negocio</span>
-      </a>
-      <a class="nav-link" data-section="proyectos" onclick="switchSection('proyectos')">
-        <span class="nav-icon"><i class="ph ph-buildings"></i></span>
-        <span>Proyectos</span>
-      </a>
-      <a class="nav-link" data-section="finanzas" onclick="switchSection('finanzas')">
-        <span class="nav-icon"><i class="ph ph-currency-dollar"></i></span>
-        <span>Finanzas</span>
-      </a>
+      <a class="nav-link active" data-section="dashboard" onclick="switchSection('dashboard')"><span class="nav-icon"><i class="ph ph-squares-four"></i></span><span>Dashboard</span></a>
+      <a class="nav-link" data-section="negocio" onclick="switchSection('negocio')"><span class="nav-icon"><i class="ph ph-briefcase"></i></span><span>Negocio</span></a>
+      <a class="nav-link" data-section="proyectos" onclick="switchSection('proyectos')"><span class="nav-icon"><i class="ph ph-buildings"></i></span><span>Proyectos</span></a>
+      <a class="nav-link" data-section="finanzas" onclick="switchSection('finanzas')"><span class="nav-icon"><i class="ph ph-currency-dollar"></i></span><span>Finanzas</span></a>
     </div>
     <div class="nav-actions">
       <button class="btn-header" onclick="exportarTodo()" title="Exportar todo"><i class="ph ph-download-simple"></i></button>
@@ -495,9 +194,7 @@
           <span class="nav-user-name" id="nav-user-name">Cuenta iniciada</span>
           <span class="nav-user-email" id="nav-user-email">contact@gnstudio.space</span>
         </div>
-        <button class="nav-user-toggle" type="button" aria-label="Menú de usuario">
-          <i class="ph ph-caret-down"></i>
-        </button>
+        <button class="nav-user-toggle" type="button" aria-label="Menú de usuario"><i class="ph ph-caret-down"></i></button>
         <div class="nav-user-menu" id="nav-user-menu">
           <button type="button" class="nav-user-item" onclick="gnCerrarSesion()">Cerrar sesión</button>
         </div>
@@ -506,285 +203,131 @@
     <button class="nav-mobile-toggle" id="nav-mobile-toggle-btn" onclick="toggleMobileNav()" aria-label="Abrir menú" aria-expanded="false"><i class="ph ph-list"></i></button>
   </nav>
 
-  <!-- ============================================================
-       MOBILE NAV OVERLAY
-       ============================================================ -->
+  <!-- MOBILE NAV -->
   <div id="mobileNav" class="mobile-nav-overlay" role="navigation" aria-label="Menú móvil">
-    <a class="nav-link mobile-nav-link active" data-section="dashboard" onclick="switchSection('dashboard')" target="_self">
-      <span class="nav-icon"><i class="ph ph-squares-four"></i></span>
-      <span>Dashboard</span>
-    </a>
-    <a class="nav-link mobile-nav-link" data-section="negocio" onclick="switchSection('negocio')" target="_self">
-      <span class="nav-icon"><i class="ph ph-briefcase"></i></span>
-      <span>Negocio</span>
-    </a>
-    <a class="nav-link mobile-nav-link" data-section="proyectos" onclick="switchSection('proyectos')" target="_self">
-      <span class="nav-icon"><i class="ph ph-buildings"></i></span>
-      <span>Proyectos</span>
-    </a>
-    <a class="nav-link mobile-nav-link" data-section="finanzas" onclick="switchSection('finanzas')" target="_self">
-      <span class="nav-icon"><i class="ph ph-currency-dollar"></i></span>
-      <span>Finanzas</span>
-    </a>
+    <a class="nav-link mobile-nav-link active" data-section="dashboard" onclick="switchSection('dashboard')" target="_self"><span class="nav-icon"><i class="ph ph-squares-four"></i></span><span>Dashboard</span></a>
+    <a class="nav-link mobile-nav-link" data-section="negocio" onclick="switchSection('negocio')" target="_self"><span class="nav-icon"><i class="ph ph-briefcase"></i></span><span>Negocio</span></a>
+    <a class="nav-link mobile-nav-link" data-section="proyectos" onclick="switchSection('proyectos')" target="_self"><span class="nav-icon"><i class="ph ph-buildings"></i></span><span>Proyectos</span></a>
+    <a class="nav-link mobile-nav-link" data-section="finanzas" onclick="switchSection('finanzas')" target="_self"><span class="nav-icon"><i class="ph ph-currency-dollar"></i></span><span>Finanzas</span></a>
     <div style="border-top:1px solid rgba(18,53,36,0.25);margin-top:8px;padding-top:12px;">
-      <button type="button" class="nav-user-item" style="width:100%;padding:14px 16px;font-size:14px;text-align:left;border-radius:10px;" onclick="gnCerrarSesion()">
-        <i class="ph ph-sign-out" style="margin-right:8px;"></i>Cerrar sesión
-      </button>
+      <button type="button" class="nav-user-item" style="width:100%;padding:14px 16px;font-size:14px;text-align:left;border-radius:10px;" onclick="gnCerrarSesion()"><i class="ph ph-sign-out" style="margin-right:8px;"></i>Cerrar sesión</button>
     </div>
   </div>
 
   <!-- MAIN CONTENT -->
   <main class="main-content">
-
-    <!-- HEADER -->
     <header class="top-header">
       <h1 class="page-title" id="page-title">Dashboard</h1>
       <div class="header-breadcrumb" id="breadcrumb"></div>
     </header>
 
-    <!-- ============================================================
-         SECCION: DASHBOARD
-         ============================================================ -->
+    <!-- ════════════════════════════════════════════════
+         DASHBOARD
+         ════════════════════════════════════════════════ -->
     <section id="dashboard" class="section-panel active">
-
-      <!-- ══ WIDGET 1: SALUDO CONTEXTUAL ══ -->
       <div class="gn-saludo-header">
         <div class="gn-saludo-icon">👋</div>
         <div>
           <p class="gn-saludo-titulo" id="widget-saludo-texto">Buenos días, GN Studio</p>
-          <p class="gn-saludo-sub"   id="widget-saludo-sub">Cargando resumen...</p>
+          <p class="gn-saludo-sub" id="widget-saludo-sub">Cargando resumen...</p>
         </div>
       </div>
-
-      <!-- ══ WIDGET 3: QUICK ACTIONS ══ -->
       <div class="gn-quick-actions">
-        <button class="gn-quick-btn" onclick="switchSection('proyectos');setTimeout(()=>togglePanelProforma(),350);" target="_self">
-          <i class="ph ph-file-plus"></i>
-          Nueva Propuesta
-        </button>
-        <button class="gn-quick-btn" onclick="switchSection('proyectos');setTimeout(()=>abrirModalPagoProyecto && abrirModalPagoProyecto(),350);" target="_self">
-          <i class="ph ph-coins"></i>
-          Registrar Pago
-        </button>
-        <button class="gn-quick-btn" onclick="switchSection('proyectos');setTimeout(()=>abrirModalGastoProyecto && abrirModalGastoProyecto(),350);" target="_self">
-          <i class="ph ph-receipt"></i>
-          Registrar Gasto
-        </button>
-        <button class="gn-quick-btn" onclick="switchSection('negocio');setTimeout(()=>typeof abrirModalCliente==='function'&&abrirModalCliente(),350);" target="_self">
-          <i class="ph ph-user-plus"></i>
-          Nuevo Cliente
-        </button>
+        <button class="gn-quick-btn" onclick="switchSection('proyectos');setTimeout(()=>togglePanelProforma(),350);" target="_self"><i class="ph ph-file-plus"></i>Nueva Propuesta</button>
+        <button class="gn-quick-btn" onclick="switchSection('proyectos');setTimeout(()=>abrirModalPagoProyecto && abrirModalPagoProyecto(),350);" target="_self"><i class="ph ph-coins"></i>Registrar Pago</button>
+        <button class="gn-quick-btn" onclick="switchSection('proyectos');setTimeout(()=>abrirModalGastoProyecto && abrirModalGastoProyecto(),350);" target="_self"><i class="ph ph-receipt"></i>Registrar Gasto</button>
+        <button class="gn-quick-btn" onclick="switchSection('negocio');setTimeout(()=>typeof abrirModalCliente==='function'&&abrirModalCliente(),350);" target="_self"><i class="ph ph-user-plus"></i>Nuevo Cliente</button>
       </div>
-
       <div class="kpi-grid kpi-dashboard">
-
-        <div class="kpi-card kpi-highlight">
-          <div class="kpi-icon" style="background:rgba(18,53,36,0.25);color:#2D8B5E;"><i class="ph ph-currency-dollar"></i></div>
-          <div class="kpi-info">
-            <span class="kpi-value" id="kpi-ingresos">USD 0.00</span>
-            <span class="kpi-label">Ingresos del Mes</span>
-            <span class="kpi-trend" id="trend-ingresos"><i class="ph ph-arrow-right"></i> 0%</span>
-          </div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-icon" style="background:rgba(248,113,113,0.12);color:#F87171;"><i class="ph ph-money"></i></div>
-          <div class="kpi-info">
-            <span class="kpi-value" id="kpi-gastos">USD 0.00</span>
-            <span class="kpi-label">Gastos del Mes</span>
-            <span class="kpi-trend" id="trend-gastos"><i class="ph ph-arrow-right"></i> 0%</span>
-          </div>
-        </div>
-
-        <div class="kpi-card kpi-por-cobrar" onclick="switchSection('finanzas')" title="Ver estado de cuenta">
-          <div class="kpi-icon" style="background:rgba(197,162,83,0.15);color:#C5A253;"><i class="ph ph-hand-coins"></i></div>
-          <div class="kpi-info">
-            <span class="kpi-value" id="widget-por-cobrar-monto">USD 0.00</span>
-            <span class="kpi-label">Por Cobrar</span>
-            <span class="kpi-trend" style="color:#C5A253;"><i class="ph ph-arrow-right"></i> Ver pagos</span>
-          </div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-icon" style="background:rgba(197,162,83,0.15);color:#C5A253;"><i class="ph ph-file-text"></i></div>
-          <div class="kpi-info">
-            <span class="kpi-value" id="kpi-cotizaciones">0</span>
-            <span class="kpi-label">Cotizaciones Pendientes</span>
-          </div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-icon" style="background:rgba(197,162,83,0.15);color:#C5A253;"><i class="ph ph-buildings"></i></div>
-          <div class="kpi-info">
-            <span class="kpi-value" id="kpi-proyectos">0</span>
-            <span class="kpi-label">Proyectos Activos</span>
-          </div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-icon" style="background:rgba(197,162,83,0.15);color:#C5A253;"><i class="ph ph-percent"></i></div>
-          <div class="kpi-info">
-            <span class="kpi-value" id="kpi-tasa-cierre">0%</span>
-            <span class="kpi-label">Tasa de Cierre</span>
-            <span class="kpi-trend" id="kpi-tasa-cierre-sub" style="color:var(--gn-text-muted,#8FAB9A);">sin cotizaciones aún</span>
-          </div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-icon" style="background:rgba(197,162,83,0.15);color:#C5A253;"><i class="ph ph-scales"></i></div>
-          <div class="kpi-info">
-            <span class="kpi-value" id="kpi-balance">USD 0.00</span>
-            <span class="kpi-label">Balance Neto</span>
-            <span class="kpi-trend" id="trend-balance"><i class="ph ph-arrow-right"></i> 0%</span>
-          </div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-icon" style="background:rgba(45,139,94,0.15);color:#2D8B5E;"><i class="ph ph-users"></i></div>
-          <div class="kpi-info">
-            <span class="kpi-value" id="kpi-clientes">0</span>
-            <span class="kpi-label">Clientes Activos</span>
-          </div>
-        </div>
-
+        <div class="kpi-card kpi-highlight"><div class="kpi-icon" style="background:rgba(18,53,36,0.25);color:#2D8B5E;"><i class="ph ph-currency-dollar"></i></div><div class="kpi-info"><span class="kpi-value" id="kpi-ingresos">USD 0.00</span><span class="kpi-label">Ingresos del Mes</span><span class="kpi-trend" id="trend-ingresos"><i class="ph ph-arrow-right"></i> 0%</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon" style="background:rgba(248,113,113,0.12);color:#F87171;"><i class="ph ph-money"></i></div><div class="kpi-info"><span class="kpi-value" id="kpi-gastos">USD 0.00</span><span class="kpi-label">Gastos del Mes</span><span class="kpi-trend" id="trend-gastos"><i class="ph ph-arrow-right"></i> 0%</span></div></div>
+        <div class="kpi-card kpi-por-cobrar" onclick="switchSection('finanzas')" title="Ver estado de cuenta"><div class="kpi-icon" style="background:rgba(197,162,83,0.15);color:#C5A253;"><i class="ph ph-hand-coins"></i></div><div class="kpi-info"><span class="kpi-value" id="widget-por-cobrar-monto">USD 0.00</span><span class="kpi-label">Por Cobrar</span><span class="kpi-trend" style="color:#C5A253;"><i class="ph ph-arrow-right"></i> Ver pagos</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon" style="background:rgba(197,162,83,0.15);color:#C5A253;"><i class="ph ph-file-text"></i></div><div class="kpi-info"><span class="kpi-value" id="kpi-cotizaciones">0</span><span class="kpi-label">Cotizaciones Pendientes</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon" style="background:rgba(197,162,83,0.15);color:#C5A253;"><i class="ph ph-buildings"></i></div><div class="kpi-info"><span class="kpi-value" id="kpi-proyectos">0</span><span class="kpi-label">Proyectos Activos</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon" style="background:rgba(197,162,83,0.15);color:#C5A253;"><i class="ph ph-percent"></i></div><div class="kpi-info"><span class="kpi-value" id="kpi-tasa-cierre">0%</span><span class="kpi-label">Tasa de Cierre</span><span class="kpi-trend" id="kpi-tasa-cierre-sub" style="color:var(--gn-text-muted,#8FAB9A);">sin cotizaciones aún</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon" style="background:rgba(197,162,83,0.15);color:#C5A253;"><i class="ph ph-scales"></i></div><div class="kpi-info"><span class="kpi-value" id="kpi-balance">USD 0.00</span><span class="kpi-label">Balance Neto</span><span class="kpi-trend" id="trend-balance"><i class="ph ph-arrow-right"></i> 0%</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon" style="background:rgba(45,139,94,0.15);color:#2D8B5E;"><i class="ph ph-users"></i></div><div class="kpi-info"><span class="kpi-value" id="kpi-clientes">0</span><span class="kpi-label">Clientes Activos</span></div></div>
       </div>
-
-      <!-- ══ WIDGET 6: META MENSUAL ══ -->
       <div class="gn-meta-card">
         <div class="gn-meta-header">
           <span class="gn-meta-title"><i class="ph ph-trophy"></i> Meta mensual de ingresos</span>
-          <div class="gn-meta-nums">
-            <span class="gn-meta-actual" id="widget-meta-monto">USD 0.00</span>
-            <span class="gn-meta-sep">/</span>
-            <span class="gn-meta-obj"   id="widget-meta-objetivo">USD 0.00</span>
-            <span class="gn-meta-pct"   id="widget-meta-pct">0%</span>
-          </div>
+          <div class="gn-meta-nums"><span class="gn-meta-actual" id="widget-meta-monto">USD 0.00</span><span class="gn-meta-sep">/</span><span class="gn-meta-obj" id="widget-meta-objetivo">USD 0.00</span><span class="gn-meta-pct" id="widget-meta-pct">0%</span></div>
         </div>
-        <div class="gn-meta-barra-wrap">
-          <div class="gn-meta-barra" id="widget-meta-barra"></div>
-        </div>
+        <div class="gn-meta-barra-wrap"><div class="gn-meta-barra" id="widget-meta-barra"></div></div>
         <div class="gn-meta-edit">
           <label for="widget-meta-input">Meta (USD):</label>
           <input type="number" id="widget-meta-input" min="1" step="100" placeholder="3000">
           <button onclick="gnGuardarMeta()"><i class="ph ph-floppy-disk"></i> Guardar</button>
         </div>
       </div>
-
-      <!-- ══ WIDGETS 4 & 5: TAREAS URGENTES + PRÓXIMOS EVENTOS ══ -->
       <div class="gn-widgets-row">
         <div class="gn-widget-card">
-          <div class="gn-widget-card-header">
-            <i class="ph ph-warning-circle"></i>
-            <h3>Tareas urgentes del día</h3>
-          </div>
-          <div id="widget-tareas-urgentes-lista">
-            <div class="gn-widget-empty"><i class="ph ph-spinner"></i> Cargando...</div>
-          </div>
+          <div class="gn-widget-card-header"><i class="ph ph-warning-circle"></i><h3>Tareas urgentes del día</h3></div>
+          <div id="widget-tareas-urgentes-lista"><div class="gn-widget-empty"><i class="ph ph-spinner"></i> Cargando...</div></div>
         </div>
         <div class="gn-widget-card">
-          <div class="gn-widget-card-header">
-            <i class="ph ph-calendar-dots"></i>
-            <h3>Próximos eventos</h3>
-          </div>
-          <div id="widget-proximos-eventos-lista">
-            <div class="gn-widget-empty"><i class="ph ph-spinner"></i> Cargando...</div>
-          </div>
+          <div class="gn-widget-card-header"><i class="ph ph-calendar-dots"></i><h3>Próximos eventos</h3></div>
+          <div id="widget-proximos-eventos-lista"><div class="gn-widget-empty"><i class="ph ph-spinner"></i> Cargando...</div></div>
         </div>
       </div>
-
       <div class="dashboard-grid">
         <div class="dashboard-card">
-          <div class="card-header"><h3><i class="ph ph-bell"></i> Alertas & Vencimientos</h3></div>
-          <div id="alertas-container">
-            <div class="tabla-vacia">
-              <div class="tabla-vacia-icon"><i class="ph ph-bell-slash"></i></div>
-              <div>Cargando alertas…</div>
-            </div>
-          </div>
+          <div class="card-header"><h3><i class="ph ph-bell"></i> Alertas &amp; Vencimientos</h3></div>
+          <div id="alertas-container"><div class="tabla-vacia"><div class="tabla-vacia-icon"><i class="ph ph-bell-slash"></i></div><div>Cargando alertas…</div></div></div>
         </div>
         <div class="section">
-          <div class="section-header">
-            <h2 class="section-title"><i class="ph ph-arrows-left-right"></i> Pipeline de Ventas</h2>
-          </div>
+          <div class="section-header"><h2 class="section-title"><i class="ph ph-arrows-left-right"></i> Pipeline de Ventas</h2></div>
           <div class="sales-pipeline">
-            <div class="pipeline-stage" id="dash-stage-cotizado">
-              <div class="stage-header"><span class="stage-icon"><i class="ph ph-file-text"></i></span><span class="stage-title">Cotizado</span></div>
-              <div class="stage-body"><span class="stage-count" id="pipeline-cotizado">0</span><span class="stage-label">Oportunidades</span></div>
-            </div>
+            <div class="pipeline-stage" id="dash-stage-cotizado"><div class="stage-header"><span class="stage-icon"><i class="ph ph-file-text"></i></span><span class="stage-title">Cotizado</span></div><div class="stage-body"><span class="stage-count" id="pipeline-cotizado">0</span><span class="stage-label">Oportunidades</span></div></div>
             <div class="pipeline-connector"></div>
-            <div class="pipeline-stage" id="dash-stage-aprobado">
-              <div class="stage-header"><span class="stage-icon"><i class="ph ph-check-circle"></i></span><span class="stage-title">Aprobado</span></div>
-              <div class="stage-body"><span class="stage-count" id="pipeline-aprobado">0</span><span class="stage-label">Proyectos</span></div>
-            </div>
+            <div class="pipeline-stage" id="dash-stage-aprobado"><div class="stage-header"><span class="stage-icon"><i class="ph ph-check-circle"></i></span><span class="stage-title">Aprobado</span></div><div class="stage-body"><span class="stage-count" id="pipeline-aprobado">0</span><span class="stage-label">Proyectos</span></div></div>
             <div class="pipeline-connector"></div>
-            <div class="pipeline-stage" id="dash-stage-en-progreso">
-              <div class="stage-header"><span class="stage-icon"><i class="ph ph-rocket"></i></span><span class="stage-title">En progreso</span></div>
-              <div class="stage-body"><span class="stage-count" id="pipeline-en-progreso">0</span><span class="stage-label">Proyectos</span></div>
-            </div>
+            <div class="pipeline-stage" id="dash-stage-en-progreso"><div class="stage-header"><span class="stage-icon"><i class="ph ph-rocket"></i></span><span class="stage-title">En progreso</span></div><div class="stage-body"><span class="stage-count" id="pipeline-en-progreso">0</span><span class="stage-label">Proyectos</span></div></div>
             <div class="pipeline-connector"></div>
-            <div class="pipeline-stage" id="dash-stage-completado">
-              <div class="stage-header"><span class="stage-icon"><i class="ph ph-flag"></i></span><span class="stage-title">Completado</span></div>
-              <div class="stage-body"><span class="stage-count" id="pipeline-completado">0</span><span class="stage-label">Proyectos</span></div>
-            </div>
+            <div class="pipeline-stage" id="dash-stage-completado"><div class="stage-header"><span class="stage-icon"><i class="ph ph-flag"></i></span><span class="stage-title">Completado</span></div><div class="stage-body"><span class="stage-count" id="pipeline-completado">0</span><span class="stage-label">Proyectos</span></div></div>
           </div>
         </div>
       </div>
-
       <div class="charts-row">
         <div class="chart-card"><h3 class="chart-title">Ingresos vs Gastos (Últimos 6 meses)</h3><canvas id="chartBalance"></canvas></div>
         <div class="chart-card"><h3 class="chart-title">Distribución de Ingresos por Tipo de Servicio</h3><canvas id="chartIngresosServicio"></canvas></div>
       </div>
-
       <div class="section">
         <div class="section-header"><h2 class="section-title"><i class="ph ph-scroll"></i> Actividad Reciente</h2></div>
-        <div class="table-wrap">
-          <table id="tablaActividadReciente">
-            <thead><tr><th>Fecha</th><th>Tipo</th><th>Descripción</th><th>Monto</th><th>Proyectos</th></tr></thead>
-            <tbody id="tbodyActividadReciente"></tbody>
-          </table>
-        </div>
+        <div class="table-wrap"><table id="tablaActividadReciente"><thead><tr><th>Fecha</th><th>Tipo</th><th>Descripción</th><th>Monto</th><th>Proyectos</th></tr></thead><tbody id="tbodyActividadReciente"></tbody></table></div>
       </div>
     </section>
 
-    <!-- ============================================================
-         SECCION: NEGOCIO
-         ============================================================ -->
+    <!-- ════════════════════════════════════════════════
+         NEGOCIO — REESTRUCTURADO v2
+         ════════════════════════════════════════════════ -->
     <section id="negocio" class="section-panel">
+
+      <!-- ── SUB-NAV ── -->
       <div class="sub-nav">
-        <button class="sub-nav-item active" onclick="switchSubSection('negocio', 'crm')"><i class="ph ph-address-book"></i> CRM</button>
-        <button class="sub-nav-item" onclick="switchSubSection('negocio', 'catalogo')"><i class="ph ph-list-checks"></i> Catálogo &amp; Grupos</button>
-        <button class="sub-nav-item" onclick="switchSubSection('negocio', 'cotizaciones'); if(typeof ncIniciarModulo==='function') ncIniciarModulo();"><i class="ph ph-file-text"></i> Cotizaciones</button>
+        <button class="sub-nav-item active" onclick="switchSubSection('negocio','crm')"><i class="ph ph-address-book"></i> CRM &amp; Clientes</button>
+        <button class="sub-nav-item" onclick="switchSubSection('negocio','oportunidades');setTimeout(()=>oppRenderKanban(),200);"><i class="ph ph-lightning"></i> Oportunidades</button>
+        <button class="sub-nav-item" onclick="switchSubSection('negocio','radar');setTimeout(()=>radarRender(),200);"><i class="ph ph-radar"></i> Radar de Trabajos</button>
+        <button class="sub-nav-item" onclick="switchSubSection('negocio','cotizaciones');if(typeof ncIniciarModulo==='function') ncIniciarModulo();"><i class="ph ph-file-text"></i> Cotizaciones</button>
+        <button class="sub-nav-item" onclick="switchSubSection('negocio','catalogo')"><i class="ph ph-list-checks"></i> Catálogo</button>
+        <button class="sub-nav-item" onclick="switchSubSection('negocio','proveedores');setTimeout(()=>prov_renderTabla(),200);"><i class="ph ph-storefront"></i> Proveedores</button>
       </div>
 
+      <!-- ══════════════════════════════════
+           TAB 1: CRM & CLIENTES
+           ══════════════════════════════════ -->
       <div id="negocio-crm" class="sub-section active">
         <div class="section">
           <div class="section-header">
             <h2 class="section-title"><i class="ph ph-address-book"></i> Clientes &amp; Pipeline</h2>
-            <div class="section-actions">
-              <button class="btn-secondary" onclick="abrirModalCliente()"><i class="ph ph-plus"></i> Nuevo Cliente</button>
-            </div>
+            <div class="section-actions"><button class="btn-secondary" onclick="abrirModalCliente()"><i class="ph ph-plus"></i> Nuevo Cliente</button></div>
           </div>
           <div class="pipeline-board">
-            <div class="pipeline-column">
-              <div class="pipeline-col-header" style="border-top-color:#C5A253;"><span>Prospecto</span><span class="pipeline-count" id="count-prospecto">0</span></div>
-              <div class="pipeline-col-body" id="pipeline-prospecto"></div>
-            </div>
-            <div class="pipeline-column">
-              <div class="pipeline-col-header" style="border-top-color:#C5A253;"><span>Cotizado</span><span class="pipeline-count" id="count-cotizado">0</span></div>
-              <div class="pipeline-col-body" id="pipeline-cotizado"></div>
-            </div>
-            <div class="pipeline-column">
-              <div class="pipeline-col-header" style="border-top-color:#2D8B5E;"><span>Aprobado</span><span class="pipeline-count" id="count-aprobado">0</span></div>
-              <div class="pipeline-col-body" id="pipeline-aprobado"></div>
-            </div>
-            <div class="pipeline-column">
-              <div class="pipeline-col-header" style="border-top-color:#C5A253;"><span>En Progreso</span><span class="pipeline-count" id="count-progreso">0</span></div>
-              <div class="pipeline-col-body" id="pipeline-progreso"></div>
-            </div>
-            <div class="pipeline-column">
-              <div class="pipeline-col-header" style="border-top-color:#2D8B5E;"><span>Completado</span><span class="pipeline-count" id="count-completado">0</span></div>
-              <div class="pipeline-col-body" id="pipeline-completado"></div>
-            </div>
+            <div class="pipeline-column"><div class="pipeline-col-header" style="border-top-color:#C5A253;"><span>Prospecto</span><span class="pipeline-count" id="count-prospecto">0</span></div><div class="pipeline-col-body" id="pipeline-prospecto"></div></div>
+            <div class="pipeline-column"><div class="pipeline-col-header" style="border-top-color:#C5A253;"><span>Cotizado</span><span class="pipeline-count" id="count-cotizado">0</span></div><div class="pipeline-col-body" id="pipeline-cotizado"></div></div>
+            <div class="pipeline-column"><div class="pipeline-col-header" style="border-top-color:#2D8B5E;"><span>Aprobado</span><span class="pipeline-count" id="count-aprobado">0</span></div><div class="pipeline-col-body" id="pipeline-aprobado"></div></div>
+            <div class="pipeline-column"><div class="pipeline-col-header" style="border-top-color:#C5A253;"><span>En Progreso</span><span class="pipeline-count" id="count-progreso">0</span></div><div class="pipeline-col-body" id="pipeline-progreso"></div></div>
+            <div class="pipeline-column"><div class="pipeline-col-header" style="border-top-color:#2D8B5E;"><span>Completado</span><span class="pipeline-count" id="count-completado">0</span></div><div class="pipeline-col-body" id="pipeline-completado"></div></div>
           </div>
         </div>
         <div class="section">
@@ -797,57 +340,149 @@
           </div>
           <div class="table-wrap">
             <table id="tablaClientes">
-              <thead><tr><th>Nombre</th><th>RUC / Código</th><th>Tipo Contribuyente</th><th>Correo</th><th>Teléfono / WhatsApp</th><th>Proyectos</th><th>Acciones</th></tr></thead>
+              <thead><tr><th>Nombre</th><th>RUC / Código</th><th>Tipo Contribuyente</th><th>Correo</th><th>Teléfono</th><th>Proyectos</th><th>Acciones</th></tr></thead>
               <tbody id="tbodyClientes"></tbody>
             </table>
           </div>
         </div>
       </div>
 
+      <!-- ══════════════════════════════════
+           TAB 2: OPORTUNIDADES KANBAN
+           ══════════════════════════════════ -->
+      <div id="negocio-oportunidades" class="sub-section">
+        <div class="section-header" style="margin-bottom:16px;">
+          <h2 class="section-title"><i class="ph ph-lightning"></i> Panel de Oportunidades</h2>
+          <div class="section-actions">
+            <button class="btn-primary" onclick="oppAbrirModal()"><i class="ph ph-plus"></i> Nueva Oportunidad</button>
+          </div>
+        </div>
+        <!-- KPIs -->
+        <div class="opp-kpis">
+          <div class="opp-kpi-card"><span class="opp-kpi-val" id="opp-kpi-total">0</span><span class="opp-kpi-lbl">Total</span></div>
+          <div class="opp-kpi-card"><span class="opp-kpi-val" id="opp-kpi-activas">0</span><span class="opp-kpi-lbl">Activas</span></div>
+          <div class="opp-kpi-card"><span class="opp-kpi-val" id="opp-kpi-ganadas">0</span><span class="opp-kpi-lbl">Ganadas</span></div>
+          <div class="opp-kpi-card"><span class="opp-kpi-val" id="opp-kpi-tasa">0%</span><span class="opp-kpi-lbl">Tasa de Cierre</span></div>
+          <div class="opp-kpi-card"><span class="opp-kpi-val" id="opp-kpi-valor">USD 0.00</span><span class="opp-kpi-lbl">Valor Ganado</span></div>
+        </div>
+        <!-- Kanban -->
+        <div class="opp-kanban-wrap">
+          <div class="opp-kanban-board" id="opp-kanban-board">
+            <div style="color:#8FAB9A;font-size:13px;padding:20px;">Cargando oportunidades...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════
+           TAB 3: RADAR DE TRABAJOS
+           ══════════════════════════════════ -->
+      <div id="negocio-radar" class="sub-section">
+        <div class="radar-intro">
+          <span class="radar-intro-icon">📡</span>
+          <div class="radar-intro-texto">
+            <h4>Radar de Trabajos — GN Studio</h4>
+            <p>Accede a búsquedas pre-filtradas en las principales plataformas freelance con los keywords de nuestros servicios. Abre cualquier plataforma, encuentra un job interesante y guárdalo como oportunidad directamente en el OS.</p>
+          </div>
+        </div>
+        <div class="radar-plataformas-grid" id="radar-plataformas-grid">
+          <div style="color:#8FAB9A;font-size:13px;padding:20px;">Cargando plataformas...</div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════
+           TAB 4: COTIZACIONES
+           ══════════════════════════════════ -->
+      <div id="negocio-cotizaciones" class="sub-section">
+        <div class="section-header" style="margin-bottom:16px;">
+          <h2 class="section-title"><i class="ph ph-file-text"></i> Cotizaciones Independientes</h2>
+          <div class="section-actions"><button class="btn-primary" id="nc-btn-nueva" onclick="ncAbrirFormulario()"><i class="ph ph-plus"></i> Nueva Cotización</button></div>
+        </div>
+        <div id="nc-panel-form">
+          <div class="nc-form-header">
+            <span class="nc-form-title"><i class="ph ph-file-plus"></i> Nueva Cotización Independiente</span>
+            <button type="button" class="btn-secondary" id="nc-btn-cancelar" style="font-size:12px;padding:6px 14px;"><i class="ph ph-x"></i> Cancelar</button>
+          </div>
+          <form id="nc-form">
+            <div class="form-grid">
+              <div class="form-group"><label for="nc-numero">N° Cotización</label><input type="text" id="nc-numero" placeholder="COT-DDMMYY-XXXX" readonly style="opacity:0.7;"></div>
+              <div class="form-group"><label for="nc-cliente">Cliente</label><select id="nc-cliente"><option value="">— Selecciona cliente —</option></select></div>
+              <div class="form-group full-width"><label for="nc-titulo">Título / Nombre del servicio <span class="required">*</span></label><input type="text" id="nc-titulo" placeholder="Ej: Diseño de branding completo" required maxlength="200"></div>
+              <div class="form-group"><label for="nc-fecha">Fecha de emisión</label><input type="date" id="nc-fecha"></div>
+              <div class="form-group"><label for="nc-fecha-vencimiento">Válida hasta</label><input type="date" id="nc-fecha-vencimiento"></div>
+            </div>
+            <div style="margin-top:20px;">
+              <h3 class="sub-title" style="margin-bottom:12px;"><i class="ph ph-currency-dollar"></i> Propuesta Económica</h3>
+              <div class="nc-items-toolbar">
+                <select id="nc-select-catalogo"><option value="">— Agregar desde catálogo —</option></select>
+                <button type="button" class="btn-secondary" id="nc-btn-add-catalogo"><i class="ph ph-plus"></i> Del catálogo</button>
+                <button type="button" class="btn-secondary" id="nc-btn-agregar-item"><i class="ph ph-pencil-simple"></i> Línea manual</button>
+              </div>
+              <div class="table-wrap">
+                <table class="nc-items-table">
+                  <thead><tr><th style="min-width:160px;">Descripción</th><th style="width:70px;">Unidad</th><th style="width:80px;">Cant.</th><th style="width:110px;">P. Unit.</th><th style="width:80px;">ITBMS</th><th style="width:100px;text-align:right;">Total</th><th style="width:40px;"></th></tr></thead>
+                  <tbody id="nc-items-tbody"></tbody>
+                </table>
+              </div>
+              <div class="nc-totales">
+                <div class="nc-total-row"><span>Subtotal</span><span id="nc-subtotal">USD 0.00</span></div>
+                <div class="nc-total-row"><span>ITBMS (7%)</span><span id="nc-itbms">USD 0.00</span></div>
+                <div class="nc-total-row nc-grand-total"><span>Total</span><span id="nc-total">USD 0.00</span></div>
+              </div>
+            </div>
+            <div class="form-group full-width" style="margin-top:16px;"><label for="nc-notas">Notas / condiciones (opcional)</label><textarea id="nc-notas" rows="3" placeholder="Ej: Validez 15 días, incluye 2 revisiones..."></textarea></div>
+            <div id="nc-feedback"></div>
+            <div class="form-actions"><button type="submit" class="btn-primary"><i class="ph ph-floppy-disk"></i> Guardar Cotización</button></div>
+          </form>
+        </div>
+        <div class="section" style="margin-top:24px;">
+          <div class="section-header">
+            <h2 class="section-title"><i class="ph ph-list-checks"></i> Cotizaciones</h2>
+            <div class="section-actions">
+              <input type="text" id="nc-buscar" placeholder="Buscar..." class="search-input" style="width:180px;">
+              <select id="nc-filtro-estado" class="filter-btn"><option value="">Todos los estados</option><option value="cotizado">Cotizado</option><option value="enviado">Enviado</option><option value="aprobado">Aprobado</option><option value="rechazado">Rechazado</option><option value="convertido">Convertido</option></select>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table id="nc-tabla-cotizaciones"><thead><tr><th>N°</th><th>Cliente</th><th>Título</th><th style="text-align:right;">Total</th><th>Fecha</th><th style="text-align:center;">Estado</th><th>Acciones</th></tr></thead><tbody id="nc-tbody"></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════
+           TAB 5: CATÁLOGO & PAQUETES
+           ══════════════════════════════════ -->
       <div id="negocio-catalogo" class="sub-section">
+        <!-- Paquetes -->
+        <div class="section" style="margin-bottom:24px;">
+          <div class="section-header">
+            <h2 class="section-title"><i class="ph ph-package"></i> Paquetes de Servicios</h2>
+            <div class="section-actions"><button class="btn-secondary" onclick="catalogo_abrirModalPaquete()"><i class="ph ph-plus"></i> Nuevo Paquete</button></div>
+          </div>
+          <div class="paquetes-grid" id="paquetes-grid">
+            <div style="color:#8FAB9A;font-size:13px;padding:20px;grid-column:1/-1;">Los paquetes que crees aparecerán aquí.</div>
+          </div>
+        </div>
+        <!-- Añadir Servicio -->
         <div class="form-section">
           <div class="form-header"><h2 class="section-title"><i class="ph ph-plus"></i> Añadir Servicio al Catálogo</h2></div>
           <form id="formServicio" onsubmit="return guardarServicio(event)">
             <div class="form-grid">
-              <div class="form-group full-width">
-                <label for="serv-descripcion">Descripción del servicio <span class="required">*</span></label>
-                <input type="text" id="serv-descripcion" placeholder="Ej: Diseño de landing page de alto impacto" required maxlength="300">
-              </div>
-              <div class="form-group">
-                <label for="serv-grupo">Grupo (opcional)</label>
-                <select id="serv-grupo"><option value="">Sin grupo específico</option></select>
-              </div>
-              <div class="form-group">
-                <label for="serv-unidad">Unidad <span class="required">*</span></label>
-                <select id="serv-unidad" required>
-                  <option value="und">und</option><option value="hr">hr</option><option value="dia">día</option>
-                  <option value="mes">mes</option><option value="pagina">pág</option>
-                  <option value="proyecto">proy</option><option value="paquete">paq</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="serv-precio">Precio Unitario (USD) <span class="required">*</span></label>
-                <input type="number" id="serv-precio" placeholder="0.00" required min="0.01" step="0.01">
-              </div>
-              <div class="form-group">
-                <label for="serv-itbms">¿Aplica ITBMS?</label>
-                <select id="serv-itbms"><option value="1">Sí (7%)</option><option value="0">No</option></select>
-              </div>
+              <div class="form-group full-width"><label for="serv-descripcion">Descripción del servicio <span class="required">*</span></label><input type="text" id="serv-descripcion" placeholder="Ej: Diseño de landing page de alto impacto" required maxlength="300"></div>
+              <div class="form-group"><label for="serv-grupo">Grupo (opcional)</label><select id="serv-grupo"><option value="">Sin grupo específico</option></select></div>
+              <div class="form-group"><label for="serv-unidad">Unidad <span class="required">*</span></label><select id="serv-unidad" required><option value="und">und</option><option value="hr">hr</option><option value="dia">día</option><option value="mes">mes</option><option value="pagina">pág</option><option value="proyecto">proy</option><option value="paquete">paq</option></select></div>
+              <div class="form-group"><label for="serv-precio">Precio Unitario (USD) <span class="required">*</span></label><input type="number" id="serv-precio" placeholder="0.00" required min="0.01" step="0.01"></div>
+              <div class="form-group"><label for="serv-itbms">¿Aplica ITBMS?</label><select id="serv-itbms"><option value="1">Sí (7%)</option><option value="0">No</option></select></div>
             </div>
-            <div class="form-actions">
-              <button type="submit" class="btn-primary"><i class="ph ph-floppy-disk"></i> Guardar Servicio</button>
-              <button type="reset" class="btn-secondary"><i class="ph ph-arrow-counter-clockwise"></i> Limpiar</button>
-            </div>
+            <div class="form-actions"><button type="submit" class="btn-primary"><i class="ph ph-floppy-disk"></i> Guardar Servicio</button><button type="reset" class="btn-secondary"><i class="ph ph-arrow-counter-clockwise"></i> Limpiar</button></div>
           </form>
           <div class="form-feedback" id="feedback-servicio"></div>
         </div>
+        <!-- Grupos -->
         <div class="section">
-          <div class="section-header">
-            <h2 class="section-title"><i class="ph ph-folder"></i> Grupos de Servicios</h2>
-            <div class="section-actions"><button class="btn-secondary" onclick="abrirModalGrupo()"><i class="ph ph-plus"></i> Nuevo grupo</button></div>
-          </div>
+          <div class="section-header"><h2 class="section-title"><i class="ph ph-folder"></i> Grupos de Servicios</h2><div class="section-actions"><button class="btn-secondary" onclick="abrirModalGrupo()"><i class="ph ph-plus"></i> Nuevo grupo</button></div></div>
           <div id="gruposResumenCatalogo" class="grupos-resumen"></div>
         </div>
+        <!-- Catálogo tabla -->
         <div class="section">
           <div class="section-header">
             <h2 class="section-title"><i class="ph ph-list-checks"></i> Servicios del Catálogo</h2>
@@ -856,254 +491,61 @@
               <select id="filtro-servicio-grupo" onchange="filtrarServicios()" class="filter-btn"><option value="todos">Todos los grupos</option></select>
             </div>
           </div>
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead><tr><th>Código</th><th>Servicio</th><th>Unidad</th><th>Precio</th><th>ITBMS</th><th>Acciones</th></tr></thead>
-              <tbody id="tbodyServicios"></tbody>
-            </table>
-          </div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>Código</th><th>Servicio</th><th>Unidad</th><th>Precio</th><th>ITBMS</th><th>Acciones</th></tr></thead><tbody id="tbodyServicios"></tbody></table></div>
         </div>
       </div>
 
-      <!-- ══ SUB-SECCIÓN: COTIZACIONES INDEPENDIENTES ══ -->
-      <div id="negocio-cotizaciones" class="sub-section">
-
-        <!-- Encabezado + botón nueva -->
+      <!-- ══════════════════════════════════
+           TAB 6: PROVEEDORES
+           ══════════════════════════════════ -->
+      <div id="negocio-proveedores" class="sub-section">
         <div class="section-header" style="margin-bottom:16px;">
-          <h2 class="section-title"><i class="ph ph-file-text"></i> Cotizaciones Independientes</h2>
-          <div class="section-actions">
-            <button class="btn-primary" id="nc-btn-nueva" onclick="ncAbrirFormulario()">
-              <i class="ph ph-plus"></i> Nueva Cotización
-            </button>
-          </div>
+          <h2 class="section-title"><i class="ph ph-storefront"></i> Proveedores</h2>
+          <div class="section-actions"><button class="btn-primary" onclick="provAbrirModal()"><i class="ph ph-plus"></i> Nuevo Proveedor</button></div>
         </div>
-
-        <!-- ── PANEL FORMULARIO (oculto por defecto) ── -->
-        <div id="nc-panel-form">
-          <div class="nc-form-header">
-            <span class="nc-form-title"><i class="ph ph-file-plus"></i> Nueva Cotización Independiente</span>
-            <button type="button" class="btn-secondary" id="nc-btn-cancelar" style="font-size:12px;padding:6px 14px;">
-              <i class="ph ph-x"></i> Cancelar
-            </button>
-          </div>
-
-          <form id="nc-form">
-            <div class="form-grid">
-              <div class="form-group">
-                <label for="nc-numero">N° Cotización</label>
-                <input type="text" id="nc-numero" placeholder="COT-DDMMYY-XXXX" readonly style="opacity:0.7;">
-              </div>
-              <div class="form-group">
-                <label for="nc-cliente">Cliente</label>
-                <select id="nc-cliente"><option value="">— Selecciona cliente —</option></select>
-              </div>
-              <div class="form-group full-width">
-                <label for="nc-titulo">Título / Nombre del servicio <span class="required">*</span></label>
-                <input type="text" id="nc-titulo" placeholder="Ej: Diseño de branding completo" required maxlength="200">
-              </div>
-              <div class="form-group">
-                <label for="nc-fecha">Fecha de emisión</label>
-                <input type="date" id="nc-fecha">
-              </div>
-              <div class="form-group">
-                <label for="nc-fecha-vencimiento">Válida hasta</label>
-                <input type="date" id="nc-fecha-vencimiento">
-              </div>
-            </div>
-
-            <!-- Ítems de la propuesta económica -->
-            <div style="margin-top:20px;">
-              <h3 class="sub-title" style="margin-bottom:12px;"><i class="ph ph-currency-dollar"></i> Propuesta Económica</h3>
-
-              <div class="nc-items-toolbar">
-                <select id="nc-select-catalogo">
-                  <option value="">— Agregar desde catálogo —</option>
-                </select>
-                <button type="button" class="btn-secondary" id="nc-btn-add-catalogo">
-                  <i class="ph ph-plus"></i> Del catálogo
-                </button>
-                <button type="button" class="btn-secondary" id="nc-btn-agregar-item">
-                  <i class="ph ph-pencil-simple"></i> Línea manual
-                </button>
-              </div>
-
-              <div class="table-wrap">
-                <table class="nc-items-table">
-                  <thead>
-                    <tr>
-                      <th style="min-width:160px;">Descripción</th>
-                      <th style="width:70px;">Unidad</th>
-                      <th style="width:80px;">Cant.</th>
-                      <th style="width:110px;">P. Unit.</th>
-                      <th style="width:80px;">ITBMS</th>
-                      <th style="width:100px;text-align:right;">Total</th>
-                      <th style="width:40px;"></th>
-                    </tr>
-                  </thead>
-                  <tbody id="nc-items-tbody"></tbody>
-                </table>
-              </div>
-
-              <div class="nc-totales">
-                <div class="nc-total-row">
-                  <span>Subtotal</span>
-                  <span id="nc-subtotal">USD 0.00</span>
-                </div>
-                <div class="nc-total-row">
-                  <span>ITBMS (7%)</span>
-                  <span id="nc-itbms">USD 0.00</span>
-                </div>
-                <div class="nc-total-row nc-grand-total">
-                  <span>Total</span>
-                  <span id="nc-total">USD 0.00</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="form-group full-width" style="margin-top:16px;">
-              <label for="nc-notas">Notas / condiciones (opcional)</label>
-              <textarea id="nc-notas" rows="3" placeholder="Ej: Validez 15 días, incluye 2 revisiones..."></textarea>
-            </div>
-
-            <div id="nc-feedback"></div>
-
-            <div class="form-actions">
-              <button type="submit" class="btn-primary"><i class="ph ph-floppy-disk"></i> Guardar Cotización</button>
-            </div>
-          </form>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Nombre</th><th>Categoría</th><th>Servicio</th><th>Contacto</th><th>Link</th><th>Costo Ref.</th><th>Acciones</th></tr></thead>
+            <tbody id="tbody-proveedores"></tbody>
+          </table>
         </div>
-        <!-- fin panel-form -->
-
-        <!-- ── TABLA DE COTIZACIONES ── -->
-        <div class="section" style="margin-top:24px;">
-          <div class="section-header">
-            <h2 class="section-title"><i class="ph ph-list-checks"></i> Cotizaciones</h2>
-            <div class="section-actions">
-              <input type="text" id="nc-buscar" placeholder="Buscar..." class="search-input" style="width:180px;">
-              <select id="nc-filtro-estado" class="filter-btn">
-                <option value="">Todos los estados</option>
-                <option value="cotizado">Cotizado</option>
-                <option value="enviado">Enviado</option>
-                <option value="aprobado">Aprobado</option>
-                <option value="rechazado">Rechazado</option>
-                <option value="convertido">Convertido</option>
-              </select>
-            </div>
-          </div>
-          <div class="table-wrap">
-            <table id="nc-tabla-cotizaciones">
-              <thead>
-                <tr>
-                  <th>N°</th>
-                  <th>Cliente</th>
-                  <th>Título</th>
-                  <th style="text-align:right;">Total</th>
-                  <th>Fecha</th>
-                  <th style="text-align:center;">Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="nc-tbody"></tbody>
-            </table>
-          </div>
-        </div>
-
       </div>
-      <!-- fin negocio-cotizaciones -->
 
     </section>
 
-    <!-- ============================================================
-         SECCION: PROYECTOS
-         ============================================================ -->
+    <!-- ════════════════════════════════════════════════
+         PROYECTOS
+         ════════════════════════════════════════════════ -->
     <section id="proyectos" class="section-panel">
-
       <div id="proyecto-proforma-panel" class="section" style="margin-bottom:24px;display:none;">
-        <div class="section-header">
-          <h2 class="section-title"><i class="ph ph-file-text"></i> Nueva Propuesta / Proyecto</h2>
-          <div class="section-actions">
-            <button type="button" class="btn-secondary" onclick="togglePanelProforma()" style="padding:8px 14px;"><i class="ph ph-x"></i> Cerrar</button>
-          </div>
-        </div>
+        <div class="section-header"><h2 class="section-title"><i class="ph ph-file-text"></i> Nueva Propuesta / Proyecto</h2><div class="section-actions"><button type="button" class="btn-secondary" onclick="togglePanelProforma()" style="padding:8px 14px;"><i class="ph ph-x"></i> Cerrar</button></div></div>
         <form id="formProformaProyecto" onsubmit="return guardarProformaProyecto(event)">
           <div class="form-grid">
-            <div class="form-group full-width">
-              <label for="pf-nombre-proyecto">Nombre del Proyecto <span class="required">*</span></label>
-              <input type="text" id="pf-nombre-proyecto" placeholder="Ej: Rediseño web corporativo" required maxlength="200">
-            </div>
-            <div class="form-group">
-              <label for="pf-fecha">Fecha de Inicio <span class="required">*</span></label>
-              <input type="date" id="pf-fecha" required>
-            </div>
-            <div class="form-group">
-              <label for="pf-cliente">Cliente <span class="required">*</span></label>
-              <select id="pf-cliente" required><option value="">Selecciona un cliente</option></select>
-            </div>
+            <div class="form-group full-width"><label for="pf-nombre-proyecto">Nombre del Proyecto <span class="required">*</span></label><input type="text" id="pf-nombre-proyecto" placeholder="Ej: Rediseño web corporativo" required maxlength="200"></div>
+            <div class="form-group"><label for="pf-fecha">Fecha de Inicio <span class="required">*</span></label><input type="date" id="pf-fecha" required></div>
+            <div class="form-group"><label for="pf-cliente">Cliente <span class="required">*</span></label><select id="pf-cliente" required><option value="">Selecciona un cliente</option></select></div>
           </div>
-          <div class="form-group full-width" style="margin-top:16px;">
-            <label>Alcance del Proyecto</label>
-            <div class="editor-toolbar">
-              <button type="button" data-cmd="bold" title="Negrita"><i class="ph ph-text-b"></i></button>
-              <button type="button" data-cmd="italic" title="Cursiva"><i class="ph ph-text-italic"></i></button>
-              <button type="button" data-cmd="unorderedList" title="Lista"><i class="ph ph-list-bullets"></i></button>
-              <button type="button" data-cmd="orderedList" title="Lista numerada"><i class="ph ph-list-numbers"></i></button>
-            </div>
-            <div id="pf-alcance-editor" class="editor-area" contenteditable="true" placeholder="Describe el alcance del proyecto..."></div>
-            <textarea id="pf-alcance" style="display:none;"></textarea>
-          </div>
+          <div class="form-group full-width" style="margin-top:16px;"><label>Alcance del Proyecto</label><div class="editor-toolbar"><button type="button" data-cmd="bold" title="Negrita"><i class="ph ph-text-b"></i></button><button type="button" data-cmd="italic" title="Cursiva"><i class="ph ph-text-italic"></i></button><button type="button" data-cmd="unorderedList" title="Lista"><i class="ph ph-list-bullets"></i></button><button type="button" data-cmd="orderedList" title="Lista numerada"><i class="ph ph-list-numbers"></i></button></div><div id="pf-alcance-editor" class="editor-area" contenteditable="true" placeholder="Describe el alcance del proyecto..."></div><textarea id="pf-alcance" style="display:none;"></textarea></div>
           <div style="margin-top:24px;">
             <h3 class="sub-title"><i class="ph ph-currency-dollar"></i> Propuesta Económica</h3>
             <div style="margin-bottom:16px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
-              <div style="flex:1;min-width:200px;">
-                <label style="font-size:12px;color:var(--gn-text-muted);display:block;margin-bottom:6px;">Agregar desde Catálogo</label>
-                <select id="pf-select-servicio-catalogo" style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--gn-border);background:rgba(18,53,36,0.15);color:var(--gn-text);font-size:14px;"><option value="">-- Selecciona un servicio del catalogo --</option></select>
-              </div>
+              <div style="flex:1;min-width:200px;"><label style="font-size:12px;color:var(--gn-text-muted);display:block;margin-bottom:6px;">Agregar desde Catálogo</label><select id="pf-select-servicio-catalogo" style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--gn-border);background:rgba(18,53,36,0.15);color:var(--gn-text);font-size:14px;"><option value="">-- Selecciona un servicio del catalogo --</option></select></div>
               <button type="button" class="btn-secondary" onclick="agregarServicioCatalogoAProforma()" style="min-height:44px;"><i class="ph ph-plus"></i> Agregar</button>
               <button type="button" class="btn-secondary" onclick="agregarFilaProformaVacia()" style="min-height:44px;"><i class="ph ph-pencil-simple"></i> Línea manual</button>
             </div>
-            <div class="table-wrap">
-              <table>
-                <thead><tr><th>Servicio</th><th>Unidad</th><th>Cantidad</th><th>Precio Unit.</th><th>ITBMS</th><th>Total</th><th></th></tr></thead>
-                <tbody id="tbodyProformaServicios"></tbody>
-              </table>
-            </div>
-            <div style="margin-top:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;">
-                <input type="checkbox" id="pf-aplica-itbms" checked style="width:18px;height:18px;accent-color:#C5A253;">
-                <span>Aplicar ITBMS (7%) a la propuesta total</span>
-              </label>
-              <span id="pf-itbms-monto" style="font-size:13px;color:var(--gn-text-muted);"></span>
-            </div>
-            <div style="margin-top:16px;text-align:right;">
-              <div style="font-size:13px;color:var(--gn-text-muted);">Subtotal: <span id="pf-subtotal-propuesta" style="font-weight:600;color:var(--gn-text);">USD 0.00</span></div>
-              <div style="font-size:13px;color:var(--gn-text-muted);margin-top:4px;">ITBMS (7%): <span id="pf-itbms-total" style="font-weight:600;color:#C5A253;">USD 0.00</span></div>
-              <div style="margin-top:8px;"><span style="font-size:13px;color:var(--gn-text-muted);">Total Propuesta: </span><span id="pf-total-propuesta" style="font-size:20px;font-weight:700;color:#C5A253;">USD 0.00</span></div>
-            </div>
+            <div class="table-wrap"><table><thead><tr><th>Servicio</th><th>Unidad</th><th>Cantidad</th><th>Precio Unit.</th><th>ITBMS</th><th>Total</th><th></th></tr></thead><tbody id="tbodyProformaServicios"></tbody></table></div>
+            <div style="margin-top:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;"><input type="checkbox" id="pf-aplica-itbms" checked style="width:18px;height:18px;accent-color:#C5A253;"><span>Aplicar ITBMS (7%) a la propuesta total</span></label><span id="pf-itbms-monto" style="font-size:13px;color:var(--gn-text-muted);"></span></div>
+            <div style="margin-top:16px;text-align:right;"><div style="font-size:13px;color:var(--gn-text-muted);">Subtotal: <span id="pf-subtotal-propuesta" style="font-weight:600;color:var(--gn-text);">USD 0.00</span></div><div style="font-size:13px;color:var(--gn-text-muted);margin-top:4px;">ITBMS (7%): <span id="pf-itbms-total" style="font-weight:600;color:#C5A253;">USD 0.00</span></div><div style="margin-top:8px;"><span style="font-size:13px;color:var(--gn-text-muted);">Total Propuesta: </span><span id="pf-total-propuesta" style="font-size:20px;font-weight:700;color:#C5A253;">USD 0.00</span></div></div>
           </div>
           <div class="form-feedback" id="feedback-proforma" style="margin-top:16px;"></div>
-          <div class="form-actions">
-            <button type="submit" class="btn-primary"><i class="ph ph-floppy-disk"></i> Crear Proyecto y Cotización</button>
-            <button type="reset" class="btn-secondary" onclick="document.getElementById('pf-alcance-editor').innerHTML='';document.getElementById('tbodyProformaServicios').innerHTML='';"><i class="ph ph-arrow-counter-clockwise"></i> Limpiar</button>
-          </div>
+          <div class="form-actions"><button type="submit" class="btn-primary"><i class="ph ph-floppy-disk"></i> Crear Proyecto y Cotización</button><button type="reset" class="btn-secondary" onclick="document.getElementById('pf-alcance-editor').innerHTML='';document.getElementById('tbodyProformaServicios').innerHTML='';"><i class="ph ph-arrow-counter-clockwise"></i> Limpiar</button></div>
         </form>
       </div>
-
       <div id="proyectos-lista">
-
-        <!-- CALENDARIO -->
         <div class="cal-wrapper">
-          <div class="cal-toolbar">
-            <h3><i class="ph ph-calendar-dots"></i> Calendario de Proyectos</h3>
-            <div class="cal-nav">
-              <button class="cal-nav-btn" onclick="calMesAnterior()" title="Mes anterior"><i class="ph ph-caret-left"></i></button>
-              <span id="cal-titulo">Cargando...</span>
-              <button class="cal-nav-btn" onclick="calMesSiguiente()" title="Mes siguiente"><i class="ph ph-caret-right"></i></button>
-              <button class="cal-btn-hoy" onclick="calHoy()">Hoy</button>
-            </div>
-          </div>
+          <div class="cal-toolbar"><h3><i class="ph ph-calendar-dots"></i> Calendario de Proyectos</h3><div class="cal-nav"><button class="cal-nav-btn" onclick="calMesAnterior()" title="Mes anterior"><i class="ph ph-caret-left"></i></button><span id="cal-titulo">Cargando...</span><button class="cal-nav-btn" onclick="calMesSiguiente()" title="Mes siguiente"><i class="ph ph-caret-right"></i></button><button class="cal-btn-hoy" onclick="calHoy()">Hoy</button></div></div>
           <div id="cal-grid"></div>
         </div>
-
         <div class="section">
           <div class="section-header">
             <h2 class="section-title"><i class="ph ph-buildings"></i> Proyectos Activos</h2>
@@ -1115,21 +557,12 @@
               <button class="btn-primary" onclick="togglePanelProforma()"><i class="ph ph-plus"></i> Nueva propuesta / proyecto</button>
             </div>
           </div>
-          <div class="table-wrap">
-            <table id="tablaProyectos" class="data-table">
-              <thead><tr><th>Fecha</th><th>ID</th><th>Nombre</th><th>Cliente</th><th>Estado</th><th>Presupuesto</th><th>Cobrado</th></tr></thead>
-              <tbody id="tbodyProyectos"></tbody>
-            </table>
-          </div>
+          <div class="table-wrap"><table id="tablaProyectos" class="data-table"><thead><tr><th>Fecha</th><th>ID</th><th>Nombre</th><th>Cliente</th><th>Estado</th><th>Presupuesto</th><th>Cobrado</th></tr></thead><tbody id="tbodyProyectos"></tbody></table></div>
         </div>
       </div>
-
       <div id="proyecto-detalle" style="display:none;">
-        <div style="margin-bottom:8px;">
-          <button class="btn-secondary" onclick="volverAListaProyectos()" style="margin-bottom:16px;"><i class="ph ph-arrow-left"></i> Volver a Proyectos</button>
-        </div>
+        <div style="margin-bottom:8px;"><button class="btn-secondary" onclick="volverAListaProyectos()" style="margin-bottom:16px;"><i class="ph ph-arrow-left"></i> Volver a Proyectos</button></div>
         <div id="proyecto-hero"></div>
-
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
           <button class="btn-secondary" onclick="abrirModalPagoProyecto()"><i class="ph ph-coins"></i> Registrar Pago</button>
           <button class="btn-secondary" onclick="abrirModalGastoProyecto()"><i class="ph ph-receipt"></i> Registrar Gasto</button>
@@ -1137,14 +570,12 @@
           <button class="btn-secondary" onclick="switchProyectoTab('documentos')"><i class="ph ph-file-text"></i> Ver Cotización</button>
           <button class="btn-secondary" onclick="imprimirCotizacionProyecto()"><i class="ph ph-printer"></i> Imprimir</button>
         </div>
-
         <div class="proyecto-tabs">
           <button class="proyecto-tab active" onclick="switchProyectoTab('resumen')"><i class="ph ph-squares-four"></i> Resumen</button>
           <button class="proyecto-tab" onclick="switchProyectoTab('tareas')"><i class="ph ph-check-square"></i> Tareas</button>
           <button class="proyecto-tab" onclick="switchProyectoTab('financiero')"><i class="ph ph-currency-dollar"></i> Financiero</button>
           <button class="proyecto-tab" onclick="switchProyectoTab('documentos')"><i class="ph ph-paperclip"></i> Documentos</button>
         </div>
-
         <div id="proyecto-tab-resumen" class="proyecto-tab-content active">
           <div class="proyecto-resumen-kpis">
             <div class="proyecto-resumen-kpi"><div class="proyecto-resumen-kpi-value" id="resumen-kpi-presupuesto">$0.00</div><div class="proyecto-resumen-kpi-label">Presupuesto</div></div>
@@ -1155,246 +586,66 @@
             <div class="proyecto-resumen-kpi"><div class="proyecto-resumen-kpi-value" id="resumen-kpi-avance">0%</div><div class="proyecto-resumen-kpi-label">% Avance</div></div>
           </div>
           <div class="dashboard-grid">
-            <div class="dashboard-card">
-              <div class="card-header"><h3><i class="ph ph-trend-up"></i> Progreso</h3></div>
-              <div class="progreso-circular" id="proyecto-progreso-visual">
-                <svg viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="8"/>
-                  <circle cx="50" cy="50" r="45" fill="none" stroke="#2D8B5E" stroke-width="8" stroke-dasharray="283" stroke-dashoffset="200" stroke-linecap="round" transform="rotate(-90 50 50)"/>
-                </svg>
-                <span class="progreso-text" id="proyecto-progreso-pct">0%</span>
-              </div>
-            </div>
-            <div class="dashboard-card">
-              <div class="card-header"><h3><i class="ph ph-currency-dollar"></i> Resumen Financiero</h3></div>
-              <div class="resumen-financiero">
-                <div class="fin-row"><span>Presupuesto Aprobado</span><strong id="resumen-presupuesto">$0.00</strong></div>
-                <div class="fin-row"><span>Gastos del Proyecto</span><strong id="resumen-gastos" style="color:#F87171;">$0.00</strong></div>
-                <div class="fin-row"><span>Pagos Recibidos</span><strong id="resumen-pagos" style="color:#2D8B5E;">$0.00</strong></div>
-                <div class="fin-row"><span>Por Cobrar</span><strong id="resumen-por-cobrar" style="color:#C5A253;">$0.00</strong></div>
-                <div class="fin-row fin-total"><span>Utilidad Neta</span><strong id="resumen-utilidad">$0.00</strong></div>
-              </div>
-            </div>
-            <div class="dashboard-card">
-              <div class="card-header"><h3><i class="ph ph-squares-four"></i> Gráficas del Proyecto</h3></div>
-              <div class="proyecto-chart-wrap"><canvas id="chartProyectoBalance"></canvas></div>
-            </div>
+            <div class="dashboard-card"><div class="card-header"><h3><i class="ph ph-trend-up"></i> Progreso</h3></div><div class="progreso-circular" id="proyecto-progreso-visual"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="8"/><circle cx="50" cy="50" r="45" fill="none" stroke="#2D8B5E" stroke-width="8" stroke-dasharray="283" stroke-dashoffset="200" stroke-linecap="round" transform="rotate(-90 50 50)"/></svg><span class="progreso-text" id="proyecto-progreso-pct">0%</span></div></div>
+            <div class="dashboard-card"><div class="card-header"><h3><i class="ph ph-currency-dollar"></i> Resumen Financiero</h3></div><div class="resumen-financiero"><div class="fin-row"><span>Presupuesto Aprobado</span><strong id="resumen-presupuesto">$0.00</strong></div><div class="fin-row"><span>Gastos del Proyecto</span><strong id="resumen-gastos" style="color:#F87171;">$0.00</strong></div><div class="fin-row"><span>Pagos Recibidos</span><strong id="resumen-pagos" style="color:#2D8B5E;">$0.00</strong></div><div class="fin-row"><span>Por Cobrar</span><strong id="resumen-por-cobrar" style="color:#C5A253;">$0.00</strong></div><div class="fin-row fin-total"><span>Utilidad Neta</span><strong id="resumen-utilidad">$0.00</strong></div></div></div>
+            <div class="dashboard-card"><div class="card-header"><h3><i class="ph ph-squares-four"></i> Gráficas del Proyecto</h3></div><div class="proyecto-chart-wrap"><canvas id="chartProyectoBalance"></canvas></div></div>
           </div>
-          <div class="section">
-            <div class="section-header"><h2 class="section-title"><i class="ph ph-calendar"></i> Línea de Tiempo</h2></div>
-            <div class="timeline" id="proyecto-timeline"></div>
-          </div>
+          <div class="section"><div class="section-header"><h2 class="section-title"><i class="ph ph-calendar"></i> Línea de Tiempo</h2></div><div class="timeline" id="proyecto-timeline"></div></div>
         </div>
-
         <div id="proyecto-tab-tareas" class="proyecto-tab-content">
           <div id="tt-panel-proyecto"></div>
-          <div class="form-section">
-            <div class="form-header"><h2 class="section-title"><i class="ph ph-plus-circle"></i> Nueva Tarea</h2></div>
-            <form id="formTareaProyecto" onsubmit="return guardarTareaProyecto(event)">
-              <div class="form-grid">
-                <div class="form-group full-width">
-                  <label for="tarea-titulo">Título <span class="required">*</span></label>
-                  <input type="text" id="tarea-titulo" placeholder="¿Qué hay que hacer?" required>
-                </div>
-                <div class="form-group full-width">
-                  <label for="tarea-descripcion">Descripción</label>
-                  <textarea id="tarea-descripcion" rows="2" placeholder="Detalles adicionales de la tarea..."></textarea>
-                </div>
-                <div class="form-group">
-                  <label for="tarea-asignado">Asignado a</label>
-                  <input type="text" id="tarea-asignado" placeholder="Ej: Diseñador UX">
-                </div>
-                <div class="form-group">
-                  <label for="tarea-fecha-limite">Fecha Límite</label>
-                  <input type="date" id="tarea-fecha-limite">
-                </div>
-                <div class="form-group">
-                  <label for="tarea-prioridad">Prioridad</label>
-                  <select id="tarea-prioridad">
-                    <option value="urgente">🔴 Urgente</option>
-                    <option value="alta">🟠 Alta</option>
-                    <option value="media" selected>🟡 Media</option>
-                    <option value="baja">⚪ Baja</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label for="tarea-estado">Estado</label>
-                  <select id="tarea-estado">
-                    <option value="pendiente">Pendiente</option>
-                    <option value="en_progreso">En Progreso</option>
-                    <option value="revision">En Revisión</option>
-                    <option value="completada">Completada</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label for="tarea-estimado-hrs">Horas Estimadas</label>
-                  <input type="number" id="tarea-estimado-hrs" placeholder="0" min="0" step="0.5">
-                </div>
-              </div>
-              <div class="form-actions">
-                <button type="submit" class="btn-primary"><i class="ph ph-floppy-disk"></i> Guardar Tarea</button>
-              </div>
-            </form>
-          </div>
-          <div class="section">
-            <div class="section-header">
-              <h2 class="section-title"><i class="ph ph-kanban"></i> Tablero de Tareas</h2>
-              <div class="section-actions">
-                <button class="btn-secondary" onclick="ttExportarReporte(window._proyectoActualId)"><i class="ph ph-download-simple"></i> Exportar Tiempo CSV</button>
-              </div>
+          <div class="form-section"><div class="form-header"><h2 class="section-title"><i class="ph ph-plus-circle"></i> Nueva Tarea</h2></div>
+          <form id="formTareaProyecto" onsubmit="return guardarTareaProyecto(event)">
+            <div class="form-grid">
+              <div class="form-group full-width"><label for="tarea-titulo">Título <span class="required">*</span></label><input type="text" id="tarea-titulo" placeholder="¿Qué hay que hacer?" required></div>
+              <div class="form-group full-width"><label for="tarea-descripcion">Descripción</label><textarea id="tarea-descripcion" rows="2" placeholder="Detalles adicionales de la tarea..."></textarea></div>
+              <div class="form-group"><label for="tarea-asignado">Asignado a</label><input type="text" id="tarea-asignado" placeholder="Ej: Diseñador UX"></div>
+              <div class="form-group"><label for="tarea-fecha-limite">Fecha Límite</label><input type="date" id="tarea-fecha-limite"></div>
+              <div class="form-group"><label for="tarea-prioridad">Prioridad</label><select id="tarea-prioridad"><option value="urgente">🔴 Urgente</option><option value="alta">🟠 Alta</option><option value="media" selected>🟡 Media</option><option value="baja">⚪ Baja</option></select></div>
+              <div class="form-group"><label for="tarea-estado">Estado</label><select id="tarea-estado"><option value="pendiente">Pendiente</option><option value="en_progreso">En Progreso</option><option value="revision">En Revisión</option><option value="completada">Completada</option></select></div>
+              <div class="form-group"><label for="tarea-estimado-hrs">Horas Estimadas</label><input type="number" id="tarea-estimado-hrs" placeholder="0" min="0" step="0.5"></div>
             </div>
-            <div id="tareas-kanban"></div>
-          </div>
+            <div class="form-actions"><button type="submit" class="btn-primary"><i class="ph ph-floppy-disk"></i> Guardar Tarea</button></div>
+          </form></div>
+          <div class="section"><div class="section-header"><h2 class="section-title"><i class="ph ph-kanban"></i> Tablero de Tareas</h2><div class="section-actions"><button class="btn-secondary" onclick="ttExportarReporte(window._proyectoActualId)"><i class="ph ph-download-simple"></i> Exportar Tiempo CSV</button></div></div><div id="tareas-kanban"></div></div>
         </div>
-
         <div id="proyecto-tab-financiero" class="proyecto-tab-content">
-          <div class="section">
-            <div class="section-header">
-              <h2 class="section-title"><i class="ph ph-money"></i> Gastos del Proyecto</h2>
-              <button class="btn-secondary" onclick="abrirModalGastoProyecto()"><i class="ph ph-plus"></i> Registrar Gasto</button>
-            </div>
-            <div class="table-wrap">
-              <table id="tablaGastosProyecto">
-                <thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Monto</th><th>Método</th></tr></thead>
-                <tbody id="tbodyGastosProyecto"></tbody>
-              </table>
-            </div>
-          </div>
-          <div class="section">
-            <div class="section-header">
-              <h2 class="section-title"><i class="ph ph-currency-dollar"></i> Pagos Recibidos</h2>
-              <button class="btn-secondary" onclick="abrirModalPagoProyecto()"><i class="ph ph-plus"></i> Registrar Pago</button>
-            </div>
-            <div class="table-wrap">
-              <table id="tablaPagosProyecto">
-                <thead><tr><th>Fecha</th><th>Concepto</th><th>Monto</th><th>Método</th><th>Estado</th></tr></thead>
-                <tbody id="tbodyPagosProyecto"></tbody>
-              </table>
-            </div>
-          </div>
+          <div class="section"><div class="section-header"><h2 class="section-title"><i class="ph ph-money"></i> Gastos del Proyecto</h2><button class="btn-secondary" onclick="abrirModalGastoProyecto()"><i class="ph ph-plus"></i> Registrar Gasto</button></div><div class="table-wrap"><table id="tablaGastosProyecto"><thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Monto</th><th>Método</th></tr></thead><tbody id="tbodyGastosProyecto"></tbody></table></div></div>
+          <div class="section"><div class="section-header"><h2 class="section-title"><i class="ph ph-currency-dollar"></i> Pagos Recibidos</h2><button class="btn-secondary" onclick="abrirModalPagoProyecto()"><i class="ph ph-plus"></i> Registrar Pago</button></div><div class="table-wrap"><table id="tablaPagosProyecto"><thead><tr><th>Fecha</th><th>Concepto</th><th>Monto</th><th>Método</th><th>Estado</th></tr></thead><tbody id="tbodyPagosProyecto"></tbody></table></div></div>
         </div>
-
         <div id="proyecto-tab-documentos" class="proyecto-tab-content">
-          <div class="section">
-            <div class="section-header">
-              <h2 class="section-title"><i class="ph ph-file-text"></i> Cotización del Proyecto</h2>
-              <div class="section-actions">
-                <button class="btn-secondary" onclick="imprimirCotizacionProyecto()"><i class="ph ph-printer"></i> Imprimir</button>
-                <button class="btn-secondary" onclick="descargarCotizacionPDF()"><i class="ph ph-download-simple"></i> Descargar PDF</button>
-              </div>
-            </div>
-            <div id="cotizacion-documento-container"><div class="empty-state">Cargando cotización...</div></div>
-          </div>
-          <div class="form-section" style="margin-top:24px;">
-            <div class="form-header"><h2 class="section-title"><i class="ph ph-pencil-simple"></i> Notas del Proyecto</h2></div>
-            <div class="form-group full-width">
-              <label for="proyecto-notas">Notas adicionales</label>
-              <textarea id="proyecto-notas" rows="6" placeholder="Reuniones, decisiones, feedback del cliente..."></textarea>
-            </div>
-            <div class="form-actions">
-              <button type="button" class="btn-primary" onclick="guardarNotasProyecto()"><i class="ph ph-floppy-disk"></i> Guardar Notas</button>
-            </div>
-          </div>
+          <div class="section"><div class="section-header"><h2 class="section-title"><i class="ph ph-file-text"></i> Cotización del Proyecto</h2><div class="section-actions"><button class="btn-secondary" onclick="imprimirCotizacionProyecto()"><i class="ph ph-printer"></i> Imprimir</button><button class="btn-secondary" onclick="descargarCotizacionPDF()"><i class="ph ph-download-simple"></i> Descargar PDF</button></div></div><div id="cotizacion-documento-container"><div class="empty-state">Cargando cotización...</div></div></div>
+          <div class="form-section" style="margin-top:24px;"><div class="form-header"><h2 class="section-title"><i class="ph ph-pencil-simple"></i> Notas del Proyecto</h2></div><div class="form-group full-width"><label for="proyecto-notas">Notas adicionales</label><textarea id="proyecto-notas" rows="6" placeholder="Reuniones, decisiones, feedback del cliente..."></textarea></div><div class="form-actions"><button type="button" class="btn-primary" onclick="guardarNotasProyecto()"><i class="ph ph-floppy-disk"></i> Guardar Notas</button></div></div>
         </div>
       </div>
     </section>
 
-    <!-- ============================================================
-         SECCION: FINANZAS
-         ============================================================ -->
+    <!-- ════════════════════════════════════════════════
+         FINANZAS
+         ════════════════════════════════════════════════ -->
     <section id="finanzas" class="section-panel">
       <div class="sub-nav">
-        <button class="sub-nav-item active" onclick="switchSubSection('finanzas', 'estado-cuenta')"><i class="ph ph-scroll"></i> Estado de Cuenta</button>
-        <button class="sub-nav-item" onclick="switchSubSection('finanzas', 'itbms')"><i class="ph ph-squares-four"></i> Declaración ITBMS</button>
-        <button class="sub-nav-item" onclick="switchSubSection('finanzas', 'reportes')"><i class="ph ph-trend-up"></i> Reportes</button>
+        <button class="sub-nav-item active" onclick="switchSubSection('finanzas','estado-cuenta')"><i class="ph ph-scroll"></i> Estado de Cuenta</button>
+        <button class="sub-nav-item" onclick="switchSubSection('finanzas','itbms')"><i class="ph ph-squares-four"></i> Declaración ITBMS</button>
+        <button class="sub-nav-item" onclick="switchSubSection('finanzas','reportes')"><i class="ph ph-trend-up"></i> Reportes</button>
       </div>
-
       <div id="finanzas-estado-cuenta" class="sub-section active">
-        <div class="form-section">
-          <div class="form-header"><h2 class="section-title"><i class="ph ph-magnifying-glass"></i> Filtros del Estado de Cuenta</h2></div>
-          <div class="form-grid">
-            <div class="form-group"><label for="ec-desde">Desde</label><input type="date" id="ec-desde"></div>
-            <div class="form-group"><label for="ec-hasta">Hasta</label><input type="date" id="ec-hasta"></div>
-            <div class="form-group"><label for="ec-tipo">Tipo</label><select id="ec-tipo"><option value="todos">Todos</option><option value="ingresos">Solo Ingresos</option><option value="gastos">Solo Gastos</option></select></div>
-            <div class="form-group"><label for="ec-proyecto">Proyecto</label><select id="ec-proyecto"><option value="">Todos los proyectos</option></select></div>
-            <div class="form-group"><label>&nbsp;</label><button type="button" class="btn-primary" onclick="generarEstadoCuenta()"><i class="ph ph-list-checks"></i> Generar Estado</button></div>
-          </div>
-        </div>
-        <div class="dashboard-grid">
-          <div class="dashboard-card"><div class="card-header"><h3><i class="ph ph-arrow-down-left"></i> Ingresos</h3></div><div class="ec-resumen-monto" id="ec-total-ingresos" style="color:#2D8B5E;">$0.00</div></div>
-          <div class="dashboard-card"><div class="card-header"><h3><i class="ph ph-arrow-up-right"></i> Gastos</h3></div><div class="ec-resumen-monto" id="ec-total-gastos" style="color:#F87171;">$0.00</div></div>
-          <div class="dashboard-card"><div class="card-header"><h3><i class="ph ph-scales"></i> Balance</h3></div><div class="ec-resumen-monto" id="ec-balance" style="color:#C5A253;">$0.00</div></div>
-        </div>
-        <div class="section">
-          <div class="section-header">
-            <h2 class="section-title"><i class="ph ph-scroll"></i> Movimientos</h2>
-            <div class="section-actions">
-              <button class="btn-secondary" onclick="exportarEstadoCuentaPDF()"><i class="ph ph-printer"></i> Exportar PDF</button>
-              <button class="btn-secondary" onclick="exportarEstadoCuentaExcel()"><i class="ph ph-squares-four"></i> Exportar Excel</button>
-            </div>
-          </div>
-          <div class="table-wrap">
-            <table id="tablaEstadoCuenta">
-              <thead><tr><th>Fecha</th><th>Tipo</th><th>Proyecto/Ref.</th><th>Descripción</th><th>Ingreso</th><th>Gasto</th><th>Saldo</th></tr></thead>
-              <tbody id="tbodyEstadoCuenta"></tbody>
-            </table>
-          </div>
-        </div>
+        <div class="form-section"><div class="form-header"><h2 class="section-title"><i class="ph ph-magnifying-glass"></i> Filtros del Estado de Cuenta</h2></div><div class="form-grid"><div class="form-group"><label for="ec-desde">Desde</label><input type="date" id="ec-desde"></div><div class="form-group"><label for="ec-hasta">Hasta</label><input type="date" id="ec-hasta"></div><div class="form-group"><label for="ec-tipo">Tipo</label><select id="ec-tipo"><option value="todos">Todos</option><option value="ingresos">Solo Ingresos</option><option value="gastos">Solo Gastos</option></select></div><div class="form-group"><label for="ec-proyecto">Proyecto</label><select id="ec-proyecto"><option value="">Todos los proyectos</option></select></div><div class="form-group"><label>&nbsp;</label><button type="button" class="btn-primary" onclick="generarEstadoCuenta()"><i class="ph ph-list-checks"></i> Generar Estado</button></div></div></div>
+        <div class="dashboard-grid"><div class="dashboard-card"><div class="card-header"><h3><i class="ph ph-arrow-down-left"></i> Ingresos</h3></div><div class="ec-resumen-monto" id="ec-total-ingresos" style="color:#2D8B5E;">$0.00</div></div><div class="dashboard-card"><div class="card-header"><h3><i class="ph ph-arrow-up-right"></i> Gastos</h3></div><div class="ec-resumen-monto" id="ec-total-gastos" style="color:#F87171;">$0.00</div></div><div class="dashboard-card"><div class="card-header"><h3><i class="ph ph-scales"></i> Balance</h3></div><div class="ec-resumen-monto" id="ec-balance" style="color:#C5A253;">$0.00</div></div></div>
+        <div class="section"><div class="section-header"><h2 class="section-title"><i class="ph ph-scroll"></i> Movimientos</h2><div class="section-actions"><button class="btn-secondary" onclick="exportarEstadoCuentaPDF()"><i class="ph ph-printer"></i> Exportar PDF</button><button class="btn-secondary" onclick="exportarEstadoCuentaExcel()"><i class="ph ph-squares-four"></i> Exportar Excel</button></div></div><div class="table-wrap"><table id="tablaEstadoCuenta"><thead><tr><th>Fecha</th><th>Tipo</th><th>Proyecto/Ref.</th><th>Descripción</th><th>Ingreso</th><th>Gasto</th><th>Saldo</th></tr></thead><tbody id="tbodyEstadoCuenta"></tbody></table></div></div>
       </div>
-
       <div id="finanzas-itbms" class="sub-section">
-        <div class="section">
-          <div class="section-header"><h2 class="section-title"><i class="ph ph-squares-four"></i> Declaración ITBMS Panamá (Formulario D-010)</h2></div>
-          <p class="section-desc">Genera automáticamente el resumen para tu declaración mensual de ITBMS ante la DGI Panamá.</p>
-        </div>
-        <div class="form-section">
-          <div class="form-grid">
-            <div class="form-group"><label for="itbms-periodo">Período <span class="required">*</span></label><input type="month" id="itbms-periodo" required></div>
-            <div class="form-group"><label for="itbms-ruc">RUC <span class="required">*</span></label><input type="text" id="itbms-ruc" placeholder="Ej: 123456789-2-2023" required></div>
-            <div class="form-group"><label for="itbms-razon">Razón Social <span class="required">*</span></label><input type="text" id="itbms-razon" placeholder="Ej: GN Studio S.A." required></div>
-            <div class="form-group"><label>&nbsp;</label><button type="button" class="btn-primary" onclick="generarDeclaracionITBMS()"><i class="ph ph-list-checks"></i> Generar Declaración</button></div>
-          </div>
-        </div>
+        <div class="section"><div class="section-header"><h2 class="section-title"><i class="ph ph-squares-four"></i> Declaración ITBMS Panamá (Formulario D-010)</h2></div><p class="section-desc">Genera automáticamente el resumen para tu declaración mensual de ITBMS ante la DGI Panamá.</p></div>
+        <div class="form-section"><div class="form-grid"><div class="form-group"><label for="itbms-periodo">Período <span class="required">*</span></label><input type="month" id="itbms-periodo" required></div><div class="form-group"><label for="itbms-ruc">RUC <span class="required">*</span></label><input type="text" id="itbms-ruc" placeholder="Ej: 123456789-2-2023" required></div><div class="form-group"><label for="itbms-razon">Razón Social <span class="required">*</span></label><input type="text" id="itbms-razon" placeholder="Ej: GN Studio S.A." required></div><div class="form-group"><label>&nbsp;</label><button type="button" class="btn-primary" onclick="generarDeclaracionITBMS()"><i class="ph ph-list-checks"></i> Generar Declaración</button></div></div></div>
         <div id="itbms-resumen-container" style="display:none;">
-          <div class="dashboard-grid">
-            <div class="dashboard-card"><div class="card-header"><h3><i class="ph ph-currency-dollar"></i> Ventas Gravadas (7%)</h3></div><div class="ec-resumen-monto" id="itbms-ventas-gravadas">$0.00</div></div>
-            <div class="dashboard-card"><div class="card-header"><h3><i class="ph ph-arrow-up-right"></i> ITBMS Débito (Cobrado)</h3></div><div class="ec-resumen-monto" id="itbms-debito" style="color:#F87171;">$0.00</div></div>
-            <div class="dashboard-card"><div class="card-header"><h3><i class="ph ph-arrow-down-left"></i> ITBMS Crédito (Pagado)</h3></div><div class="ec-resumen-monto" id="itbms-credito" style="color:#2D8B5E;">$0.00</div></div>
-            <div class="dashboard-card"><div class="card-header"><h3><i class="ph ph-scales"></i> ITBMS a Pagar</h3></div><div class="ec-resumen-monto" id="itbms-a-pagar" style="color:#C5A253;">$0.00</div></div>
-          </div>
-          <div class="section">
-            <div class="section-header">
-              <h2 class="section-title"><i class="ph ph-list-checks"></i> Detalle de Operaciones</h2>
-              <div class="section-actions"><button class="btn-secondary" onclick="exportarITBMSPDF()"><i class="ph ph-printer"></i> Exportar para DGI</button></div>
-            </div>
-            <h3 class="sub-title"><i class="ph ph-arrow-up-right"></i> Ventas con ITBMS (Débito Fiscal)</h3>
-            <div class="table-wrap">
-              <table id="tablaITBMSDebito">
-                <thead><tr><th>Fecha</th><th>Cliente</th><th>Factura/Cotización</th><th>Monto Base</th><th>ITBMS 7%</th><th>Total</th></tr></thead>
-                <tbody id="tbodyITBMSDebito"></tbody>
-              </table>
-            </div>
-            <h3 class="sub-title" style="margin-top:24px;"><i class="ph ph-arrow-down-left"></i> Compras con ITBMS (Crédito Fiscal)</h3>
-            <div class="table-wrap">
-              <table id="tablaITBMSCredito">
-                <thead><tr><th>Fecha</th><th>Proveedor</th><th>Descripción</th><th>Monto Base</th><th>ITBMS 7%</th><th>Total</th></tr></thead>
-                <tbody id="tbodyITBMSCredito"></tbody>
-              </table>
-            </div>
-          </div>
+          <div class="dashboard-grid"><div class="dashboard-card"><div class="card-header"><h3><i class="ph ph-currency-dollar"></i> Ventas Gravadas (7%)</h3></div><div class="ec-resumen-monto" id="itbms-ventas-gravadas">$0.00</div></div><div class="dashboard-card"><div class="card-header"><h3><i class="ph ph-arrow-up-right"></i> ITBMS Débito (Cobrado)</h3></div><div class="ec-resumen-monto" id="itbms-debito" style="color:#F87171;">$0.00</div></div><div class="dashboard-card"><div class="card-header"><h3><i class="ph ph-arrow-down-left"></i> ITBMS Crédito (Pagado)</h3></div><div class="ec-resumen-monto" id="itbms-credito" style="color:#2D8B5E;">$0.00</div></div><div class="dashboard-card"><div class="card-header"><h3><i class="ph ph-scales"></i> ITBMS a Pagar</h3></div><div class="ec-resumen-monto" id="itbms-a-pagar" style="color:#C5A253;">$0.00</div></div></div>
+          <div class="section"><div class="section-header"><h2 class="section-title"><i class="ph ph-list-checks"></i> Detalle de Operaciones</h2><div class="section-actions"><button class="btn-secondary" onclick="exportarITBMSPDF()"><i class="ph ph-printer"></i> Exportar para DGI</button></div></div><h3 class="sub-title"><i class="ph ph-arrow-up-right"></i> Ventas con ITBMS (Débito Fiscal)</h3><div class="table-wrap"><table id="tablaITBMSDebito"><thead><tr><th>Fecha</th><th>Cliente</th><th>Factura/Cotización</th><th>Monto Base</th><th>ITBMS 7%</th><th>Total</th></tr></thead><tbody id="tbodyITBMSDebito"></tbody></table></div><h3 class="sub-title" style="margin-top:24px;"><i class="ph ph-arrow-down-left"></i> Compras con ITBMS (Crédito Fiscal)</h3><div class="table-wrap"><table id="tablaITBMSCredito"><thead><tr><th>Fecha</th><th>Proveedor</th><th>Descripción</th><th>Monto Base</th><th>ITBMS 7%</th><th>Total</th></tr></thead><tbody id="tbodyITBMSCredito"></tbody></table></div></div>
         </div>
       </div>
-
       <div id="finanzas-reportes" class="sub-section">
         <div class="section"><div class="section-header"><h2 class="section-title"><i class="ph ph-trend-up"></i> Reportes &amp; Análisis</h2></div></div>
-        <div class="charts-row">
-          <div class="chart-card"><h3 class="chart-title">Evolución Mensual</h3><canvas id="chartEvolucionMensual"></canvas></div>
-          <div class="chart-card"><h3 class="chart-title">Ingresos por Tipo de Servicio</h3><canvas id="chartIngresosPorServicio"></canvas></div>
-        </div>
-        <div class="charts-row">
-          <div class="chart-card"><h3 class="chart-title">Gastos por Categoría</h3><canvas id="chartGastosPorCategoria"></canvas></div>
-          <div class="chart-card"><h3 class="chart-title">Rentabilidad por Proyecto</h3><canvas id="chartRentabilidadProyectos"></canvas></div>
-        </div>
+        <div class="charts-row"><div class="chart-card"><h3 class="chart-title">Evolución Mensual</h3><canvas id="chartEvolucionMensual"></canvas></div><div class="chart-card"><h3 class="chart-title">Ingresos por Tipo de Servicio</h3><canvas id="chartIngresosPorServicio"></canvas></div></div>
+        <div class="charts-row"><div class="chart-card"><h3 class="chart-title">Gastos por Categoría</h3><canvas id="chartGastosPorCategoria"></canvas></div><div class="chart-card"><h3 class="chart-title">Rentabilidad por Proyecto</h3><canvas id="chartRentabilidadProyectos"></canvas></div></div>
       </div>
     </section>
 
@@ -1422,6 +673,9 @@
   <script src="js/app.js"></script>
   <script src="js/dashboard-widgets.js"></script>
   <script src="js/negocio-cotizaciones.js"></script>
+  <script src="js/negocio-oportunidades.js"></script>
+  <script src="js/negocio-radar.js"></script>
+  <script src="js/negocio-proveedores.js"></script>
 
   <script>
     document.addEventListener('click', function(e) {
@@ -1441,29 +695,20 @@
         window.renderDetalleProyecto = async function(proyecto) {
           window._proyectoActualId = proyecto.id;
           await _origRender(proyecto);
-          if (typeof ttRenderPanelEnTareas === 'function') {
-            ttRenderPanelEnTareas(proyecto.id, []);
-          }
+          if (typeof ttRenderPanelEnTareas === 'function') ttRenderPanelEnTareas(proyecto.id, []);
           ttInjectarEnKanban(proyecto.id);
         };
       }
-
       var _origSwitch = window.switchSection;
       if (typeof _origSwitch === 'function') {
         window.switchSection = function(seccion) {
           _origSwitch(seccion);
-          if (seccion === 'proyectos' && typeof window.initCalendario === 'function') {
-            window.initCalendario();
-          }
-          if (seccion === 'dashboard' && typeof gnRenderWidgets === 'function') {
-            gnRenderWidgets();
-          }
+          if (seccion === 'proyectos' && typeof window.initCalendario === 'function') window.initCalendario();
+          if (seccion === 'dashboard' && typeof gnRenderWidgets === 'function') gnRenderWidgets();
         };
       }
       setTimeout(function() {
-        if (typeof window.initCalendario === 'function') {
-          window.initCalendario();
-        }
+        if (typeof window.initCalendario === 'function') window.initCalendario();
       }, 800);
     });
 
