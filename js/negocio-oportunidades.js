@@ -1,6 +1,7 @@
 // ============================================================
-// js/negocio-oportunidades.js — GN Studio OS v1.0
+// js/negocio-oportunidades.js — GN Studio OS v1.1
 // Panel de Oportunidades: leads guardados desde Radar + manual
+// Incluye: boton Crear Propuesta en cada tarjeta del Kanban
 // ============================================================
 
 var OPPS_KEY = 'gn_oportunidades';
@@ -62,11 +63,15 @@ async function oppRenderKanban() {
         OPP_STAGES.forEach(function(s) {
           if (s.id === stage.id) return;
           if (s.id === 'ganado' || s.id === 'perdido') return;
-          html += '<button onclick="event.stopPropagation();oppMoverStage(\''+o.id+'\',\''+s.id+'\')" title="Mover a '+s.label+'" style="background:none;border:none;cursor:pointer;color:#8FAB9A;font-size:11px;padding:2px 4px;border-radius:4px;border:1px solid rgba(255,255,255,0.08);">→ '+s.label+'</button> ';
+          html += '<button onclick="event.stopPropagation();oppMoverStage(\''+o.id+'\',\''+s.id+'\')" title="Mover a '+s.label+'" style="background:none;border:none;cursor:pointer;color:#8FAB9A;font-size:11px;padding:2px 4px;border-radius:4px;border:1px solid rgba(255,255,255,0.08);">\u2192 '+s.label+'</button> ';
         });
         if (stage.id !== 'ganado') html += '<button onclick="event.stopPropagation();oppMoverStage(\''+o.id+'\',\'ganado\')" style="background:rgba(45,139,94,0.15);border:1px solid rgba(45,139,94,0.3);color:#2D8B5E;font-size:11px;padding:2px 6px;border-radius:4px;cursor:pointer;">✓ Ganado</button> ';
         if (stage.id !== 'perdido') html += '<button onclick="event.stopPropagation();oppMoverStage(\''+o.id+'\',\'perdido\')" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.2);color:#F87171;font-size:11px;padding:2px 6px;border-radius:4px;cursor:pointer;">✗</button> ';
         html += '<button onclick="event.stopPropagation();oppEliminar(\''+o.id+'\')" style="background:none;border:none;cursor:pointer;color:#F87171;font-size:11px;">🗑</button>';
+        html += '</div>';
+        // ── Botón Crear Propuesta ──
+        html += '<div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;">';
+        html += '<button onclick="event.stopPropagation();oppCrearPropuesta(\''+o.id+'\')" style="width:100%;padding:6px 10px;background:rgba(197,162,83,0.12);border:1px solid rgba(197,162,83,0.3);border-radius:7px;color:#C5A253;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;"><i class="ph ph-file-plus"></i> Crear Propuesta</button>';
         html += '</div>';
         html += '</div>';
       });
@@ -103,9 +108,84 @@ async function oppMoverStage(id, newStage) {
 }
 
 async function oppEliminar(id) {
-  if (!confirm('¿Eliminar esta oportunidad?')) return;
+  if (!confirm('\u00bfEliminar esta oportunidad?')) return;
   await opp_delete(id);
   await oppRenderKanban();
+}
+
+// ============================================================
+// oppCrearPropuesta(id)
+// Toma los datos de la oportunidad y abre el panel de Proyectos
+// con el formulario de Nueva Propuesta pre-rellenado.
+// ============================================================
+async function oppCrearPropuesta(id) {
+  var opps = await opp_getAll();
+  var o = opps.find(function(x){ return String(x.id) === String(id); });
+  if (!o) return;
+
+  // Navegar a Proyectos y abrir el panel de propuesta
+  if (typeof window.switchSection === 'function') {
+    window.switchSection('proyectos');
+  }
+
+  // Esperar a que el panel esté visible antes de rellenar
+  setTimeout(function() {
+    // Mostrar el panel del formulario
+    if (typeof window.togglePanelProforma === 'function') {
+      var panel = document.getElementById('proyecto-proforma-panel');
+      // Solo abrir si no está ya visible
+      if (panel && panel.style.display === 'none') {
+        window.togglePanelProforma();
+      }
+    }
+
+    // Pre-rellenar los campos con datos de la oportunidad
+    setTimeout(function() {
+      var nombreField = document.getElementById('pf-nombre-proyecto');
+      if (nombreField) nombreField.value = o.titulo || '';
+
+      // Intentar seleccionar el cliente si existe en el select
+      var clienteSelect = document.getElementById('pf-cliente');
+      if (clienteSelect && o.cliente) {
+        // Buscar opción que coincida (por texto)
+        var opts = Array.prototype.slice.call(clienteSelect.options);
+        opts.forEach(function(opt) {
+          if (opt.text && opt.text.toLowerCase().indexOf(o.cliente.toLowerCase()) !== -1) {
+            clienteSelect.value = opt.value;
+          }
+        });
+      }
+
+      // Pre-rellenar fecha de hoy si está vacía
+      var fechaField = document.getElementById('pf-fecha');
+      if (fechaField && !fechaField.value) {
+        var hoy = new Date();
+        fechaField.value = hoy.getFullYear() + '-' +
+          String(hoy.getMonth()+1).padStart(2,'0') + '-' +
+          String(hoy.getDate()).padStart(2,'0');
+      }
+
+      // Agregar nota con presupuesto de referencia y link en el editor de alcance
+      var alcanceEditor = document.getElementById('pf-alcance-editor');
+      if (alcanceEditor && !alcanceEditor.textContent.trim()) {
+        var nota = 'Basado en oportunidad: ' + (o.titulo || '') + '.';
+        if (o.presupuesto) nota += ' Presupuesto referencia: USD ' + parseFloat(o.presupuesto).toFixed(2) + '.';
+        if (o.notas) nota += '\n' + o.notas;
+        if (o.link) nota += '\nLink: ' + o.link;
+        alcanceEditor.textContent = nota;
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      if (window.showToast) {
+        window.showToast({
+          type: 'info',
+          title: 'Propuesta pre-rellenada',
+          message: 'Revisa y ajusta los datos desde la oportunidad "' + (o.titulo || '') + '".'
+        });
+      }
+    }, 300);
+  }, 400);
 }
 
 // ── Modal nueva oportunidad ──
@@ -139,9 +219,9 @@ function oppAbrirModal(prefill) {
         '</select></div>',
         '<div><label style="font-size:11px;color:#8FAB9A;display:block;margin-bottom:5px;">PRIORIDAD</label>',
         '<select id="opp-prioridad" style="width:100%;padding:10px;background:#0D1611;border:1px solid rgba(197,162,83,0.2);border-radius:8px;color:#E8F0EC;">',
-        '<option value="alta"'+(d.prioridad==='alta'?' selected':'')+'>🔴 Alta</option>',
-        '<option value="media"'+((!d.prioridad||d.prioridad==='media')?' selected':'')+'>🟡 Media</option>',
-        '<option value="baja"'+(d.prioridad==='baja'?' selected':'')+'>🟢 Baja</option>',
+        '<option value="alta"'+(d.prioridad==='alta'?' selected':'')+'>\uD83D\uDD34 Alta</option>',
+        '<option value="media"'+((!d.prioridad||d.prioridad==='media')?' selected':'')+'>\uD83D\uDFE1 Media</option>',
+        '<option value="baja"'+(d.prioridad==='baja'?' selected':'')+'>\uD83D\uDFE2 Baja</option>',
         '</select></div>',
         '<div style="grid-column:1/-1;"><label style="font-size:11px;color:#8FAB9A;display:block;margin-bottom:5px;">LINK AL JOB (opcional)</label>',
         '<input id="opp-link" value="'+escH(d.link||'')+'" placeholder="https://www.upwork.com/jobs/..." style="width:100%;padding:10px;background:#0D1611;border:1px solid rgba(197,162,83,0.2);border-radius:8px;color:#E8F0EC;box-sizing:border-box;"></div>',
