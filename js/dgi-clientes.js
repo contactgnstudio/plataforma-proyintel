@@ -1,14 +1,12 @@
 // ============================================================
 // js/dgi-clientes.js — Búsqueda de Contribuyentes DGI Panamá
-// Integración con API pública de la DGI / MEF
+// Integración con portal DGI / MEF via proxy CORS
 // GN Studio OS v2.5
 // ============================================================
-// La DGI de Panamá expone datos de contribuyentes públicamente.
-// Usamos la API del portal MEF/e-Tax: https://etax.mef.gob.pa
-// Endpoint de consulta pública (RUC o nombre):
-//   GET https://api.mef.gob.pa/contribuyentes/consulta?q={query}
-// Como fallback usamos el scraping seguro vía cors-proxy o
-// el endpoint directo documentado en el portal de datos abiertos.
+// La API directa de api.mef.gob.pa no tiene DNS público válido
+// y etax2.mef.gob.pa bloquea peticiones cross-origin (CORS).
+// Solución: pasar las llamadas por un proxy CORS (allorigins.win)
+// que actúa de intermediario y devuelve la respuesta sin restricciones.
 // ============================================================
 
 (function (window, document) {
@@ -28,46 +26,51 @@
   }
 
   // ============================================================
-  // API DGI — Endpoints conocidos y públicos
-  // La DGI publica datos de RUC en:
-  //   https://www.dgi.mef.gob.pa/registro/ruc/index.html
-  // El portal de datos abiertos de Panamá también tiene:
-  //   https://www.datosabiertos.gob.pa
-  // Usamos el endpoint de consulta de la API REST del MEF:
+  // Proxy CORS — envuelve cualquier URL para evitar bloqueos
+  // allorigins.win retorna { contents: "...", status: {...} }
   // ============================================================
-  var DGI_API = {
-    // Búsqueda por nombre o RUC — API MEF Datos Abiertos
-    // https://api.mef.gob.pa/contribuyentes/consulta?ruc=XXX
-    // https://api.mef.gob.pa/contribuyentes/consulta?nombre=XXX
-    BASE: 'https://api.mef.gob.pa/contribuyentes/consulta',
-    // Endpoint alternativo portal DGI
-    PORTAL: 'https://etax2.mef.gob.pa/esb/portaltrib/consultaRucService'
-  };
+  var CORS_PROXY = 'https://api.allorigins.win/get?url=';
+
+  // Endpoint DGI real (portal e-Tax MEF)
+  var DGI_PORTAL = 'https://etax2.mef.gob.pa/esb/portaltrib/consultaRucService';
 
   // ============================================================
-  // Buscar contribuyente en la API DGI
+  // Buscar contribuyente en la DGI via proxy CORS
   // query puede ser RUC (ej: 8-123-456) o nombre/razón social
   // ============================================================
   async function buscarEnDGI(query) {
     if (!query || query.trim().length < 2) return [];
     var q = query.trim();
 
-    // Detectar si es RUC (contiene guiones o solo números)
+    // Detectar si es RUC (contiene guiones o solo dígitos)
     var esRuc = /^[\d-]+$/.test(q);
+    var paramKey = esRuc ? 'ruc' : 'nombre';
+
+    // URL destino real en DGI
+    var targetUrl = DGI_PORTAL + '?' + paramKey + '=' + encodeURIComponent(q);
+
+    // URL proxificada
+    var proxyUrl = CORS_PROXY + encodeURIComponent(targetUrl);
 
     try {
-      var url = DGI_API.BASE + '?' + (esRuc ? 'ruc=' : 'nombre=') + encodeURIComponent(q);
+      var resp = await fetch(proxyUrl, { method: 'GET' });
+      if (!resp.ok) throw new Error('Proxy HTTP ' + resp.status);
 
-      var resp = await fetch(url, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
-      });
+      var wrapper = await resp.json();
+      // allorigins devuelve { contents: "<respuesta del servidor>" }
+      var contents = wrapper && wrapper.contents ? wrapper.contents : null;
+      if (!contents) return _resultadoVacio();
 
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-      var data = await resp.json();
+      // Intentar parsear como JSON
+      var data;
+      try { data = JSON.parse(contents); } catch (e) { data = null; }
 
-      // Normalizar respuesta — la API puede devolver array o { data: [...] }
+      if (!data) return _resultadoVacio();
+
       var lista = Array.isArray(data) ? data : (data.data || data.contribuyentes || data.results || []);
+
+      if (!lista.length) return _resultadoVacio();
+
       return lista.map(function (item) {
         return {
           ruc:               item.ruc || item.numero_ruc || '',
@@ -79,38 +82,14 @@
           actividad:         item.actividad || item.actividad_economica || ''
         };
       });
+
     } catch (e) {
-      // Fallback: intentar endpoint alternativo del portal DGI
-      try {
-        return await _buscarFallbackDGI(q, esRuc);
-      } catch (e2) {
-        console.warn('[DGI] Error en ambos endpoints:', e2);
-        return [];
-      }
+      console.warn('[DGI] Error consultando vía proxy:', e);
+      return [];
     }
   }
 
-  // Fallback: consulta directa al portal DGI e-Tax
-  async function _buscarFallbackDGI(query, esRuc) {
-    // El portal DGI permite consulta por RUC vía parámetro GET
-    // URL pública: https://etax2.mef.gob.pa/esb/portaltrib/consultaRucService?ruc=XXX
-    var url = DGI_API.PORTAL + '?' + (esRuc ? 'ruc=' : 'nombre=') + encodeURIComponent(query);
-    var resp = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
-    if (!resp.ok) throw new Error('Fallback HTTP ' + resp.status);
-    var data = await resp.json();
-    var lista = Array.isArray(data) ? data : (data.data || []);
-    return lista.map(function (item) {
-      return {
-        ruc:               item.ruc || '',
-        dv:                item.dv || '',
-        nombre:            item.nombre || item.razon_social || '',
-        tipo_contribuyente: item.tipo || '',
-        nombre_comercial:  item.nombre_comercial || '',
-        estado:            item.estado || 'Activo',
-        actividad:         item.actividad || ''
-      };
-    });
-  }
+  function _resultadoVacio() { return []; }
 
   // ============================================================
   // MODAL DE BÚSQUEDA DGI
@@ -209,10 +188,8 @@
     html += '</div>';
     resultados.innerHTML = html;
 
-    // Guardar referencia a los resultados para el botón Guardar
     window._dgiResultados = lista;
 
-    // Bind botones Guardar
     var btns = document.querySelectorAll('.dgi-btn-agregar');
     Array.prototype.forEach.call(btns, function (btn) {
       btn.addEventListener('click', function () {
@@ -256,7 +233,6 @@
       if (resultado) {
         toast('success', '¡Cliente guardado!', item.nombre + ' fue agregado a tus clientes.');
         if (btnEl) { btnEl.style.background = 'rgba(45,139,94,0.2)'; btnEl.style.color = '#2D8B5E'; btnEl.style.borderColor = '#2D8B5E'; btnEl.innerHTML = '<i class="ph ph-check"></i> Guardado'; }
-        // Actualizar tabla de clientes si está visible
         if (typeof window.renderClientes === 'function') window.renderClientes();
         if (typeof window.actualizarSelectClientes === 'function') window.actualizarSelectClientes();
       } else {
