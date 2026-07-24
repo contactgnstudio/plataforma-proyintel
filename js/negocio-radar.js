@@ -2,25 +2,25 @@
 // js/negocio-radar.js — GN Studio OS v2.0
 // Radar de Oportunidades: consume la Edge Function radar-jobs
 // y renderiza tarjetas con trabajos reales (o fallback mock).
-// Fase 5: fetch con timeout, retry, refresh automático,
-//         estados visuales En vivo / Caché / Sin jobs,
-//         validación robusta de SUPABASE_FUNCTIONS_URL.
+// Los jobs se abren en target="_blank" — sin iframes embebidos
+// (X-Frame-Options bloquea Upwork/Workana/Fiverr/Behance/etc.)
 // ============================================================
 
 // ─── Config ─────────────────────────────────────────────────
-var RADAR_FETCH_TIMEOUT_MS  = 8000;   // 8 s máximo por petición
-var RADAR_FETCH_RETRIES     = 2;      // reintentos ante error de red
-var RADAR_REFRESH_INTERVAL  = 5 * 60 * 1000; // refresco cada 5 min
-var _radarRefreshTimer      = null;
-var _radarCategoriaActiva   = null;
-var _radarUltimaRespuesta   = null;   // cache in-memory de la última respuesta OK
+var RADAR_SUPABASE_URL       = 'https://smbphmmaswqcwmacfdxg.supabase.co';
+var RADAR_FETCH_TIMEOUT_MS   = 8000;
+var RADAR_FETCH_RETRIES      = 2;
+var RADAR_REFRESH_INTERVAL   = 5 * 60 * 1000;
+var _radarRefreshTimer       = null;
+var _radarCategoriaActiva    = null;
+var _radarUltimaRespuesta    = null;
 
-// ─── Validación de URL base ──────────────────────────────────
+// ─── URL de la Edge Function ─────────────────────────────────
 function radarGetApiUrl() {
-  var base = (window.SUPABASE_FUNCTIONS_URL || '').toString().trim();
-  // Considera URL válida solo si tiene protocolo http(s)
+  // Prioridad: variable global inyectada en runtime → constante hardcoded
+  var base = ((window.SUPABASE_FUNCTIONS_URL || '').toString().trim()) || RADAR_SUPABASE_URL;
   if (!base || !/^https?:\/\//i.test(base)) return null;
-  return base.replace(/\/+$/, '') + '/radar-jobs';
+  return base.replace(/\/+$/, '') + '/functions/v1/radar-jobs';
 }
 
 // ─── Datos mock (fallback mientras no hay integración real) ──
@@ -67,6 +67,15 @@ function radarFormatFecha(iso) {
   if (diff < 60)   return 'hace ' + diff + ' min';
   if (diff < 1440) return 'hace ' + Math.floor(diff / 60) + 'h';
   return 'hace ' + Math.floor(diff / 1440) + 'd';
+}
+
+// ─── Abrir job en nueva pestaña (reemplaza el iframe viewer) ─
+// Los iframes de Upwork/Workana/Fiverr/Behance/LinkedIn son
+// bloqueados por X-Frame-Options. La solución correcta es
+// abrir el link directamente en una pestaña nueva.
+function radarAbrirJob(url, plataformaId) {
+  if (plataformaId) radarTrackLanzamiento(plataformaId, url);
+  window.open(url, '_blank', 'noopener,noreferrer');
 }
 
 // ─── Tracking de lanzamiento (best-effort) ───────────────────
@@ -155,7 +164,6 @@ function radarDetenerRefresh() {
   }
 }
 
-// Refresco silencioso: actualiza sin mostrar spinner
 function radarRenderSilencioso() {
   var apiUrl = radarGetApiUrl();
   if (!apiUrl) return;
@@ -169,7 +177,6 @@ function radarRenderSilencioso() {
       radarRenderConData(plataformas);
       radarActualizarTimestamp();
     }
-    // Si falla el silencioso, se mantiene la vista actual sin interrumpir
   }, opciones);
 }
 
@@ -181,100 +188,6 @@ function radarActualizarTimestamp() {
   el.textContent = 'Actualizado: '
     + String(hora.getHours()).padStart(2, '0') + ':'
     + String(hora.getMinutes()).padStart(2, '0');
-}
-
-// ─── Mini-Viewer Modal ───────────────────────────────────────
-function radarAbrirViewer(url, nombre, color, plataformaId) {
-  if (plataformaId) radarTrackLanzamiento(plataformaId, url);
-
-  var existente = document.getElementById('radar-viewer-overlay');
-  if (existente) existente.remove();
-
-  var overlay = document.createElement('div');
-  overlay.id = 'radar-viewer-overlay';
-  overlay.style.cssText = [
-    'position:fixed','top:0','left:0','width:100vw','height:100vh',
-    'background:rgba(0,0,0,0.75)','z-index:99999',
-    'display:flex','align-items:center','justify-content:center',
-    'animation:radarFadeIn 0.2s ease'
-  ].join(';');
-
-  overlay.innerHTML = [
-    '<div style="width:92vw;max-width:1100px;height:82vh;background:#0f1117;border-radius:14px;',
-    'border:1px solid rgba(255,255,255,0.1);display:flex;flex-direction:column;overflow:hidden;',
-    'box-shadow:0 24px 64px rgba(0,0,0,0.6);">',
-
-    '<div style="display:flex;align-items:center;justify-content:space-between;',
-    'padding:12px 18px;border-bottom:1px solid rgba(255,255,255,0.08);',
-    'background:rgba(255,255,255,0.03);">',
-    '<div style="display:flex;align-items:center;gap:10px;">',
-    '<span style="width:10px;height:10px;border-radius:50%;background:'+color+';display:inline-block;box-shadow:0 0 8px '+color+'"></span>',
-    '<span style="color:#fff;font-size:14px;font-weight:600;">'+nombre+'</span>',
-    '<span style="color:rgba(255,255,255,0.4);font-size:12px;">— Trabajos disponibles</span>',
-    '</div>',
-    '<div style="display:flex;gap:8px;align-items:center;">',
-    '<a href="'+url+'" target="_blank" rel="noopener noreferrer" ',
-    'style="background:'+color+';color:#fff;border:none;padding:6px 14px;border-radius:6px;',
-    'font-size:12px;cursor:pointer;text-decoration:none;font-weight:500;',
-    'display:flex;align-items:center;gap:5px;">',
-    '<i class="ph ph-arrow-square-out"></i> Abrir en nueva pestaña</a>',
-    '<button onclick="document.getElementById(\'radar-viewer-overlay\').remove()" ',
-    'style="background:rgba(255,255,255,0.08);color:#fff;border:1px solid rgba(255,255,255,0.15);',
-    'padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;">✕ Cerrar</button>',
-    '</div></div>',
-
-    '<div id="radar-viewer-notice" style="display:none;flex:1;flex-direction:column;align-items:center;',
-    'justify-content:center;padding:40px;text-align:center;">',
-    '<span style="font-size:48px;margin-bottom:16px;display:block;">🔒</span>',
-    '<p style="color:rgba(255,255,255,0.8);font-size:16px;margin-bottom:8px;font-weight:600;">',
-    'Esta plataforma bloquea la vista embebida</p>',
-    '<p style="color:rgba(255,255,255,0.5);font-size:13px;margin-bottom:24px;">',
-    'Por seguridad, '+nombre+' no permite mostrarse dentro de otras apps.<br>',
-    'Puedes abrirla directamente en una nueva pestaña.</p>',
-    '<a href="'+url+'" target="_blank" rel="noopener noreferrer" ',
-    'style="background:'+color+';color:#fff;padding:10px 24px;border-radius:8px;',
-    'text-decoration:none;font-weight:600;font-size:14px;">',
-    '<i class="ph ph-arrow-square-out"></i> Abrir '+nombre+'</a>',
-    '</div>',
-
-    '<iframe id="radar-viewer-iframe" src="'+url+'" ',
-    'style="flex:1;border:none;width:100%;" ',
-    'sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox" ',
-    'onload="radarViewerIframeLoaded(this)">',
-    '</iframe>',
-    '</div>'
-  ].join('');
-
-  overlay.addEventListener('click', function(e) {
-    if (e.target === overlay) overlay.remove();
-  });
-
-  document.body.appendChild(overlay);
-
-  setTimeout(function() {
-    var iframe = document.getElementById('radar-viewer-iframe');
-    var notice = document.getElementById('radar-viewer-notice');
-    if (iframe && notice) {
-      try {
-        var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-        if (!iframeDoc || iframeDoc.body === null || iframeDoc.body.innerHTML === '') {
-          iframe.style.display = 'none';
-          notice.style.display = 'flex';
-        }
-      } catch(err) { /* Cross-origin bloqueado = página cargó OK */ }
-    }
-  }, 4000);
-}
-
-function radarViewerIframeLoaded(iframe) {
-  try {
-    var doc = iframe.contentDocument || iframe.contentWindow.document;
-    if (doc && doc.body && doc.body.innerHTML.trim() === '') {
-      iframe.style.display = 'none';
-      var notice = document.getElementById('radar-viewer-notice');
-      if (notice) notice.style.display = 'flex';
-    }
-  } catch(e) { /* Cross-origin = OK */ }
 }
 
 // ─── Render filtros de categoría ─────────────────────────────
@@ -291,7 +204,7 @@ function radarRenderFiltros(categorias, categoriaActiva) {
 
   categorias.forEach(function(cat) {
     var activa = cat === categoriaActiva;
-    html += '<button onclick="radarCambiarCategoria(\''+cat+'\')" '
+    html += '<button onclick="radarCambiarCategoria(\'' + cat + '\')" '
       + 'style="padding:5px 14px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;'
       + 'border:1px solid rgba(255,255,255,0.18);margin-right:6px;transition:all 0.15s;'
       + (activa ? 'background:rgba(255,255,255,0.12);color:#fff;'
@@ -321,11 +234,9 @@ function radarBadgeFuente(p, usandoMock) {
         + 'background:rgba(255,200,60,0.06);border:1px solid rgba(255,200,60,0.15);'
         + 'border-radius:4px;white-space:nowrap;">⏱ Caché</span>';
     }
-    // Jobs existen pero sin fuente conocida
     return '<span style="font-size:9px;color:rgba(255,255,255,0.35);margin-left:auto;padding:2px 6px;'
       + 'background:rgba(255,255,255,0.04);border-radius:4px;white-space:nowrap;">datos reales</span>';
   }
-  // Sin datos de la API — usando mock local
   return '<span style="font-size:9px;color:rgba(255,255,255,0.25);margin-left:auto;padding:2px 6px;'
     + 'background:rgba(255,255,255,0.04);border-radius:4px;white-space:nowrap;">datos de ejemplo</span>';
 }
@@ -343,7 +254,6 @@ function radarMostrarError(motivo) {
   };
   var msg = mensajes[motivo] || mensajes['error'];
 
-  // Mostrar banner informativo ENCIMA del grid (no bloquea el fallback)
   var banner = document.getElementById('radar-api-banner');
   if (!banner) {
     banner = document.createElement('div');
@@ -374,7 +284,6 @@ function radarRenderConData(plataformas) {
     var style = document.createElement('style');
     style.id = 'radar-viewer-styles';
     style.textContent = [
-      '@keyframes radarFadeIn{from{opacity:0;transform:scale(0.97)}to{opacity:1;transform:scale(1)}}',
       '.radar-job-item:hover{background:rgba(255,255,255,0.07)!important;transform:translateX(3px)}',
       '.radar-job-item{transition:background 0.15s ease,transform 0.15s ease}',
       '.radar-tag:hover{opacity:0.85;transform:translateY(-1px)}',
@@ -399,14 +308,14 @@ function radarRenderConData(plataformas) {
     var usandoMock = !(p.jobs && p.jobs.length > 0);
     var fuenteBadge = radarBadgeFuente(p, usandoMock);
 
-    html += '<div class="radar-card" style="border-color:'+p.color_border+';background:'+p.color_bg+';padding:0;overflow:hidden;">';
+    html += '<div class="radar-card" style="border-color:' + p.color_border + ';background:' + p.color_bg + ';padding:0;overflow:hidden;">';
 
     // Header
     html += '<div class="radar-card-header" style="padding:14px 16px 12px;">';
-    html += '<span class="radar-logo">'+(p.logo||'🔗')+'</span>';
+    html += '<span class="radar-logo">' + (p.logo || '🔗') + '</span>';
     html += '<div class="radar-info">';
-    html += '<span class="radar-nombre" style="color:'+p.color+';">'+p.nombre+'</span>';
-    html += '<span class="radar-desc">'+(p.descripcion||'')+'</span>';
+    html += '<span class="radar-nombre" style="color:' + p.color + ';">' + p.nombre + '</span>';
+    html += '<span class="radar-desc">' + (p.descripcion || '') + '</span>';
     html += '</div>';
     html += fuenteBadge;
     html += '</div>';
@@ -427,40 +336,43 @@ function radarRenderConData(plataformas) {
       jobs.forEach(function(job) {
         var jobUrl = job.url || p.search_url || '#';
         var tiempo = radarFormatFecha(job.fecha_publicacion) || '';
-        html += '<div class="radar-job-item" onclick="radarAbrirViewer(\''+jobUrl+'\',\''+p.nombre+'\',\''+p.color+'\',\''+p.id+'\')" '
+        // Abre el job directamente en nueva pestaña (sin iframe)
+        html += '<div class="radar-job-item" '
+               + 'onclick="radarAbrirJob(\'' + jobUrl.replace(/'/g, "\\'") + '\',\'' + p.id + '\')" '
                + 'style="display:flex;align-items:flex-start;gap:10px;padding:8px 10px;'
                + 'border-radius:8px;cursor:pointer;margin-bottom:4px;background:rgba(255,255,255,0.03);">';
         html += '<div style="flex:1;min-width:0;">';
         html += '<p style="color:rgba(255,255,255,0.88);font-size:12px;font-weight:500;margin:0 0 3px 0;'
-               + 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+job.titulo+'</p>';
+               + 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + job.titulo + '</p>';
         html += '<div style="display:flex;gap:8px;align-items:center;">';
-        html += '<span style="color:'+p.color+';font-size:11px;font-weight:600;">'+(job.presupuesto||'Negociable')+'</span>';
+        html += '<span style="color:' + p.color + ';font-size:11px;font-weight:600;">' + (job.presupuesto || 'Negociable') + '</span>';
         if (tiempo) {
           html += '<span style="color:rgba(255,255,255,0.3);font-size:10px;">•</span>';
-          html += '<span style="color:rgba(255,255,255,0.35);font-size:10px;">'+tiempo+'</span>';
+          html += '<span style="color:rgba(255,255,255,0.35);font-size:10px;">' + tiempo + '</span>';
         }
         html += '</div></div>';
-        html += '<span style="color:'+p.color+';font-size:14px;flex-shrink:0;margin-top:2px;">›</span>';
+        html += '<span style="color:' + p.color + ';font-size:14px;flex-shrink:0;margin-top:2px;">›</span>';
         html += '</div>';
       });
     }
 
-    // Botón ver todos
+    // Botón ver todos — abre search_url en nueva pestaña
     var searchUrl = p.search_url || '#';
-    html += '<button class="radar-btn-viewer" onclick="radarAbrirViewer(\''+searchUrl+'\',\''+p.nombre+'\',\''+p.color+'\',\''+p.id+'\')" '
-           + 'style="width:100%;background:rgba(255,255,255,0.05);border:1px solid '+p.color_border+';'
-           + 'color:'+p.color+';padding:7px;border-radius:8px;font-size:11px;font-weight:600;'
+    html += '<button class="radar-btn-viewer" '
+           + 'onclick="radarAbrirJob(\'' + searchUrl.replace(/'/g, "\\'") + '\',\'' + p.id + '\')" '
+           + 'style="width:100%;background:rgba(255,255,255,0.05);border:1px solid ' + p.color_border + ';'
+           + 'color:' + p.color + ';padding:7px;border-radius:8px;font-size:11px;font-weight:600;'
            + 'cursor:pointer;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:6px;">'
-           + '<i class="ph ph-eye"></i> Ver todos los trabajos en vivo</button>';
+           + '<i class="ph ph-arrow-square-out"></i> Ver todos los trabajos en vivo</button>';
     html += '</div>';
 
     // Footer
     html += '<div class="radar-card-footer" style="padding:10px 16px;border-top:1px solid rgba(255,255,255,0.06);">';
-    html += '<button onclick="radarGuardarOpp(\''+p.id+'\',\''+p.nombre+'\')" class="radar-btn-opp" style="border-color:'+p.color_border+';color:'+p.color+';">';
+    html += '<button onclick="radarGuardarOpp(\'' + p.id + '\',\'' + p.nombre + '\')" class="radar-btn-opp" style="border-color:' + p.color_border + ';color:' + p.color + ';">';
     html += '<i class="ph ph-lightning"></i> Guardar Oportunidad</button>';
-    html += '<a href="'+searchUrl+'" target="_blank" rel="noopener noreferrer" class="radar-btn-open" style="background:'+p.color+';"'
-           + ' onclick="radarTrackLanzamiento(\''+p.id+'\',\''+searchUrl+'\')">';
-    html += '<i class="ph ph-arrow-square-out"></i> Abrir '+p.nombre+'</a>';
+    html += '<a href="' + searchUrl + '" target="_blank" rel="noopener noreferrer" class="radar-btn-open" style="background:' + p.color + ';"'
+           + ' onclick="radarTrackLanzamiento(\'' + p.id + '\',\'' + searchUrl + '\')">';
+    html += '<i class="ph ph-arrow-square-out"></i> Abrir ' + p.nombre + '</a>';
     html += '</div>';
 
     html += '</div>';
@@ -504,7 +416,6 @@ function radarRender() {
 
   var apiUrl = radarGetApiUrl();
   if (!apiUrl) {
-    // SUPABASE_FUNCTIONS_URL no disponible todavía — esperar 500 ms y reintentar una vez
     setTimeout(function() {
       var urlReintentar = radarGetApiUrl();
       if (!urlReintentar) {
@@ -527,7 +438,6 @@ function radarHandleApiResponse(plataformas, estado) {
     radarActualizarTimestamp();
     radarIniciarRefresh();
   } else if (_radarUltimaRespuesta && _radarUltimaRespuesta.length > 0) {
-    // Hay datos anteriores en caché in-memory: usarlos
     radarOcultarBanner();
     radarRenderConData(_radarUltimaRespuesta);
   } else {
@@ -543,10 +453,11 @@ function radarGuardarOpp(plataformaId, plataformaNombre) {
 }
 
 // ─── Exponer globals necesarios ──────────────────────────────
-window.radarRender              = radarRender;
-window.radarCambiarCategoria    = radarCambiarCategoria;
-window.radarAbrirViewer         = radarAbrirViewer;
-window.radarViewerIframeLoaded  = radarViewerIframeLoaded;
-window.radarTrackLanzamiento    = radarTrackLanzamiento;
-window.radarGuardarOpp          = radarGuardarOpp;
-window.radarDetenerRefresh      = radarDetenerRefresh;
+window.radarRender           = radarRender;
+window.radarCambiarCategoria = radarCambiarCategoria;
+window.radarAbrirJob         = radarAbrirJob;
+window.radarTrackLanzamiento = radarTrackLanzamiento;
+window.radarGuardarOpp       = radarGuardarOpp;
+window.radarDetenerRefresh   = radarDetenerRefresh;
+// radarAbrirViewer y radarViewerIframeLoaded eliminados —
+// usaban <iframe> bloqueado por X-Frame-Options en todas las plataformas externas.
